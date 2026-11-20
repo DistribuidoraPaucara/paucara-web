@@ -20,14 +20,33 @@ use Inertia\Response;
 
 class ComboController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filtros = [
+            'q'      => trim((string) $request->query('q', '')),
+            'estado' => in_array($request->query('estado'), ['activo', 'inactivo'], true) ? $request->query('estado') : '',
+            'stock'  => in_array($request->query('stock'), ['con', 'sin'], true) ? $request->query('stock') : '',
+            'orden'  => in_array($request->query('orden'), ['capacidad_asc', 'capacidad_desc'], true) ? $request->query('orden') : '',
+        ];
+        $almacenId = $this->almacenPrincipalId();
+
+        // La capacidad se calcula en PHP: filtrar y ordenar por ella obliga a paginar después de calcularla
         $combos = Producto::where('es_combo', true)
             ->when(auth()->user()?->empresa_id, fn($q, $id) => $q->where('empresa_id', $id))
+            ->when($filtros['q'] !== '', fn($q) => $q->where(function ($sub) use ($filtros) {
+                $sub->where('nombre', 'ilike', "%{$filtros['q']}%")
+                    ->orWhere('sku', 'ilike', "%{$filtros['q']}%");
+                if (ctype_digit($filtros['q'])) {
+                    $sub->orWhere('id', (int) $filtros['q']);
+                }
+            }))
+            ->when($filtros['estado'] !== '', fn($q) => $q->where('activo', $filtros['estado'] === 'activo'))
             ->with('comboItems.producto:id,nombre,sku')
             ->orderByDesc('id')
-            ->paginate(15)
-            ->through(function (Producto $combo) {
+            ->get()
+            ->map(function (Producto $combo) use ($almacenId) {
+                $capacidad = ComboStockService::calcularCapacidadConDetalles($combo->id, $almacenId);
+
                 return [
                     'id'             => $combo->id,
                     'nombre'         => $combo->nombre,
@@ -37,11 +56,38 @@ class ComboController extends Controller
                         fn($item) => (float) $item->precio_unitario * (float) $item->cantidad
                     ), 2),
                     'cantidad_items' => $combo->comboItems->count(),
+                    'capacidad'      => $capacidad['capacidad_total'],
+                    // Componentes obligatorios que definen el máximo (también cuando es 0)
+                    'limitantes'     => collect($capacidad['detalles'])
+                        ->filter(fn($d) => $d['es_obligatorio'] && $d['combos_posibles'] === $capacidad['capacidad_total'])
+                        ->map(fn($d) => [
+                            'nombre'    => $d['producto_nombre'],
+                            'stock'     => $d['stock_disponible'],
+                            'requerida' => $d['cantidad_requerida'],
+                        ])
+                        ->values()
+                        ->all(),
                     'activo'         => $combo->activo,
                 ];
-            });
+            })
+            ->when($filtros['stock'] === 'sin', fn($c) => $c->where('capacidad', 0))
+            ->when($filtros['stock'] === 'con', fn($c) => $c->where('capacidad', '>', 0))
+            ->when($filtros['orden'] !== '', fn($c) => $c->sortBy('capacidad', SORT_REGULAR, $filtros['orden'] === 'capacidad_desc'))
+            ->values();
 
-        return Inertia::render('combos/index', ['combos' => $combos]);
+        $porPagina = 15;
+        $pagina = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+
+        return Inertia::render('combos/index', [
+            'combos'  => new \Illuminate\Pagination\LengthAwarePaginator(
+                $combos->forPage($pagina, $porPagina)->values(),
+                $combos->count(),
+                $porPagina,
+                $pagina,
+                ['path' => $request->url(), 'query' => $request->query()]
+            ),
+            'filtros' => $filtros,
+        ]);
     }
 
     public function create(): Response
@@ -140,6 +186,8 @@ class ComboController extends Controller
         DB::transaction(function () use ($request, $combo) {
             $this->validarItems($request->items, $request->grupo_opcional ?? null, comboId: $combo->id);
 
+            $precioAnterior = (float) $combo->precio_venta;
+
             $combo->update([
                 'sku'            => $request->sku,
                 'nombre'         => $request->nombre,
@@ -157,9 +205,7 @@ class ComboController extends Controller
                 $this->crearGrupo($combo->id, $request->grupo_opcional);
             }
 
-            // Actualizar precios del combo (eliminar antiguos y crear nuevos)
-            $combo->precios()->delete();
-            $this->crearPreciosProducto($combo->id, $request->precio_venta);
+            $this->actualizarPrecioVenta($combo, $precioAnterior, (float) $request->precio_venta);
 
             Log::info('✅ [ComboController::update] Combo actualizado', [
                 'combo_id'       => $combo->id,
@@ -176,14 +222,11 @@ class ComboController extends Controller
     {
         abort_unless($combo->es_combo, 404);
 
-        // Verificar si el combo está siendo usado en detalle_proformas
-        $tieneReferencias = DB::table('detalle_proformas')
-            ->where('producto_id', $combo->id)
-            ->exists();
-
-        if ($tieneReferencias) {
-            return back()
-                ->withErrors(['delete' => 'No se puede eliminar este combo porque ya ha sido utilizado en una proforma o documento. Debes eliminar primero las referencias existentes.']);
+        $referencias = $this->referenciasDelCombo($combo->id);
+        if (!empty($referencias)) {
+            return back()->withErrors([
+                'delete' => 'No se puede eliminar porque tiene historial (' . implode(', ', $referencias) . '). Desactívalo para que deje de venderse.',
+            ]);
         }
 
         try {
@@ -204,7 +247,48 @@ class ComboController extends Controller
         }
     }
 
+    public function cambiarEstado(Request $request, Producto $combo): RedirectResponse
+    {
+        abort_unless($combo->es_combo, 404);
+        $validado = $request->validate(['activo' => ['required', 'boolean']]);
+
+        $combo->update(['activo' => $validado['activo']]);
+
+        return back();
+    }
+
     // ── Privados ────────────────────────────────────────────────
+
+    /**
+     * Historial que impide borrar un combo: tablas cuya llave foránea bloquea el DELETE.
+     *
+     * @return string[] Por ejemplo ["110 líneas de proforma", "137 líneas de venta"]
+     */
+    private function referenciasDelCombo(int $comboId): array
+    {
+        $tablas = [
+            ['detalle_proformas', 'producto_id', 'línea de proforma', 'líneas de proforma'],
+            ['detalle_ventas', 'producto_id', 'línea de venta', 'líneas de venta'],
+            ['detalle_compras', 'producto_id', 'línea de compra', 'líneas de compra'],
+            ['detalles_pedido', 'producto_id', 'línea de pedido', 'líneas de pedido'],
+            ['detalle_transferencia_inventarios', 'producto_id', 'línea de transferencia', 'líneas de transferencia'],
+            ['detalle_cambios', 'producto_id', 'línea de cambio', 'líneas de cambio'],
+            ['detalle_devoluciones', 'producto_id', 'línea de devolución', 'líneas de devolución'],
+            ['reporte_carga_detalles', 'producto_id', 'línea de reporte de carga', 'líneas de reporte de carga'],
+            ['venta_por_lotes', 'producto_id', 'registro de venta por lotes', 'registros de venta por lotes'],
+            ['venta_por_lotes', 'combo_padre_id', 'registro de venta por lotes', 'registros de venta por lotes'],
+        ];
+
+        $referencias = [];
+        foreach ($tablas as [$tabla, $columna, $singular, $plural]) {
+            $total = DB::table($tabla)->where($columna, $comboId)->count();
+            if ($total > 0) {
+                $referencias[] = $total . ' ' . ($total === 1 ? $singular : $plural);
+            }
+        }
+
+        return $referencias;
+    }
 
     private function validarRequest(Request $request, ?int $comboId = null): void
     {
@@ -365,6 +449,52 @@ class ComboController extends Controller
         ]);
     }
 
+    /**
+     * Refleja en los precios de venta un cambio del precio del combo, sin borrar precios ni tocar el costo.
+     * Se actualizan los que estaban en el valor anterior; los que tienen un valor propio se respetan.
+     */
+    private function actualizarPrecioVenta(Producto $combo, float $anterior, float $nuevo): void
+    {
+        if (abs($nuevo - $anterior) < 0.005) {
+            return;
+        }
+
+        $preciosVenta = $combo->precios()
+            ->whereHas('tipoPrecio', fn($q) => $q->where('es_ganancia', true))
+            ->with('tipoPrecio')
+            ->get()
+            ->sortBy(fn(PrecioProducto $p) => $p->tipoPrecio->orden)
+            ->values();
+
+        if ($preciosVenta->isEmpty()) {
+            $tipoVenta = TipoPrecio::activos()->where('es_ganancia', true)->orderBy('orden')->first();
+            if ($tipoVenta) {
+                PrecioProducto::create([
+                    'producto_id'    => $combo->id,
+                    'tipo_precio_id' => $tipoVenta->id,
+                    'precio'         => $nuevo,
+                    'activo'         => true,
+                ]);
+            }
+
+            return;
+        }
+
+        $seguianElPrecio = $preciosVenta->filter(fn(PrecioProducto $p) => abs((float) $p->precio - $anterior) < 0.005);
+        // Si ninguno coincide, el precio del combo igual debe llegar a un precio de venta
+        $aActualizar = $seguianElPrecio->isNotEmpty() ? $seguianElPrecio : $preciosVenta->take(1);
+
+        // Se guarda directo: PrecioProductoObserver registra el historial una sola vez
+        $aActualizar->each(function (PrecioProducto $p) use ($nuevo) {
+            $p->precio = $nuevo;
+            $p->motivo_cambio = 'Actualización desde el formulario de combos';
+            $p->fecha_ultima_actualizacion = now();
+            $p->margen_ganancia = $p->calcularGanancia();
+            $p->porcentaje_ganancia = $p->calcularPorcentajeGanancia();
+            $p->save();
+        });
+    }
+
     private function crearPreciosProducto(int $comboId, float $precioVenta): void
     {
         // Obtener los tipos de precio para "venta" y "costo"
@@ -396,15 +526,19 @@ class ComboController extends Controller
     {
         return [
             'tipos_precio' => TipoPrecio::activos()->ordenados()->get(['id', 'nombre', 'codigo'])->toArray(),
+            'almacen_principal_id' => $this->almacenPrincipalId(),
         ];
+    }
+
+    private function almacenPrincipalId(): int
+    {
+        return (int) (auth()->user()?->empresa?->almacen_id_principal ?? config('inventario.almacen_principal_id', 1));
     }
 
     private function serializarCombo(Producto $combo, ?int $almacenId = null): array
     {
-        // ✅ CORREGIDO: Si no se proporciona almacen_id, usar el almacén principal
-        if (!$almacenId) {
-            $almacenId = auth()->user()?->empresa?->almacen_id_principal ?? config('inventario.almacen_principal_id', 1);
-        }
+        // Si no se proporciona almacen_id, usar el almacén principal
+        $almacenId ??= $this->almacenPrincipalId();
 
         return [
             'id'           => $combo->id,
@@ -414,13 +548,11 @@ class ComboController extends Controller
             'precio_venta' => (float) $combo->precio_venta,
             'activo'       => $combo->activo,
             'items'        => $combo->comboItems->map(function(ComboItem $item) use ($almacenId) {
-                // ✅ CORREGIDO: Obtener stock del almacén específico, no suma de todos
-                $stockAlmacen = $item->producto?->stock()
-                    ->where('almacen_id', $almacenId)
-                    ->first();
+                // Un producto tiene una fila por lote: se suman todas las del almacén
+                $lotes = $item->producto?->stock()->where('almacen_id', $almacenId)->get();
 
-                $stockDisponible = $stockAlmacen?->cantidad_disponible ?? 0;
-                $stockTotal = $stockAlmacen?->cantidad ?? 0;
+                $stockDisponible = $lotes?->sum('cantidad_disponible') ?? 0;
+                $stockTotal = $lotes?->sum('cantidad') ?? 0;
 
                 return [
                     'producto_id'        => $item->producto_id,

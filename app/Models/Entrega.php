@@ -971,6 +971,56 @@ class Entrega extends Model
     }
 
     /**
+     * Totales de la entrega contando solo las ventas vigentes.
+     */
+    public function totalesVentasVigentes(): array
+    {
+        $this->loadMissing(['ventas.estadoDocumento', 'ventas.tipoPago']);
+
+        [$vigentes, $excluidas] = $this->ventas->partition(fn (Venta $venta) => $venta->estaVigente());
+
+        return [
+            'cantidad_ventas'    => $vigentes->count(),
+            'cantidad_excluidas' => $excluidas->count(),
+            'subtotal'           => round((float) $vigentes->sum('subtotal'), 2),
+            'total_sin_credito'  => round(
+                (float) $vigentes->filter(fn (Venta $venta) => $venta->tipoPago?->codigo !== 'CREDITO')->sum('total'),
+                2
+            ),
+        ];
+    }
+
+    /**
+     * Peso de las ventas vigentes, o null si alguna no tiene peso registrado.
+     */
+    public function calcularPesoVigente(): ?float
+    {
+        if ($this->ventas()->vigentes()->sinPesoRegistrado()->exists()) {
+            return null;
+        }
+
+        return round((float) $this->ventas()->vigentes()->sum('peso_total_estimado'), 2);
+    }
+
+    /**
+     * Guarda en peso_kg la suma de las ventas vigentes.
+     *
+     * @return bool false si no se pudo calcular y el peso quedó como estaba
+     */
+    public function recalcularPeso(): bool
+    {
+        $peso = $this->calcularPesoVigente();
+
+        if ($peso === null) {
+            return false;
+        }
+
+        $this->updateQuietly(['peso_kg' => $peso]);
+
+        return true;
+    }
+
+    /**
      * Obtener el peso total de todas las ventas
      *
      * @return float

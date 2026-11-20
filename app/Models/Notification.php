@@ -13,6 +13,7 @@ class Notification extends Model
     protected $fillable = [
         'user_id',
         'type',
+        'grupo_id',
         'data',
         'read',
         'read_at',

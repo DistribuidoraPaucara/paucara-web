@@ -24,6 +24,9 @@ interface Props {
 export default function FiltrosCompras({ filtros, datosParaFiltros, className }: Props) {
     // Valores por defecto para evitar errores de undefined
     const filtrosSeguras = filtros || {};
+    // El orden se elige en los encabezados de la tabla: siempre se toma de la URL actual (props),
+    // no del estado local, que Inertia conserva entre visitas y quedaría desactualizado
+    const ordenActual = { sort_by: filtrosSeguras.sort_by, sort_dir: filtrosSeguras.sort_dir };
     const datosSeguras = datosParaFiltros || {
         proveedores: [],
         estados: [],
@@ -62,13 +65,15 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
 
     const aplicarFiltros = () => {
         const filtrosLimpios = Object.fromEntries(
-            Object.entries(valoresLocales).filter(([, value]) => value !== '' && value != null)
+            Object.entries({ ...valoresLocales, ...ordenActual }).filter(([, value]) => value !== '' && value != null)
         );
 
         comprasService.search(filtrosLimpios as FiltrosCompras);
     };
 
+    // Limpia los filtros pero conserva el orden elegido en los encabezados de la tabla
     const limpiarFiltros = () => {
+        const orden = ordenActual;
         setValoresLocales({
             q: '',
             id: '',
@@ -78,12 +83,11 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
             tipo_pago_id: '',
             fecha_desde: '',
             fecha_hasta: '',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
+            ...orden,
         });
 
         setBusquedaCombinada('');
-        comprasService.clearFilters();
+        comprasService.search(orden);
     };
 
     const busquedaRapida = (e: React.FormEvent) => {
@@ -92,7 +96,7 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
         // Detectar si la búsqueda es por ID (solo números) o búsqueda general (texto)
         const filtrosParaBusqueda: FiltrosCompras = {
             ...Object.fromEntries(
-                Object.entries(valoresLocales).filter(([key, value]) =>
+                Object.entries({ ...valoresLocales, ...ordenActual }).filter(([key, value]) =>
                     key !== 'q' && key !== 'id' && value !== '' && value != null
                 )
             )
@@ -111,8 +115,9 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
         comprasService.search(filtrosParaBusqueda);
     };
 
-    const hayFiltrosActivos = Object.values(filtrosSeguras).some(value =>
-        value !== '' && value != null && value !== 'created_at' && value !== 'desc'
+    // El orden y la paginación no son filtros
+    const hayFiltrosActivos = Object.entries(filtrosSeguras).some(([clave, value]) =>
+        !['sort_by', 'sort_dir', 'page', 'per_page'].includes(clave) && value !== '' && value != null
     );
 
     const opcionesProveedores = datosSeguras.proveedores.map(p => ({
@@ -134,14 +139,6 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
         value: t.id,
         label: `${t.nombre} (${t.codigo})`
     }));
-
-    const opcionesOrden = [
-        { value: 'created_at', label: 'Fecha de creación' },
-        { value: 'fecha', label: 'Fecha de compra' },
-        { value: 'numero', label: 'Número' },
-        { value: 'total', label: 'Total' },
-        { value: 'proveedor', label: 'Proveedor' },
-    ];
 
     // Validar que los filtros existan
     if (!filtros) {
@@ -236,7 +233,7 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
                         </div>
 
                         {/* Moneda */}
-                        <div>
+                        {/* <div>
                             <Label htmlFor="moneda_id" className="text-sm font-medium">
                                 Moneda
                             </Label>
@@ -249,7 +246,7 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
                                 allowClear
                                 emptyText="No hay monedas disponibles"
                             />
-                        </div>
+                        </div> */}
 
                         {/* Tipo de Pago */}
                         <div>
@@ -300,40 +297,6 @@ export default function FiltrosCompras({ filtros, datosParaFiltros, className }:
                                     className="pl-10"
                                 />
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Ordenamiento */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="sort_by" className="text-sm font-medium">
-                                Ordenar por
-                            </Label>
-                            <SearchSelect
-                                id="sort_by"
-                                placeholder="Campo de ordenamiento"
-                                value={valoresLocales.sort_by || 'created_at'}
-                                options={opcionesOrden}
-                                onChange={value => setValoresLocales(prev => ({ ...prev, sort_by: String(value) }))}
-                                allowClear={false}
-                            />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="sort_dir" className="text-sm font-medium">
-                                Dirección
-                            </Label>
-                            <SearchSelect
-                                id="sort_dir"
-                                placeholder="Dirección"
-                                value={valoresLocales.sort_dir || 'desc'}
-                                options={[
-                                    { value: 'asc', label: 'Ascendente' },
-                                    { value: 'desc', label: 'Descendente' },
-                                ]}
-                                onChange={value => setValoresLocales(prev => ({ ...prev, sort_dir: String(value) }))}
-                                allowClear={false}
-                            />
                         </div>
                     </div>
 

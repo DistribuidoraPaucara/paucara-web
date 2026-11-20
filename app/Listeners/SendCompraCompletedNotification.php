@@ -51,7 +51,7 @@ class SendCompraCompletedNotification
             }
 
             // Usar el servicio especializado de compras
-            $result = $this->notificationService->notifyCompleted($compra);
+            $result = $this->notificationService->notifyCompleted($compra, $event->usuarioId);
 
             if ($result) {
                 Log::info('✅ Notificación de compra completada procesada exitosamente', [

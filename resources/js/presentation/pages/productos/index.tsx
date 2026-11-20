@@ -26,23 +26,6 @@ export default function ProductosIndex({ productos, filters, categorias, marcas,
   const puedeEditar = can('productos.edit');
   const puedeEliminar = can('productos.delete');
 
-  // 📊 LOG: Ver datos que llegan del backend
-  console.log('📦 [ProductosIndex] Datos del Backend:', {
-    productosTotal: productos?.total,
-    productosData: productos?.data?.map(p => ({ id: p.id, nombre: p.nombre, sku: p.sku })),
-    filters,
-    categorias: categorias?.map(c => ({ id: c.id, nombre: c.nombre })),
-    marcas: marcas?.map(m => ({ id: m.id, nombre: m.nombre })),
-    proveedores: proveedores?.map(p => ({ id: p.id, nombre: p.nombre, razon_social: p.razon_social })),
-  });
-
-  // 🔐 LOG: Ver permisos del usuario
-  console.log('🔐 [ProductosIndex] Permisos del Usuario:', {
-    puedeEditar,
-    puedeEliminar,
-    verPrecioCosto: can('ver_precio_costo'),
-  });
-
   return (
     <AppLayout breadcrumbs={[
       { title: 'Dashboard', href: productosService.indexUrl() },

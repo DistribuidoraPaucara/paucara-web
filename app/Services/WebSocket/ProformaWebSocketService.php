@@ -230,6 +230,7 @@ class ProformaWebSocketService extends BaseWebSocketService
             'numero' => $proforma->numero,
             'cliente_id' => $proforma->cliente_id,
             'user_id' => $proforma->cliente?->user_id,
+            'usuario_creador_id' => $proforma->usuario_creador_id,
             'cliente' => [
                 'id' => $proforma->cliente_id,
                 'nombre' => $proforma->cliente?->nombre ?? 'Cliente',

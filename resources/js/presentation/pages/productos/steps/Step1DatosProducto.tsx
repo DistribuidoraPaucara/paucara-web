@@ -491,11 +491,6 @@ function Step1DatosProducto({
                     </div>
                     {errors.peso && <div className="mt-1 text-sm text-red-500">⚠️ {errors.peso}</div>}
                 </div>
-                {/* 🆕 Campo activo oculto - el valor por defecto (true) se establece en form.tsx */}
-                <div className="hidden">
-                    <Checkbox id="activo" checked={!!data.activo} onCheckedChange={(v) => setData('activo', !!v)} />
-                    <Label htmlFor="activo">Activo</Label>
-                </div>
                 <div className="space-y-1">
                     <div className="relative">
                         <label
@@ -668,7 +663,7 @@ function Step1DatosProducto({
                 /> */}
 
                 {/* ✅ NUEVA SECCIÓN: Venta sin Stock (solo para farmacias) */}
-                <FeatureToggle
+                {/* <FeatureToggle
                     id="permite_venta_sin_stock"
                     checked={!!data.permite_venta_sin_stock}
                     onCheckedChange={(v) => setData('permite_venta_sin_stock', !!v)}
@@ -677,13 +672,13 @@ function Step1DatosProducto({
                     description="Marca este producto si es un servicio que se puede vender incluso sin inventario disponible."
                     hint="Ejemplo: Inyecciones, curaciones, aplicación de medicamentos"
                     colorScheme="purple"
-                    /* additionalContent={
+                    additionalContent={
                           <div>
                               <p className="text-sm font-medium">✅ <strong>Servicio Habilitado:</strong> Este producto se puede vender sin stock disponible</p>
                               <p className="mt-1 text-xs opacity-75">Se permitirá crear ventas incluso si el inventario es 0 o negativo</p>
                           </div>
-                      } */
-                />
+                    }
+                /> */}
 
                 {/* ✨ NUEVA SECCIÓN: Visibilidad en App */}
                 <FeatureToggle

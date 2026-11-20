@@ -6,23 +6,35 @@ export interface Role {
     display_name?: string;
 }
 
+export type TipoNotificacion = 'promocion' | 'evento' | 'informativo' | 'oferta';
+export type Frecuencia = 'una_vez' | 'diario' | 'semanal' | 'mensual';
+
+export interface HorarioNotificacion {
+    id?: number;
+    hora: string; // HH:mm (el backend puede devolver HH:mm:ss)
+    activo: boolean;
+    ultimo_envio?: string | null;
+}
+
 export interface NotificacionRecurrente {
     id: number;
     titulo: string;
     descripcion: string;
-    tipo: 'promocion' | 'evento' | 'informativo' | 'oferta';
-    frecuencia: 'una_vez' | 'diario' | 'semanal' | 'mensual';
+    tipo: TipoNotificacion;
+    frecuencia: Frecuencia;
     hora_envio: string;
     dias_semana?: string[];
-    dia_mes?: number;
+    dia_mes?: number | null;
     fecha_inicio: string;
-    fecha_fin?: string;
+    fecha_fin?: string | null;
     activo: boolean;
     total_enviadas: number;
     vistas: number;
     ultimo_envio?: string;
     usuario_id: number;
     roles?: Role[];
+    horarios?: HorarioNotificacion[];
+    imagen_url?: string | null;
     usuario?: {
         id: number;
         name: string;
@@ -30,6 +42,22 @@ export interface NotificacionRecurrente {
     };
     created_at: string;
     updated_at: string;
+}
+
+// Datos que se envían al crear/actualizar (los mismos campos que valida StoreNotificacionRequest)
+export interface NotificacionPayload {
+    titulo: string;
+    descripcion: string;
+    tipo: TipoNotificacion;
+    frecuencia: Frecuencia;
+    horarios: Pick<HorarioNotificacion, 'id' | 'hora' | 'activo'>[];
+    fecha_inicio: string;
+    fecha_fin: string | null;
+    dias_semana: string[];
+    dia_mes: number | null;
+    activo: boolean;
+    imagen_url: string | null;
+    roles: number[]; // IDs
 }
 
 export interface FiltrosNotificaciones {
@@ -48,9 +76,17 @@ export interface Estadisticas {
     proximas: number;
 }
 
+export interface Paginacion {
+    current_page: number;
+    last_page: number;
+    total: number;
+    per_page: number;
+}
+
 export interface ResponseListado {
     notificaciones: NotificacionRecurrente[];
     estadisticas: Estadisticas;
+    pagination?: Paginacion;
     links?: any;
     meta?: any;
 }
@@ -87,7 +123,7 @@ const notificacionesService = {
     },
 
     // Crear notificación
-    async crear(datos: Partial<NotificacionRecurrente>) {
+    async crear(datos: NotificacionPayload) {
         const { data } = await axios.post(API_URL, datos);
         return data.data || data;
     },
@@ -99,7 +135,7 @@ const notificacionesService = {
     },
 
     // Actualizar notificación
-    async actualizar(id: number, datos: Partial<NotificacionRecurrente>) {
+    async actualizar(id: number, datos: NotificacionPayload) {
         const { data } = await axios.put(`${API_URL}/${id}`, datos);
         return data.data || data;
     },

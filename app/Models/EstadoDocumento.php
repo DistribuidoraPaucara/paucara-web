@@ -9,6 +9,9 @@ class EstadoDocumento extends Model
 {
     use HasFactory;
 
+    /** Estados de una venta que ya no cuenta para montos, pesos ni productos de una entrega. */
+    public const CODIGOS_SIN_EFECTO = ['ANULADO', 'CANCELADO'];
+
     public $timestamps = false;
 
     protected $table = 'estados_documento';

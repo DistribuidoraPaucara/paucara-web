@@ -131,6 +131,24 @@ class Venta extends Model
 
     protected static function booted()
     {
+        // ✅ FIX (2026-11-06): politica_pago=CREDITO solo con tipo de pago crédito.
+        // Cubre todos los caminos de creación (web, API proformas, app). Sin esto la venta
+        // registra un movimiento CREDITO en caja pero no genera CxC.
+        static::creating(function ($venta) {
+            if ($venta->politica_pago !== 'CREDITO' || ! $venta->tipo_pago_id) {
+                return;
+            }
+            $tipoPago = TipoPago::find($venta->tipo_pago_id);
+            if ($tipoPago && ! $tipoPago->es_credito && strtoupper((string) $tipoPago->codigo) !== 'CREDITO') {
+                $venta->politica_pago = $venta->requiere_envio ? 'CONTRA_ENTREGA' : 'ANTICIPADO_100';
+                \Illuminate\Support\Facades\Log::warning('⚠️ [Venta::creating] politica_pago CREDITO con tipo de pago no-crédito → corregida', [
+                    'tipo_pago_codigo' => $tipoPago->codigo,
+                    'politica_corregida' => $venta->politica_pago,
+                    'proforma_id' => $venta->proforma_id,
+                ]);
+            }
+        });
+
         // Después de crear una venta, generar movimientos automáticamente
         static::created(function ($venta) {
             // ⚠️ CAMBIO CRÍTICO: Solo procesar stock si:
@@ -572,6 +590,132 @@ class Venta extends Model
     {
         return $this->pickup_confirmado_cliente_en !== null
             && $this->pickup_confirmado_empleado_en !== null;
+    }
+
+    public function estaVigente(): bool
+    {
+        return ! in_array($this->estadoDocumento?->codigo, EstadoDocumento::CODIGOS_SIN_EFECTO, true);
+    }
+
+    public function scopeVigentes($query)
+    {
+        return $query->whereDoesntHave(
+            'estadoDocumento',
+            fn ($q) => $q->whereIn('codigo', EstadoDocumento::CODIGOS_SIN_EFECTO)
+        );
+    }
+
+    public const ENTREGA_ENTREGADO = 'ENTREGADO';
+    public const ENTREGA_PARCIAL = 'PARCIAL';
+    public const ENTREGA_NO_ENTREGADO = 'NO_ENTREGADO';
+    public const ENTREGA_PENDIENTE = 'PENDIENTE';
+    public const ENTREGA_POR_REVISAR = 'POR_REVISAR';
+
+    /**
+     * Cantidad entregada de cada línea del detalle, según la última confirmación de su entrega.
+     *
+     * Las devoluciones se descuentan de las líneas del mismo producto, sin bajar de 0.
+     * Si la lista de devueltos trae un producto que no está en la venta, o más de lo
+     * vendido, la venta queda POR_REVISAR.
+     *
+     * @return array{estado: string, lineas: array<int, float>} lineas: detalle_id => cantidad entregada
+     */
+    public function resultadoEntrega(): array
+    {
+        $confirmacion = $this->ultimaConfirmacionEnEntrega();
+
+        if (! $confirmacion) {
+            return ['estado' => self::ENTREGA_PENDIENTE, 'lineas' => $this->detalles->mapWithKeys(fn ($d) => [$d->id => 0.0])->all()];
+        }
+
+        if (! $confirmacion->entregoProductos()) {
+            return ['estado' => self::ENTREGA_NO_ENTREGADO, 'lineas' => $this->detalles->mapWithKeys(fn ($d) => [$d->id => 0.0])->all()];
+        }
+
+        $porDevolver = $confirmacion->cantidadesDevueltasPorProducto();
+        $lineas = [];
+
+        foreach ($this->detalles as $detalle) {
+            $cantidad = (float) $detalle->cantidad;
+            $devuelta = min($cantidad, $porDevolver[$detalle->producto_id] ?? 0.0);
+
+            if (isset($porDevolver[$detalle->producto_id])) {
+                $porDevolver[$detalle->producto_id] -= $devuelta;
+            }
+
+            $lineas[$detalle->id] = $cantidad - $devuelta;
+        }
+
+        $sobrante = array_sum(array_filter($porDevolver, fn ($c) => $c > 0));
+        $vendido = (float) $this->detalles->sum('cantidad');
+        $entregado = array_sum($lineas);
+
+        $estado = match (true) {
+            $sobrante > 0          => self::ENTREGA_POR_REVISAR,
+            $entregado >= $vendido => self::ENTREGA_ENTREGADO,
+            $entregado > 0         => self::ENTREGA_PARCIAL,
+            default                => self::ENTREGA_NO_ENTREGADO,
+        };
+
+        return ['estado' => $estado, 'lineas' => $lineas];
+    }
+
+    /**
+     * Última confirmación de la entrega actual. Si la venta se reasignó, lo que pasó
+     * en la entrega anterior no dice nada de esta.
+     */
+    public function ultimaConfirmacionEnEntrega(): ?EntregaVentaConfirmacion
+    {
+        return $this->confirmaciones
+            ->where('entrega_id', $this->entrega_id)
+            ->sortByDesc('id')
+            ->first();
+    }
+
+    /**
+     * Unidades vendidas y entregadas de toda la venta, con su estado de entrega.
+     *
+     * @return array{vendidas: float, entregadas: float, estado: string}
+     */
+    public function unidadesEntregadas(): array
+    {
+        $resultado = $this->resultadoEntrega();
+
+        return [
+            'vendidas'   => (float) $this->detalles->sum('cantidad'),
+            'entregadas' => (float) array_sum($resultado['lineas']),
+            'estado'     => $resultado['estado'],
+        ];
+    }
+
+    /**
+     * Dinero que falta cobrar según la última confirmación de su entrega.
+     *
+     * Se espera cobrar el total menos lo devuelto en productos. No se espera cobro si la
+     * venta es a crédito, si no se entregó o si aún no se confirmó.
+     */
+    public function faltanteCobro(): float
+    {
+        $confirmacion = $this->ultimaConfirmacionEnEntrega();
+
+        if (! $confirmacion || ! $confirmacion->entregoProductos() || $this->tipoPago?->codigo === 'CREDITO') {
+            return 0.0;
+        }
+
+        $esperado = (float) $this->total - (float) ($confirmacion->monto_devuelto ?? 0);
+        $cobrado = array_sum(array_column($confirmacion->montosPorTipoPago(), 'monto'));
+
+        return max(0.0, round($esperado - $cobrado, 2));
+    }
+
+    /**
+     * Ventas vigentes sin peso registrado: sumarlas daría un peso menor al real.
+     */
+    public function scopeSinPesoRegistrado($query)
+    {
+        return $query->where(
+            fn ($q) => $q->whereNull('peso_total_estimado')->orWhere('peso_total_estimado', '<=', 0)
+        );
     }
 
     // Scopes para el nuevo sistema

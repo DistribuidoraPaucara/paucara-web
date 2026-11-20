@@ -34,7 +34,7 @@ export function NavUser() {
                             )}
                             tooltip={state === "collapsed" ? `Menú de ${auth.user.name}` : undefined}
                         >
-                            <UserInfo user={auth.user} />
+                            <UserInfo user={auth.user} roles={auth.roles} />
                             <ChevronsUpDown className={cn(
                                 "ml-auto size-4 flex-shrink-0 transition-transform duration-300",
                                 "group-data-[state=open]:rotate-180"

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Services\Notifications\DatabaseNotificationService;
+use App\Services\Notifications\NotificationPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -54,6 +55,89 @@ class NotificationController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Bandeja de la campana: notificaciones de HOY + no leídas anteriores.
+     *
+     * GET /api/mis-notificaciones/bandeja?limit=50
+     */
+    public function bandeja(Request $request): JsonResponse
+    {
+        $user  = $request->user();
+        $limit = min((int) $request->input('limit', 50), 100);
+
+        $base = Notification::where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->where('created_at', '>=', today())->orWhere('read', false);
+            });
+
+        $items = (clone $base)->orderByDesc('created_at')->limit($limit)->get();
+
+        // Conteo de no leídas por categoría (para badges de las pestañas)
+        $porCategoria = array_fill_keys(NotificationPresenter::CATEGORIAS, 0);
+        Notification::where('user_id', $user->id)->where('read', false)
+            ->selectRaw('type, count(*) as c')->groupBy('type')->get()
+            ->each(function ($row) use (&$porCategoria) {
+                $porCategoria[NotificationPresenter::categoria($row->type)] += (int) $row->c;
+            });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $items->map(fn ($n) => NotificationPresenter::present($n))->values(),
+            'meta'    => [
+                'no_leidas'     => array_sum($porCategoria),
+                'por_categoria' => $porCategoria,
+            ],
+        ]);
+    }
+
+    /**
+     * Historial paginado con filtros.
+     *
+     * GET /api/mis-notificaciones/historial?categoria=proformas&estado=no_leidas&desde=2026-11-01&hasta=2026-11-19&page=1
+     */
+    public function historial(Request $request): JsonResponse
+    {
+        $request->validate([
+            'categoria' => 'nullable|in:' . implode(',', NotificationPresenter::CATEGORIAS),
+            'estado'    => 'nullable|in:todas,leidas,no_leidas',
+            'desde'     => 'nullable|date',
+            'hasta'     => 'nullable|date',
+            'per_page'  => 'nullable|integer|min:5|max:100',
+        ]);
+
+        $query = Notification::where('user_id', $request->user()->id);
+
+        if ($categoria = $request->input('categoria')) {
+            NotificationPresenter::aplicarCategoria($query, $categoria);
+        }
+
+        match ($request->input('estado')) {
+            'leidas'    => $query->where('read', true),
+            'no_leidas' => $query->where('read', false),
+            default     => null,
+        };
+
+        if ($desde = $request->input('desde')) {
+            $query->where('created_at', '>=', \Carbon\Carbon::parse($desde)->startOfDay());
+        }
+        if ($hasta = $request->input('hasta')) {
+            $query->where('created_at', '<=', \Carbon\Carbon::parse($hasta)->endOfDay());
+        }
+
+        $page = $query->orderByDesc('created_at')->paginate((int) $request->input('per_page', 25));
+
+        return response()->json([
+            'success' => true,
+            'data'    => collect($page->items())->map(fn ($n) => NotificationPresenter::present($n))->values(),
+            'meta'    => [
+                'current_page' => $page->currentPage(),
+                'last_page'    => $page->lastPage(),
+                'total'        => $page->total(),
+                'per_page'     => $page->perPage(),
+            ],
+        ]);
     }
 
     /**

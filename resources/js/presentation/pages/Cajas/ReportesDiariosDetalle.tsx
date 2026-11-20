@@ -472,14 +472,28 @@ export default function ReportesDiariosDetalle({ cierre, movimientos, totales_po
                         </Card>
 
                         <Card className="border p-2 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Diferencia</p>
-                            <p
-                                className={`text-2xl font-bold ${
-                                    cierre.diferencia === 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'
-                                }`}
-                            >
-                                Bs. {Number(cierre.diferencia).toFixed(2)}
-                            </p>
+                            {(() => {
+                                const dif = Number(cierre.diferencia);
+                                const cuadra = Math.abs(dif) < 0.005;
+                                const estado = cuadra
+                                    ? { label: 'Cuadra', texto: 'text-green-600 dark:text-green-400', badge: 'bg-green-600 dark:bg-green-700' }
+                                    : dif < 0
+                                      ? { label: 'Faltante', texto: 'text-red-600 dark:text-red-400', badge: 'bg-red-600 dark:bg-red-700' }
+                                      : { label: 'Sobrante', texto: 'text-orange-600 dark:text-orange-400', badge: 'bg-orange-500 dark:bg-orange-600' };
+                                return (
+                                    <>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Diferencia</p>
+                                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold text-white ${estado.badge}`}>
+                                                {cuadra ? '✓ ' : ''}{estado.label}
+                                            </span>
+                                        </div>
+                                        <p className={`text-2xl font-bold tabular-nums ${estado.texto}`}>
+                                            {dif > 0 ? '+' : ''}Bs. {dif.toFixed(2)}
+                                        </p>
+                                    </>
+                                );
+                            })()}
                         </Card>
 
                         <Card className="border p-2 shadow-sm dark:border-slate-700 dark:bg-slate-800">

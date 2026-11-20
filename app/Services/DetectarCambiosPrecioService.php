@@ -31,11 +31,12 @@ class DetectarCambiosPrecioService
             }
 
             // Comparar con el precio de la compra
-            $precioCompra = (float) $detalle->precio_unitario;
+            // El costo se registra con hasta 4 decimales
+            $precioCompra = round((float) $detalle->precio_unitario, 4);
             $precioCostoActual = (float) $precioCosto->precio;
 
             // Si hay diferencia, es un cambio
-            if (abs($precioCostoActual - $precioCompra) > 0.01) { // Permitir pequeñas variaciones de redondeo
+            if (abs($precioCostoActual - $precioCompra) >= 0.00005) {
                 $porcentajeCambio = $precioCostoActual != 0
                     ? (($precioCompra - $precioCostoActual) / $precioCostoActual) * 100
                     : 0;

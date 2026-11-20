@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/compone
 import { useEntitySelect } from '@/presentation/hooks/use-search-select';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import ComboComponentes from './components/ComboComponentes';
 import Step1DatosProducto from './steps/Step1DatosProducto';
 import Step2PreciosCodigos from './steps/Step2PreciosCodigos';
 import Step3Almacenes, { validarYAjustarAlmacenes } from './steps/Step3Almacenes'; // ✨ NUEVO: Almacenes y sectores
@@ -666,7 +667,21 @@ export default function ProductoForm({
                             </p>
                         </div>
                     )}
-                    <div className="flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-3">
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={!!data.activo}
+                            aria-label={data.activo ? 'Desactivar producto' : 'Activar producto'}
+                            title="Se aplica al guardar. Un producto inactivo no aparece en la búsqueda de productos"
+                            onClick={() => setData('activo', !data.activo)}
+                            className="inline-flex items-center gap-2"
+                        >
+                            <span className={`relative h-5 w-9 rounded-full transition-colors ${data.activo ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                                <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${data.activo ? 'translate-x-4' : ''}`} />
+                            </span>
+                            <span className="text-sm font-medium">{data.activo ? 'Activo' : 'Inactivo'}</span>
+                        </button>
                         {!isEditing && (
                             <Button type="button" variant="destructive" size="sm" onClick={clearDraft}>
                                 Limpiar borrador
@@ -674,6 +689,17 @@ export default function ProductoForm({
                         )}
                     </div>
                 </div>
+
+                {/* Combos que se pueden armar (almacén principal) */}
+                {isEditing && (producto as any)?.es_combo && (
+                    <div className="mx-2 mb-4 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-cyan-950/30">
+                        <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">📦 Combos que se pueden armar</p>
+                        <p className={`text-2xl font-bold ${(producto as any).capacidad_combo > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {(producto as any).capacidad_combo ?? 0}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">En el almacén principal</p>
+                    </div>
+                )}
 
                 {/* ✨ NUEVO: Resumen de Stock Total */}
                 {(data.almacenes || []).length > 0 && (
@@ -698,13 +724,13 @@ export default function ProductoForm({
                 <Tabs defaultValue="datos" className="w-full">
                     <TabsList className={`flex flex-wrap items-center justify-center border-b border-border bg-background`}>
                         <TabsTrigger value="datos">Datos del producto</TabsTrigger>
+                        {isEditing && (producto as any)?.es_combo && <TabsTrigger value="combos">📦 Componentes del combo</TabsTrigger>}
 
                         {permite_productos_fraccionados && data.es_fraccionado && <TabsTrigger value="conversiones">✨ Conversiones</TabsTrigger>}
                         {isEditing && <TabsTrigger value="precio-rango">Rango de Precios</TabsTrigger>}
                         <TabsTrigger value="precios">Precios y códigos</TabsTrigger>
                         <TabsTrigger value="almacenes">Almacenes</TabsTrigger>
                         <TabsTrigger value="imagenes">Imágenes</TabsTrigger>
-                        {isEditing && (producto as any)?.es_combo && <TabsTrigger value="combos">📦 Combos</TabsTrigger>}
                     </TabsList>
 
                     <form onSubmit={submit} className="space-y-2">
@@ -813,13 +839,8 @@ export default function ProductoForm({
                     </TabsContent>
 
                     {isEditing && producto?.id && (producto as any)?.es_combo && (
-                        <TabsContent value="combos" className="mt-6 space-y-6">
-                            <div className="flex flex-col items-center justify-center space-y-4 py-12">
-                                <p className="text-muted-foreground">Gestiona los componentes de este combo</p>
-                                <Button asChild>
-                                    <Link href={`/combos/${producto.id}/edit`}>Ir a Editar Combo</Link>
-                                </Button>
-                            </div>
+                        <TabsContent value="combos">
+                            <ComboComponentes comboId={producto.id} almacenes={almacenes} almacenPrincipalId={(producto as any).almacen_principal_id} />
                         </TabsContent>
                     )}
                 </Tabs>

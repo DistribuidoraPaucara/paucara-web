@@ -33,7 +33,7 @@ class StockProducto extends Model
             'cantidad' => 'int',
             'cantidad_reservada' => 'int',
             'cantidad_disponible' => 'int',
-            'precio_costo' => 'decimal:2',
+            'precio_costo' => \App\Casts\PrecioHastaCuatroDecimales::class,
             'fecha_actualizacion' => 'datetime',
             'fecha_vencimiento' => 'date',
             'deleted_at' => 'datetime', // ✓ Para SoftDeletes

@@ -7,7 +7,6 @@ import GenericTable from '@/presentation/components/generic/generic-table';
 import ModernFilters from '@/presentation/components/generic/modern-filters';
 import { Button } from '@/presentation/components/ui/button';
 import { Card, CardContent, CardFooter, CardTitle } from '@/presentation/components/ui/card';
-import { Skeleton } from '@/presentation/components/ui/skeleton';
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -26,7 +25,7 @@ export default function GenericContainer<T extends BaseEntity, F extends BaseFor
     service,
     extraData,
 }: GenericContainerProps<T, F>) {
-    const { isLoading, searchEntities, deleteEntity, navigateToEdit, clearFilters } = useGenericEntities<T, F>(service);
+    const { isLoading, searchEntities, deleteEntity, navigateToEdit, clearFilters } = useGenericEntities<T, F>(service, config.searchReloadProps);
 
     const [viewMode, setViewMode] = useState<'table' | 'cards'>(config.enableCardView ? 'cards' : 'table');
 
@@ -164,42 +163,26 @@ export default function GenericContainer<T extends BaseEntity, F extends BaseFor
                                 onResetFilters={clearFilters}
                                 extraData={extraData}
                                 isLoading={isLoading}
+                                searchPlaceholder={config.searchPlaceholder}
                             />
                         )}
 
-                        {viewMode === 'table' && (
-                            <GenericTable<T>
-                                entities={entities.data}
-                                columns={config.tableColumns}
-                                onEdit={navigateToEdit}
-                                onDelete={handleDelete}
-                                entityName={config.singularName}
-                                isLoading={isLoading}
-                                puedeEditar={(extraData as any)?.puedeEditar ?? true}
-                                puedeEliminar={(extraData as any)?.puedeEliminar ?? true}
-                            />
-                        )}
+                        {/* Mientras busca se mantienen los resultados previos atenuados: sin parpadeo de skeletons en cada tecla */}
+                        <div aria-busy={isLoading} className={`transition-opacity duration-150 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}>
+                            {viewMode === 'table' && (
+                                <GenericTable<T>
+                                    entities={entities.data}
+                                    columns={config.tableColumns}
+                                    onEdit={navigateToEdit}
+                                    onDelete={handleDelete}
+                                    entityName={config.singularName}
+                                    puedeEditar={(extraData as any)?.puedeEditar ?? true}
+                                    puedeEliminar={(extraData as any)?.puedeEliminar ?? true}
+                                />
+                            )}
 
-                        {viewMode === 'cards' && <div>{renderCards()}</div>}
-
-                        {isLoading && (
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                {Array.from({ length: 8 }).map((_, i) => (
-                                    <div key={i} className="space-y-3 rounded-xl border border-border p-3">
-                                        <Skeleton className="h-32 w-full rounded-md" />
-                                        <Skeleton className="h-4 w-3/4" />
-                                        <div className="flex gap-2">
-                                            <Skeleton className="h-3 w-12" />
-                                            <Skeleton className="h-3 w-16" />
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <Skeleton className="h-5 w-16" />
-                                            <Skeleton className="h-6 w-20" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                            {viewMode === 'cards' && renderCards()}
+                        </div>
                     </div>
 
                     {entities.links && entities.total > 0 && (

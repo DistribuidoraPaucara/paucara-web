@@ -757,6 +757,7 @@ class ExcelExportService
         try {
             // Cargar relaciones
             $entrega->load([
+                'ventas' => fn ($q) => $q->vigentes(),
                 'ventas.cliente',
                 'ventas.detalles.producto',
                 'chofer',

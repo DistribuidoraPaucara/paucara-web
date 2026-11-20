@@ -1,4 +1,7 @@
 import { formatCurrency, formatCurrencyMinimalDecimals, formatCurrencyWith2Decimals } from '@/lib/utils';
+import { formatearCosto } from '@/lib/precios.utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/presentation/components/ui/tooltip';
+import { ExternalLink, Tag } from 'lucide-react';
 import { Fragment } from 'react';
 import type { DetalleProducto } from '../types';
 import ComboExpandedRows from './ComboExpandedRows';
@@ -22,6 +25,7 @@ interface ProductoTableRowProps {
     comboItemsMap: Record<number, any[]>;
     setComboItemsMap: (value: any) => void;
     onUpdateDetail: (index: number, field: string, value: any) => void;
+    onUpdateDetailMultiple?: (index: number, updates: Record<string, number | string | null>) => void;
     onRemoveDetail: (index: number) => void;
     onManualTipoPrecioChange?: (index: number) => void;
     onAbrirModalCascada: (index: number, detalle: DetalleProducto) => void;
@@ -33,6 +37,24 @@ interface ProductoTableRowProps {
     onUpdateDetailUnidadConPrecio?: (index: number, unidadId: number, precio: number) => void;
     proformaConvertida?: boolean;
 }
+
+// Enter pasa al siguiente campo de la fila; desde el último vuelve al buscador de productos
+const avanzarConEnter = (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+    const actual = e.target as HTMLInputElement;
+    if (e.key !== 'Enter' || !actual.matches('[data-campo-fila]')) return;
+    e.preventDefault();
+    const campos = Array.from(e.currentTarget.querySelectorAll<HTMLInputElement>('[data-campo-fila]:not(:disabled)'));
+    const siguiente = campos[campos.indexOf(actual) + 1] ?? document.querySelector<HTMLInputElement>('[data-buscador-productos]');
+    siguiente?.focus();
+    if (siguiente?.type === 'text') siguiente.select();
+};
+
+// Mañana en hora local (YYYY-MM-DD); toISOString usaría UTC
+const mananaLocal = (): string => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 export default function ProductoTableRow({
     detalle,
@@ -53,6 +75,7 @@ export default function ProductoTableRow({
     comboItemsMap,
     setComboItemsMap,
     onUpdateDetail,
+    onUpdateDetailMultiple,
     onRemoveDetail,
     onManualTipoPrecioChange,
     onAbrirModalCascada,
@@ -65,13 +88,43 @@ export default function ProductoTableRow({
     proformaConvertida = false,
 }: ProductoTableRowProps) {
     const productoInfo = detalle.producto as any;
-    console.log('ProductoTableRow - productoInfo:', productoInfo);
     const esCombo = productoInfo && productoInfo.es_combo;
     const precioCosto = detalle.precio_costo || productoInfo?.precio_costo || 0;
+    const esCompra = tipo === 'compra';
+    const porcentajeDiferencia = precioCosto > 0 ? ((detalle.precio_unitario - precioCosto) / precioCosto) * 100 : 0;
+    const textoPorcentaje =
+        Math.abs(porcentajeDiferencia) < 0.01
+            ? '<0,01 %'
+            : `${porcentajeDiferencia > 0 ? '+' : '−'}${Math.abs(porcentajeDiferencia).toLocaleString('es-BO', { maximumFractionDigits: 2 })} %`;
+    // Precios de venta que quedarían por debajo del precio de compra (el costo viaja en la misma lista)
+    const preciosSuperados: Array<{ nombre?: string; precio: number | string }> = esCompra
+        ? (productoInfo?.precios ?? []).filter(
+              (p: { nombre?: string; precio: number | string }) =>
+                  !/cost/i.test(p.nombre ?? '') && Number(p.precio) > 0 && detalle.precio_unitario > Number(p.precio),
+          )
+        : [];
+    const skuProducto = productoInfo?.sku || productoInfo?.codigo;
+    const marcaProducto = typeof productoInfo?.marca === 'string' ? productoInfo.marca : productoInfo?.marca?.nombre;
+    const categoriaProducto = typeof productoInfo?.categoria === 'string' ? productoInfo.categoria : productoInfo?.categoria?.nombre;
+    const unidadProducto = detalle.unidad_medida_nombre || productoInfo?.unidad_medida?.nombre;
+    // El servidor exige un vencimiento posterior a hoy (after:today)
+    const vencimientoMinimo = mananaLocal();
+    const fechaVencimiento = normalizeDateForInput(detalle.fecha_vencimiento);
+    const vencimientoInvalido = tipo === 'compra' && !readOnly && !!fechaVencimiento && fechaVencimiento < vencimientoMinimo;
+
+    // Varios campos de una sola vez: con llamadas seguidas a onUpdateDetail solo sobreviviría la última
+    const actualizarCampos = (campos: Record<string, number | string | null>) => {
+        if (onUpdateDetailMultiple) {
+            onUpdateDetailMultiple(index, campos);
+        } else {
+            Object.entries(campos).forEach(([campo, valor]) => onUpdateDetail(index, campo, valor));
+        }
+    };
 
     const content = (
         <tr
             key={detalle.producto_id}
+            onKeyDown={esCompra ? avanzarConEnter : undefined}
             className={`font-small text-xs hover:bg-gray-50 dark:hover:bg-zinc-800 ${
                 tipo === 'compra' && tieneDiferencia && esAumento
                     ? 'bg-amber-50 px-2 py-2 dark:bg-amber-950/10'
@@ -81,8 +134,26 @@ export default function ProductoTableRow({
             }`}
         >
             {/* Producto Info */}
-            <td className="items-start px-2 py-2">
+            <td className={`items-start px-2 py-2 ${esCompra ? 'align-top' : ''}`}>
                 <div className="items-start text-xs font-bold text-gray-900 dark:text-white">{productoInfo?.nombre || 'Producto no encontrado'}</div>
+                {esCompra && (
+                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {skuProducto && (
+                            <span className="rounded bg-blue-100 px-1.5 py-0.5 font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{skuProducto}</span>
+                        )}
+                        <a
+                            href={`/productos/${detalle.producto_id}/edit`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Editar producto en otra pestaña"
+                            className="inline-flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                            ID {detalle.producto_id}
+                            <ExternalLink className="h-3 w-3" />
+                        </a>
+                        {[marcaProducto, categoriaProducto].filter(Boolean).join(' · ')}
+                    </div>
+                )}
                 <div className="mt-1 text-left text-xs text-gray-500 dark:text-gray-400">
                     {productoInfo?.codigo_barras && productoInfo.codigo_barras !== productoInfo.sku && (
                         <div>Cod Barras: {productoInfo.codigo_barras}</div>
@@ -103,17 +174,19 @@ export default function ProductoTableRow({
             </td>
 
             {/* SKU */}
-            <td className="items-start px-2 py-2">
-                {productoInfo?.sku || productoInfo?.codigo ? (
-                    <span className="items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                        {productoInfo.sku || productoInfo.codigo}
-                    </span>
-                ) : (
-                    <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
-                )}
-            </td>
+            {!esCompra && (
+                <td className="items-start px-2 py-2">
+                    {productoInfo?.sku || productoInfo?.codigo ? (
+                        <span className="items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            {productoInfo.sku || productoInfo.codigo}
+                        </span>
+                    ) : (
+                        <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
+                    )}
+                </td>
+            )}
             {/* Disponibilidad */}
-            <td className="items-start text-xs px-2 py-2 w-20">
+            <td className={`items-start text-xs px-2 w-20 ${esCompra ? 'pt-3 pb-2 align-top' : 'py-2'}`}>
                 {!proformaConvertida &&
                     (() => {
                         const stockDisponible =
@@ -125,7 +198,7 @@ export default function ProductoTableRow({
                         const stockTotal = (productoInfo as any)?.stock_total_calc ?? (productoInfo as any)?.stock_total ?? 0;
                         return (
                             <div
-                                className={`flex flex-col rounded p-1 text-xs ${
+                                className={`flex flex-col rounded p-1 text-xs ${esCompra ? 'whitespace-nowrap' : ''} ${
                                     stockDisponible === 0
                                         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200'
                                         : stockDisponible < 5
@@ -135,25 +208,34 @@ export default function ProductoTableRow({
                             >
                                 {/* Disp. {stockDisponible} | Res. {stockReservado} | Total {stockTotal} */}
                                 {/* disponible */}
-                                <p>Disp.: {stockDisponible}</p>
-                                {/* Reservado */}
-                                <p>Res.: {stockReservado}</p>
-                                {/* Total */}
-                                <p>T: {stockTotal}</p>
+                                {esCompra ? (
+                                    <p>
+                                        {stockDisponible} disp. · {stockReservado} res. · {stockTotal} total
+                                    </p>
+                                ) : (
+                                    <>
+                                        <p>Disp.: {stockDisponible}</p>
+                                        {/* Reservado */}
+                                        <p>Res.: {stockReservado}</p>
+                                        {/* Total */}
+                                        <p>T: {stockTotal}</p>
+                                    </>
+                                )}
                             </div>
                         );
                     })()}
             </td>
 
             {/* Cantidad */}
-            <td className="items-start px-2 py-2">
+            <td className={`items-start px-2 py-2 ${esCompra ? 'align-top' : ''}`}>
                 <div className="flex flex-col items-center gap-2">
                     <input
                         type="text"
-                        inputMode="decimal"
+                        inputMode={tipo === 'compra' ? 'numeric' : 'decimal'}
                         disabled={readOnly}
                         value={editingField?.index === index && editingField?.field === 'cantidad' ? editingField.value : detalle.cantidad.toString()}
-                        placeholder="0.00"
+                        data-campo-fila
+                        placeholder={tipo === 'compra' ? '0' : '0.00'}
                         onFocus={() => {
                             setEditingField({
                                 index,
@@ -162,7 +244,8 @@ export default function ProductoTableRow({
                             });
                         }}
                         onChange={(e) => {
-                            const valor = e.target.value;
+                            // En compras la cantidad es entera (el servidor rechaza decimales)
+                            const valor = tipo === 'compra' ? e.target.value.split(/[.,]/)[0].replace(/\D/g, '') : e.target.value;
                             setEditingField((prev) => (prev && prev.index === index ? { ...prev, value: valor } : prev));
                             if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
                                 const num = valor === '' ? 0 : parseFloat(valor);
@@ -174,15 +257,16 @@ export default function ProductoTableRow({
                         onBlur={() => {
                             setEditingField(null);
                         }}
-                        className="w-24 flex-col rounded-lg border border-gray-300 px-1 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        className={`w-24 flex-col rounded-lg border border-gray-300 text-sm ${esCompra ? 'px-2 py-2 font-semibold' : 'px-1 py-1'} focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white`}
                     />
+                    {esCompra && unidadProducto && <span className="text-xs text-gray-500 dark:text-gray-400">{unidadProducto}</span>}
                 </div>
             </td>
 
             {/* Precio Unitario (Compra) */}
             {tipo === 'compra' && (
                 <>
-                    <td className="px-2 py-4">
+                    <td className="px-2 py-2 align-top">
                         <input
                             type="text"
                             inputMode="decimal"
@@ -192,6 +276,7 @@ export default function ProductoTableRow({
                                     ? editingField.value
                                     : detalle.precio_unitario.toString()
                             }
+                            data-campo-fila
                             placeholder="0.0000"
                             onFocus={() => {
                                 setEditingField({
@@ -221,13 +306,47 @@ export default function ProductoTableRow({
                                     : 'border-gray-300 dark:border-zinc-600'
                             }`}
                         />
-                        {tieneDiferencia && (
-                            <div
-                                className={`mt-0.5 text-xs font-semibold ${
-                                    esAumento ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
-                                }`}
-                            >
-                                {esAumento ? '↑' : '↓'} {formatCurrency(Math.abs(detalle.precio_unitario - precioCosto))}
+                        {esCompra && (
+                            <div className="mt-0.5 flex h-6 w-28 items-center text-xs whitespace-nowrap">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span
+                                            tabIndex={0}
+                                            className={`cursor-help ${
+                                                !tieneDiferencia
+                                                    ? 'text-gray-500 dark:text-gray-400'
+                                                    : esAumento
+                                                      ? 'font-semibold text-amber-600 dark:text-amber-400'
+                                                      : 'font-semibold text-green-600 dark:text-green-400'
+                                            }`}
+                                        >
+                                            {tieneDiferencia
+                                                ? `${esAumento ? '↑' : '↓'} ${textoPorcentaje.replace(/^[+−]/, '')}`
+                                                : precioCosto > 0
+                                                  ? `Reg. ${formatearCosto(precioCosto)}`
+                                                  : 'Sin costo'}
+                                            {preciosSuperados.length > 0 && <span className="ml-1 text-red-600 dark:text-red-400">⚠</span>}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="text-left">
+                                        <p>{precioCosto > 0 ? `Registrado: ${formatearCosto(precioCosto)}` : 'Sin costo registrado'}</p>
+                                        {tieneDiferencia && (
+                                            <p>
+                                                Diferencia: {esAumento ? '↑' : '↓'} {formatearCosto(Math.abs(detalle.precio_unitario - precioCosto))} ({textoPorcentaje})
+                                            </p>
+                                        )}
+                                        {preciosSuperados.length > 0 && (
+                                            <div className="mt-1">
+                                                <p className="font-semibold">⚠ Supera a:</p>
+                                                {preciosSuperados.map((p) => (
+                                                    <p key={p.nombre}>
+                                                        {p.nombre}: {formatearCosto(Number(p.precio))}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </TooltipContent>
+                                </Tooltip>
                             </div>
                         )}
                         {detalle.es_fraccionado && detalle.conversiones && detalle.conversiones.length > 0 && (
@@ -262,11 +381,12 @@ export default function ProductoTableRow({
                     </td>
 
                     {/* Lote */}
-                    <td className="px-2 py-4">
+                    <td className="px-2 py-2 align-top">
                         <input
                             type="text"
                             disabled={readOnly}
                             value={detalle.lote || ''}
+                            data-campo-fila
                             placeholder="LOT-001"
                             onChange={(e) => {
                                 onUpdateDetail(index, 'lote', e.target.value);
@@ -276,16 +396,22 @@ export default function ProductoTableRow({
                     </td>
 
                     {/* Fecha Vencimiento */}
-                    <td className="px-2 py-4">
+                    <td className="px-2 py-2 align-top">
                         <input
                             type="date"
                             disabled={readOnly}
-                            value={normalizeDateForInput(detalle.fecha_vencimiento)}
+                            data-campo-fila
+                            min={vencimientoMinimo}
+                            aria-invalid={vencimientoInvalido}
+                            value={fechaVencimiento}
                             onChange={(e) => {
                                 onUpdateDetail(index, 'fecha_vencimiento', e.target.value);
                             }}
-                            className="w-32 rounded-lg border border-gray-300 px-2 py-2 text-sm font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            className={`w-40 rounded-lg border px-2 py-2 text-sm font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:text-white ${
+                                vencimientoInvalido ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-zinc-600'
+                            }`}
                         />
+                        {vencimientoInvalido && <div className="mt-0.5 text-xs font-semibold text-red-600 dark:text-red-400">Debe ser posterior a hoy</div>}
                     </td>
                 </>
             )}
@@ -331,7 +457,8 @@ export default function ProductoTableRow({
                             // ✅ MEJORADO: Permitir decimales y validación más flexible
                             if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
                                 const num = valor === '' ? 0 : parseFloat(valor);
-                                if (num >= 0) {
+                                // Salir del campo sin cambiar el precio no cuenta como selección manual
+                                if (num >= 0 && Math.abs(num - Number(detalle.precio_unitario)) >= 0.005) {
                                     // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
                                     // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
                                     if (onManualTipoPrecioChange) {
@@ -368,10 +495,10 @@ export default function ProductoTableRow({
                         // ✅ REFACTORIZADO (2026-07-03): Usar producto_id como clave en lugar de index
                         const productoId = detalle.producto_id;
                         const valorInicial =
-                            selectedTipoPrecio[productoId] !== undefined
-                                ? String(selectedTipoPrecio[productoId]) // Usuario seleccionó algo
-                                : detalle.tipo_precio_id === null
-                                  ? 'otros' // Mostrar "OTROS" si es null
+                            detalle.tipo_precio_id === null
+                                ? 'otros' // Precio personalizado
+                                : selectedTipoPrecio[productoId] !== undefined
+                                  ? String(selectedTipoPrecio[productoId]) // Usuario seleccionó algo
                                   : detalle.tipo_precio_id
                                     ? String(detalle.tipo_precio_id) // ✅ Usar siempre el del detalle si existe
                                     : detalle.tipo_precio_id_recomendado
@@ -400,8 +527,7 @@ export default function ProductoTableRow({
                                         }));
 
                                         // Limpiar tipo_precio pero mantener el precio actual
-                                        onUpdateDetail(index, 'tipo_precio_id', null);
-                                        onUpdateDetail(index, 'tipo_precio_nombre', null);
+                                        actualizarCampos({ tipo_precio_id: null, tipo_precio_nombre: null });
                                         return;
                                     }
 
@@ -420,9 +546,11 @@ export default function ProductoTableRow({
                                             [productoId]: tipoPrecioIdSeleccionado,
                                         }));
 
-                                        onUpdateDetail(index, 'tipo_precio_id', precioSeleccionado.tipo_precio_id);
-                                        onUpdateDetail(index, 'tipo_precio_nombre', precioSeleccionado.nombre || '');
-                                        onUpdateDetail(index, 'precio_unitario', precioSeleccionado.precio || 0);
+                                        actualizarCampos({
+                                            tipo_precio_id: precioSeleccionado.tipo_precio_id,
+                                            tipo_precio_nombre: precioSeleccionado.nombre || '',
+                                            precio_unitario: Number(precioSeleccionado.precio) || 0,
+                                        });
                                     }
                                 }}
                                 className="font-small mt-1 rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
@@ -448,33 +576,31 @@ export default function ProductoTableRow({
             )}
 
             {/* Subtotal */}
-            <td className="items-start px-2 py-4 text-center">
-                <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrencyMinimalDecimals(detalle.subtotal)}</span>
+            <td className={`items-start px-2 text-center ${esCompra ? 'pt-4 pb-2 align-top' : 'py-4'}`}>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{tipo === 'compra' ? formatearCosto(detalle.subtotal) : formatCurrencyMinimalDecimals(detalle.subtotal)}</span>
             </td>
 
-            {/* Categoría */}
-            <td className="items-start px-2 py-2 text-center">
-                <span className="font-small text-xs text-gray-700 dark:text-gray-300">
-                    {typeof productoInfo?.categoria === 'string' ? productoInfo.categoria : productoInfo?.categoria?.nombre || '-'}
-                </span>
-            </td>
+            {!esCompra && (
+                <>
+                    {/* Categoría */}
+                    <td className="items-start px-2 py-2 text-center">
+                        <span className="font-small text-xs text-gray-700 dark:text-gray-300">{categoriaProducto || '-'}</span>
+                    </td>
 
-            {/* Unidad */}
-            <td className="items-start px-2 py-2 text-center">
-                <span className="font-small text-xs text-gray-700 dark:text-gray-300">
-                    {detalle.unidad_medida_nombre || productoInfo?.unidad_medida?.nombre || '-'}
-                </span>
-            </td>
+                    {/* Unidad */}
+                    <td className="items-start px-2 py-2 text-center">
+                        <span className="font-small text-xs text-gray-700 dark:text-gray-300">{unidadProducto || '-'}</span>
+                    </td>
 
-            {/* Marca */}
-            <td className="items-start px-2 py-2 text-center">
-                <span className="font-small text-xs text-gray-700 dark:text-gray-300">
-                    {typeof productoInfo?.marca === 'string' ? productoInfo.marca : productoInfo?.marca?.nombre || '-'}
-                </span>
-            </td>
+                    {/* Marca */}
+                    <td className="items-start px-2 py-2 text-center">
+                        <span className="font-small text-xs text-gray-700 dark:text-gray-300">{marcaProducto || '-'}</span>
+                    </td>
+                </>
+            )}
 
             {/* Acciones */}
-            <td className="items-start px-2 py-4 text-center">
+            <td className={`items-start px-2 text-center ${esCompra ? 'pt-3 pb-2 align-top' : 'py-4'}`}>
                 <div className="flex items-center justify-center gap-1">
                     {/* Botón expandir/contraer combo */}
                     {detalle.producto && (detalle.producto as any).es_combo && (
@@ -500,24 +626,22 @@ export default function ProductoTableRow({
                         </button>
                     )}
 
-                    {/* Botón modal cascada para compras */}
-                    {tipo === 'compra' && tieneDiferencia && (
-                        <button
-                            type="button"
-                            disabled={readOnly}
-                            onClick={() => onAbrirModalCascada(index, detalle)}
-                            className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                            title="Editar cascada de precios"
-                        >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                            </svg>
-                        </button>
+                    {/* Actualizar precios (compras con cambio de costo) */}
+                    {tieneDiferencia && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    disabled={readOnly}
+                                    aria-label="Actualizar precios"
+                                    onClick={() => onAbrirModalCascada(index, detalle)}
+                                    className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                >
+                                    <Tag className="h-5 w-5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Actualizar precios</TooltipContent>
+                        </Tooltip>
                     )}
 
                     {/* Botón eliminar */}

@@ -14,11 +14,14 @@ class CompraWebSocketService extends BaseWebSocketService
     /**
      * Notificar nuevo stock disponible
      *
-     * Destinatarios:
-     * - Roles internos: admin, manager, cajero, preventista, chofer (datos completos)
-     * - Cliente: SOLO "hay nuevo stock" (sin cantidades)
+     * Destinatarios (los calcula CompraNotificationService):
+     * - Internos: admin, manager, cajero, preventista + usuario que aprobó (datos completos)
+     * - Clientes: SOLO "hay nuevo stock" (sin cantidades)
+     *
+     * @param int[] $userIdsInternos
+     * @param int[] $userIdsClientes
      */
-    public function notifyCompleted($compra): bool
+    public function notifyCompleted($compra, array $userIdsInternos = [], array $userIdsClientes = []): bool
     {
         // Información COMPLETA de productos (con cantidades)
         $productosCompleto = ($compra->detalles ?? collect())->map(function ($item) {
@@ -69,26 +72,14 @@ class CompraWebSocketService extends BaseWebSocketService
             'show_quantities' => false,  // Flag para el cliente: NO mostrar cantidades
         ];
 
-        // 3️⃣ Obtener client user_id
-        $clienteUserId = $compra->cliente?->user_id;
+        // 3️⃣ Internos (con datos completos) y clientes (datos reducidos): una petición HTTP por grupo,
+        // por user_id para que coincida exactamente con las notificaciones guardadas en BD
+        $okInternos = empty($userIdsInternos)
+            || $this->notifyMultiChannel('stock.disponible', $eventDataInternos, $userIdsInternos);
 
-        // 4️⃣ Enviar a roles internos (con datos completos)
-        $this->notifyMultiChannel(
-            'stock.disponible',
-            $eventDataInternos,
-            [],  // Sin user_ids específicos
-            ['admin', 'manager', 'cajero', 'preventista', 'chofer']
-        );
+        $okClientes = empty($userIdsClientes)
+            || $this->notifyMultiChannel('stock.disponible', $eventDataCliente, $userIdsClientes);
 
-        // 5️⃣ Enviar al cliente POR SEPARADO (con datos reducidos)
-        if ($clienteUserId) {
-            $this->notifyUser(
-                $clienteUserId,
-                'stock.disponible',
-                $eventDataCliente
-            );
-        }
-
-        return true;
+        return $okInternos && $okClientes;
     }
 }

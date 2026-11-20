@@ -298,6 +298,65 @@ class EntregaVentaConfirmacion extends Model
         })->toArray();
     }
 
+    /** Confirmaciones en las que el cliente no recibió ningún producto. */
+    private const TIPOS_SIN_ENTREGA = ['RECHAZADO', 'CLIENTE_CERRADO', 'NO_CONTACTADO'];
+
+    /**
+     * ¿El cliente recibió productos? En CON_NOVEDAD el motivo real está en tipo_novedad.
+     */
+    public function entregoProductos(): bool
+    {
+        $tipo = $this->tipo_confirmacion === 'CON_NOVEDAD' ? $this->tipo_novedad : $this->tipo_confirmacion;
+
+        return ! in_array($tipo, self::TIPOS_SIN_ENTREGA, true);
+    }
+
+    /**
+     * Cantidades devueltas agrupadas por producto_id.
+     *
+     * La lista manda aunque la confirmación diga COMPLETA: en los datos reales siempre
+     * cuadra con monto_devuelto. Algunas filas antiguas la guardaron como texto JSON.
+     *
+     * @return array<int, float>
+     */
+    public function cantidadesDevueltasPorProducto(): array
+    {
+        $lista = $this->productos_devueltos;
+
+        if (is_string($lista)) {
+            $lista = json_decode($lista, true);
+        }
+
+        return collect(is_array($lista) ? $lista : [])
+            ->groupBy('producto_id')
+            ->map(fn ($items) => (float) $items->sum('cantidad'))
+            ->all();
+    }
+
+    /**
+     * Dinero recibido agrupado por tipo de pago, según desglose_pagos.
+     *
+     * @return array<int, array{tipo_pago_id: int|null, tipo_pago: string, monto: float}>
+     */
+    public function montosPorTipoPago(): array
+    {
+        $desglose = $this->desglose_pagos;
+
+        if (is_string($desglose)) {
+            $desglose = json_decode($desglose, true);
+        }
+
+        return collect(is_array($desglose) ? $desglose : [])
+            ->groupBy(fn ($pago) => $pago['tipo_pago_id'] ?? $pago['tipo_pago_nombre'] ?? 'sin_tipo')
+            ->map(fn ($pagos) => [
+                'tipo_pago_id' => $pagos->first()['tipo_pago_id'] ?? null,
+                'tipo_pago'    => $pagos->first()['tipo_pago_nombre'] ?? 'Sin especificar',
+                'monto'        => round((float) $pagos->sum('monto'), 2),
+            ])
+            ->values()
+            ->all();
+    }
+
     /**
      * ✅ NUEVA 2026-02-15: Obtener porcentaje devuelto
      */

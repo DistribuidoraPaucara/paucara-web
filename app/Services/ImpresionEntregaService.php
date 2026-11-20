@@ -17,7 +17,7 @@ class ImpresionEntregaService
         $productos = collect();
 
         // Recorrer todas las ventas asignadas a la entrega
-        foreach ($entrega->ventas as $venta) {
+        foreach ($entrega->ventas->filter(fn ($venta) => $venta->estaVigente()) as $venta) {
             foreach ($venta->detalles as $detalle) {
                 // ✅ NUEVO (2026-04-23): Obtener componentes del combo si es combo
                 $esCombo = $detalle->producto->es_combo === true || $detalle->producto->es_combo === 1;

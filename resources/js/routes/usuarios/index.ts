@@ -416,7 +416,7 @@ edit.head = (args: { usuario: number | { id: number } } | [usuario: number | { i
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
 export const update = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -431,7 +431,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
 update.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -464,7 +464,7 @@ update.url = (args: { usuario: number | { id: number } } | [usuario: number | { 
 
 /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
 update.put = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -473,7 +473,7 @@ update.put = (args: { usuario: number | { id: number } } | [usuario: number | { 
 })
 /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
 update.patch = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -483,7 +483,7 @@ update.patch = (args: { usuario: number | { id: number } } | [usuario: number | 
 
     /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
     const updateForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -498,7 +498,7 @@ update.patch = (args: { usuario: number | { id: number } } | [usuario: number | 
 
             /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
         updateForm.put = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -512,7 +512,7 @@ update.patch = (args: { usuario: number | { id: number } } | [usuario: number | 
         })
             /**
 * @see \App\Http\Controllers\UserController::update
- * @see app/Http/Controllers/UserController.php:141
+ * @see app/Http/Controllers/UserController.php:142
  * @route '/usuarios/{usuario}'
  */
         updateForm.patch = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -528,7 +528,7 @@ update.patch = (args: { usuario: number | { id: number } } | [usuario: number | 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\UserController::destroy
- * @see app/Http/Controllers/UserController.php:183
+ * @see app/Http/Controllers/UserController.php:185
  * @route '/usuarios/{usuario}'
  */
 export const destroy = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -543,7 +543,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::destroy
- * @see app/Http/Controllers/UserController.php:183
+ * @see app/Http/Controllers/UserController.php:185
  * @route '/usuarios/{usuario}'
  */
 destroy.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -576,7 +576,7 @@ destroy.url = (args: { usuario: number | { id: number } } | [usuario: number | {
 
 /**
 * @see \App\Http\Controllers\UserController::destroy
- * @see app/Http/Controllers/UserController.php:183
+ * @see app/Http/Controllers/UserController.php:185
  * @route '/usuarios/{usuario}'
  */
 destroy.delete = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -586,7 +586,7 @@ destroy.delete = (args: { usuario: number | { id: number } } | [usuario: number 
 
     /**
 * @see \App\Http\Controllers\UserController::destroy
- * @see app/Http/Controllers/UserController.php:183
+ * @see app/Http/Controllers/UserController.php:185
  * @route '/usuarios/{usuario}'
  */
     const destroyForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -601,7 +601,7 @@ destroy.delete = (args: { usuario: number | { id: number } } | [usuario: number 
 
             /**
 * @see \App\Http\Controllers\UserController::destroy
- * @see app/Http/Controllers/UserController.php:183
+ * @see app/Http/Controllers/UserController.php:185
  * @route '/usuarios/{usuario}'
  */
         destroyForm.delete = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -617,7 +617,7 @@ destroy.delete = (args: { usuario: number | { id: number } } | [usuario: number 
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\UserController::assignRole
- * @see app/Http/Controllers/UserController.php:210
+ * @see app/Http/Controllers/UserController.php:212
  * @route '/usuarios/{usuario}/assign-role'
  */
 export const assignRole = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -632,7 +632,7 @@ assignRole.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::assignRole
- * @see app/Http/Controllers/UserController.php:210
+ * @see app/Http/Controllers/UserController.php:212
  * @route '/usuarios/{usuario}/assign-role'
  */
 assignRole.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -665,7 +665,7 @@ assignRole.url = (args: { usuario: number | { id: number } } | [usuario: number 
 
 /**
 * @see \App\Http\Controllers\UserController::assignRole
- * @see app/Http/Controllers/UserController.php:210
+ * @see app/Http/Controllers/UserController.php:212
  * @route '/usuarios/{usuario}/assign-role'
  */
 assignRole.post = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -675,7 +675,7 @@ assignRole.post = (args: { usuario: number | { id: number } } | [usuario: number
 
     /**
 * @see \App\Http\Controllers\UserController::assignRole
- * @see app/Http/Controllers/UserController.php:210
+ * @see app/Http/Controllers/UserController.php:212
  * @route '/usuarios/{usuario}/assign-role'
  */
     const assignRoleForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -685,7 +685,7 @@ assignRole.post = (args: { usuario: number | { id: number } } | [usuario: number
 
             /**
 * @see \App\Http\Controllers\UserController::assignRole
- * @see app/Http/Controllers/UserController.php:210
+ * @see app/Http/Controllers/UserController.php:212
  * @route '/usuarios/{usuario}/assign-role'
  */
         assignRoleForm.post = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -696,7 +696,7 @@ assignRole.post = (args: { usuario: number | { id: number } } | [usuario: number
     assignRole.form = assignRoleForm
 /**
 * @see \App\Http\Controllers\UserController::removeRole
- * @see app/Http/Controllers/UserController.php:221
+ * @see app/Http/Controllers/UserController.php:223
  * @route '/usuarios/{usuario}/remove-role'
  */
 export const removeRole = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -711,7 +711,7 @@ removeRole.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::removeRole
- * @see app/Http/Controllers/UserController.php:221
+ * @see app/Http/Controllers/UserController.php:223
  * @route '/usuarios/{usuario}/remove-role'
  */
 removeRole.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -744,7 +744,7 @@ removeRole.url = (args: { usuario: number | { id: number } } | [usuario: number 
 
 /**
 * @see \App\Http\Controllers\UserController::removeRole
- * @see app/Http/Controllers/UserController.php:221
+ * @see app/Http/Controllers/UserController.php:223
  * @route '/usuarios/{usuario}/remove-role'
  */
 removeRole.delete = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -754,7 +754,7 @@ removeRole.delete = (args: { usuario: number | { id: number } } | [usuario: numb
 
     /**
 * @see \App\Http\Controllers\UserController::removeRole
- * @see app/Http/Controllers/UserController.php:221
+ * @see app/Http/Controllers/UserController.php:223
  * @route '/usuarios/{usuario}/remove-role'
  */
     const removeRoleForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -769,7 +769,7 @@ removeRole.delete = (args: { usuario: number | { id: number } } | [usuario: numb
 
             /**
 * @see \App\Http\Controllers\UserController::removeRole
- * @see app/Http/Controllers/UserController.php:221
+ * @see app/Http/Controllers/UserController.php:223
  * @route '/usuarios/{usuario}/remove-role'
  */
         removeRoleForm.delete = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -785,7 +785,7 @@ removeRole.delete = (args: { usuario: number | { id: number } } | [usuario: numb
     removeRole.form = removeRoleForm
 /**
 * @see \App\Http\Controllers\UserController::assignPermission
- * @see app/Http/Controllers/UserController.php:232
+ * @see app/Http/Controllers/UserController.php:234
  * @route '/usuarios/{usuario}/assign-permission'
  */
 export const assignPermission = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -800,7 +800,7 @@ assignPermission.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::assignPermission
- * @see app/Http/Controllers/UserController.php:232
+ * @see app/Http/Controllers/UserController.php:234
  * @route '/usuarios/{usuario}/assign-permission'
  */
 assignPermission.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -833,7 +833,7 @@ assignPermission.url = (args: { usuario: number | { id: number } } | [usuario: n
 
 /**
 * @see \App\Http\Controllers\UserController::assignPermission
- * @see app/Http/Controllers/UserController.php:232
+ * @see app/Http/Controllers/UserController.php:234
  * @route '/usuarios/{usuario}/assign-permission'
  */
 assignPermission.post = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -843,7 +843,7 @@ assignPermission.post = (args: { usuario: number | { id: number } } | [usuario: 
 
     /**
 * @see \App\Http\Controllers\UserController::assignPermission
- * @see app/Http/Controllers/UserController.php:232
+ * @see app/Http/Controllers/UserController.php:234
  * @route '/usuarios/{usuario}/assign-permission'
  */
     const assignPermissionForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -853,7 +853,7 @@ assignPermission.post = (args: { usuario: number | { id: number } } | [usuario: 
 
             /**
 * @see \App\Http\Controllers\UserController::assignPermission
- * @see app/Http/Controllers/UserController.php:232
+ * @see app/Http/Controllers/UserController.php:234
  * @route '/usuarios/{usuario}/assign-permission'
  */
         assignPermissionForm.post = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -864,7 +864,7 @@ assignPermission.post = (args: { usuario: number | { id: number } } | [usuario: 
     assignPermission.form = assignPermissionForm
 /**
 * @see \App\Http\Controllers\UserController::removePermission
- * @see app/Http/Controllers/UserController.php:243
+ * @see app/Http/Controllers/UserController.php:245
  * @route '/usuarios/{usuario}/remove-permission'
  */
 export const removePermission = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -879,7 +879,7 @@ removePermission.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::removePermission
- * @see app/Http/Controllers/UserController.php:243
+ * @see app/Http/Controllers/UserController.php:245
  * @route '/usuarios/{usuario}/remove-permission'
  */
 removePermission.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -912,7 +912,7 @@ removePermission.url = (args: { usuario: number | { id: number } } | [usuario: n
 
 /**
 * @see \App\Http\Controllers\UserController::removePermission
- * @see app/Http/Controllers/UserController.php:243
+ * @see app/Http/Controllers/UserController.php:245
  * @route '/usuarios/{usuario}/remove-permission'
  */
 removePermission.delete = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -922,7 +922,7 @@ removePermission.delete = (args: { usuario: number | { id: number } } | [usuario
 
     /**
 * @see \App\Http\Controllers\UserController::removePermission
- * @see app/Http/Controllers/UserController.php:243
+ * @see app/Http/Controllers/UserController.php:245
  * @route '/usuarios/{usuario}/remove-permission'
  */
     const removePermissionForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -937,7 +937,7 @@ removePermission.delete = (args: { usuario: number | { id: number } } | [usuario
 
             /**
 * @see \App\Http\Controllers\UserController::removePermission
- * @see app/Http/Controllers/UserController.php:243
+ * @see app/Http/Controllers/UserController.php:245
  * @route '/usuarios/{usuario}/remove-permission'
  */
         removePermissionForm.delete = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -953,7 +953,7 @@ removePermission.delete = (args: { usuario: number | { id: number } } | [usuario
     removePermission.form = removePermissionForm
 /**
 * @see \App\Http\Controllers\UserController::toggleStatus
- * @see app/Http/Controllers/UserController.php:196
+ * @see app/Http/Controllers/UserController.php:198
  * @route '/usuarios/{usuario}/toggle-status'
  */
 export const toggleStatus = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -968,7 +968,7 @@ toggleStatus.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::toggleStatus
- * @see app/Http/Controllers/UserController.php:196
+ * @see app/Http/Controllers/UserController.php:198
  * @route '/usuarios/{usuario}/toggle-status'
  */
 toggleStatus.url = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -1001,7 +1001,7 @@ toggleStatus.url = (args: { usuario: number | { id: number } } | [usuario: numbe
 
 /**
 * @see \App\Http\Controllers\UserController::toggleStatus
- * @see app/Http/Controllers/UserController.php:196
+ * @see app/Http/Controllers/UserController.php:198
  * @route '/usuarios/{usuario}/toggle-status'
  */
 toggleStatus.patch = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1011,7 +1011,7 @@ toggleStatus.patch = (args: { usuario: number | { id: number } } | [usuario: num
 
     /**
 * @see \App\Http\Controllers\UserController::toggleStatus
- * @see app/Http/Controllers/UserController.php:196
+ * @see app/Http/Controllers/UserController.php:198
  * @route '/usuarios/{usuario}/toggle-status'
  */
     const toggleStatusForm = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1026,7 +1026,7 @@ toggleStatus.patch = (args: { usuario: number | { id: number } } | [usuario: num
 
             /**
 * @see \App\Http\Controllers\UserController::toggleStatus
- * @see app/Http/Controllers/UserController.php:196
+ * @see app/Http/Controllers/UserController.php:198
  * @route '/usuarios/{usuario}/toggle-status'
  */
         toggleStatusForm.patch = (args: { usuario: number | { id: number } } | [usuario: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

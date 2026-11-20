@@ -561,6 +561,9 @@ export const productosConfig: ModuleConfig<Producto, ProductoFormData> = {
   searchPlaceholder: 'Buscar por ID, SKU, código de barras o nombre...',
 
   // Modern Index filters configuration
+  // Al buscar/filtrar solo se recarga el listado; los catálogos (categorías, marcas...) se mantienen
+  searchReloadProps: ['productos', 'filters'],
+
   indexFilters: {
     filters: [
       {

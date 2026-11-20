@@ -306,6 +306,10 @@ Route::middleware(['auth:sanctum,web', 'platform'])->group(function () {
         // Listar todas las notificaciones del usuario
         Route::get('/', [NotificationController::class, 'index']);
 
+        // Bandeja de la campana (hoy + no leídas) e historial paginado con filtros
+        Route::get('/bandeja', [NotificationController::class, 'bandeja']);
+        Route::get('/historial', [NotificationController::class, 'historial']);
+
         // Listar solo notificaciones no leídas
         Route::get('/no-leidas', [NotificationController::class, 'unread']);
 

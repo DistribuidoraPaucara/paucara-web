@@ -154,6 +154,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         ]);
     })->name('clientes.credito');
 
+    // 🔔 Historial de notificaciones del usuario (enlace "Ver todas" de la campana)
+    Route::get('mis-notificaciones', fn () => \Inertia\Inertia::render('notificaciones/mis-notificaciones'))
+        ->name('mis-notificaciones.index');
+
     // ✅ FASE 3: Ruta para página principal de créditos del usuario actual
     Route::get('creditos', function () {
         return \Inertia\Inertia::render('creditos/index');
@@ -186,6 +190,7 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // Rutas para combos (productos virtuales que agrupan otros productos)
     Route::get('combos/{combo}/capacidad', [\App\Http\Controllers\ComboController::class, 'capacidad'])->middleware('permission:productos.manage')->name('combos.capacidad');
     Route::get('combos/{combo}/capacidad-detalles', [\App\Http\Controllers\ComboController::class, 'capacidadDetalles'])->middleware('permission:productos.manage')->name('combos.capacidad-detalles');
+    Route::patch('combos/{combo}/estado', [\App\Http\Controllers\ComboController::class, 'cambiarEstado'])->middleware('permission:productos.manage')->name('combos.estado');
     Route::resource('combos', \App\Http\Controllers\ComboController::class)->middleware('permission:productos.manage');
 
     // Resource route DESPUÉS de las rutas específicas
@@ -1092,6 +1097,20 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('alertas-stock-completo', [App\Http\Controllers\AdminController::class, 'alertasStockCompleto'])->name('alertas-stock-completo');
         // ✅ NUEVO (2026-08-24): Calendario unificado de vencimientos
         Route::get('calendario-vencimientos', [\App\Http\Controllers\CalendarioVencimientosController::class, 'dashboard'])->name('calendario-vencimientos');
+
+        // 🔔 Panel administrativo de notificaciones (admin / manager)
+        Route::prefix('notificaciones')->name('notificaciones.')
+            ->middleware('permission:notificaciones.panel')
+            ->controller(\App\Http\Controllers\Admin\NotificacionesAdminController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('data/resumen', 'resumen')->name('resumen');
+                Route::get('data/eventos', 'eventos')->name('eventos');
+                Route::get('data/eventos/destinatarios', 'destinatarios')->name('destinatarios');
+                Route::get('data/envios', 'envios')->name('envios');
+                Route::get('data/dispositivos', 'dispositivos')->name('dispositivos');
+                Route::get('data/usuarios', 'usuarios')->name('usuarios');
+            });
     });
 
     // Rutas para gestión de rutas (planificación y seguimiento)
@@ -1277,6 +1296,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     });
 
     // ✨ NUEVO: Notificaciones Recurrentes
+    // Imágenes de notificaciones (antes del resource para no chocar con notificaciones/{id})
+    Route::get('notificaciones/imagenes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'listarImagenes'])->name('notificaciones.imagenes.index');
+    Route::post('notificaciones/imagenes', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'subirImagen'])->name('notificaciones.imagenes.store');
     Route::resource('notificaciones', \App\Http\Controllers\NotificacionRecurrenteController::class);
     Route::post('notificaciones/{notificacion}/enviar', [\App\Http\Controllers\NotificacionRecurrenteController::class, 'enviarManual'])->name('notificaciones.enviar');
 

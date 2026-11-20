@@ -10,6 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -228,9 +230,19 @@ class NotificacionRecurrenteController extends Controller
         // ✅ NUEVO: Serializar horarios
         $horariosData = $notificacionModel->horarios->map(fn($h) => [
             'id' => $h->id,
-            'hora' => $h->hora,
+            'hora' => substr($h->hora, 0, 5),
             'activo' => $h->activo,
-        ])->toArray();
+            'ultimo_envio' => $h->ultimo_envio,
+        ])->sortBy('hora')->values()->toArray();
+
+        // Notificaciones creadas antes de los horarios múltiples solo tienen hora_envio
+        if (empty($horariosData) && $notificacionModel->hora_envio) {
+            $horariosData = [[
+                'hora' => substr($notificacionModel->hora_envio, 0, 5),
+                'activo' => true,
+                'ultimo_envio' => null,
+            ]];
+        }
 
         // ✅ Serializar explícitamente con relaciones incluidas
         $notificacionData = [
@@ -241,9 +253,11 @@ class NotificacionRecurrenteController extends Controller
             'frecuencia' => $notificacionModel->frecuencia,
             'activo' => $notificacionModel->activo,
             'hora_envio' => $notificacionModel->hora_envio,
-            'fecha_inicio' => $notificacionModel->fecha_inicio,
-            'fecha_fin' => $notificacionModel->fecha_fin,
-            'dias_semana' => $notificacionModel->dias_semana ? json_decode($notificacionModel->dias_semana, true) : [],
+            // Y-m-d para evitar el corrimiento de zona horaria del ISO en UTC
+            'fecha_inicio' => $notificacionModel->fecha_inicio?->format('Y-m-d'),
+            'fecha_fin' => $notificacionModel->fecha_fin?->format('Y-m-d'),
+            // El cast 'array' del modelo ya decodifica el JSON
+            'dias_semana' => $notificacionModel->dias_semana ?? [],
             'dia_mes' => $notificacionModel->dia_mes,
             'total_enviadas' => $notificacionModel->total_enviadas,
             'vistas' => $notificacionModel->vistas,
@@ -295,17 +309,32 @@ class NotificacionRecurrenteController extends Controller
             $rolesArray = is_array($request->roles) ? $request->roles : [];
             $notificacionModel->roles()->sync($rolesArray);
 
-            // ✅ NUEVO: Actualizar horarios (reemplazar completamente)
+            // Sincronizar horarios por hora: se conservan las filas existentes (y su ultimo_envio)
+            // para no reenviar un horario que ya salió hoy, se crean las nuevas y se borran las quitadas
             if (!empty($dto->horarios)) {
-                // Eliminar horarios antiguos
-                $notificacionModel->horarios()->delete();
+                $existentes = $notificacionModel->horarios()->get()
+                    ->keyBy(fn($h) => substr($h->hora, 0, 5));
+                $horasNuevas = array_column($dto->horarios, 'hora');
 
-                // Crear nuevos horarios
+                // Ojo: Eloquent\Collection::only() filtra por ID de modelo, no por clave; por eso filter()
+                $idsConservados = $existentes
+                    ->filter(fn($h, $hora) => in_array($hora, $horasNuevas, true))
+                    ->pluck('id');
+
+                $notificacionModel->horarios()
+                    ->whereNotIn('id', $idsConservados)
+                    ->delete();
+
                 foreach ($dto->horarios as $horarioData) {
-                    $notificacionModel->horarios()->create([
-                        'hora' => $horarioData['hora'],
-                        'activo' => $horarioData['activo'] ?? true,
-                    ]);
+                    $activo = $horarioData['activo'] ?? true;
+                    if ($existente = $existentes->get($horarioData['hora'])) {
+                        $existente->update(['activo' => $activo]);
+                    } else {
+                        $notificacionModel->horarios()->create([
+                            'hora' => $horarioData['hora'],
+                            'activo' => $activo,
+                        ]);
+                    }
                 }
 
                 Log::debug("✅ Horarios actualizados para notificación", [
@@ -372,10 +401,69 @@ class NotificacionRecurrenteController extends Controller
     /**
      * Obtener roles disponibles para asignar a notificaciones
      */
+    /**
+     * Subir imagen para notificaciones (disco public, carpeta notificacion).
+     * Se devuelve la ruta relativa: la URL absoluta se arma al enviar con APP_URL,
+     * así un cambio de IP o dominio no rompe las imágenes ya guardadas.
+     */
+    public function subirImagen(Request $request): JsonResponse
+    {
+        $request->validate([
+            'imagen' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+        ], [
+            'imagen.image' => 'El archivo debe ser una imagen',
+            'imagen.mimes' => 'Formatos permitidos: JPG, PNG, WEBP o GIF',
+            'imagen.max' => 'La imagen no puede superar los 5MB',
+        ]);
+
+        $archivo = $request->file('imagen');
+        $nombre = Str::slug(pathinfo($archivo->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'imagen';
+        $ruta = $archivo->storeAs(
+            'notificacion',
+            $nombre . '-' . now()->format('YmdHis') . '.' . $archivo->extension(),
+            'public'
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->datosImagen($ruta),
+        ]);
+    }
+
+    /**
+     * Listar imágenes disponibles para notificaciones (más recientes primero)
+     */
+    public function listarImagenes(): JsonResponse
+    {
+        $imagenes = collect(Storage::disk('public')->files('notificacion'))
+            ->filter(fn($ruta) => preg_match('/\.(jpe?g|png|webp|gif)$/i', $ruta))
+            ->map(fn($ruta) => $this->datosImagen($ruta))
+            ->sortByDesc('modificado')
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $imagenes]);
+    }
+
+    private function datosImagen(string $ruta): array
+    {
+        $disco = Storage::disk('public');
+
+        return [
+            'url' => '/storage/' . $ruta,
+            'nombre' => basename($ruta),
+            'tamano' => $disco->size($ruta),
+            'modificado' => $disco->lastModified($ruta),
+        ];
+    }
+
     public function getRoles(): JsonResponse
     {
         try {
+            // Roles administrativos que no se ofrecen como destinatarios de notificaciones
+            $rolesOcultos = ['super admin', 'admin'];
+
             $roles = \Spatie\Permission\Models\Role::select('id', 'name')
+                ->whereRaw('LOWER(name) NOT IN (' . implode(',', array_fill(0, count($rolesOcultos), '?')) . ')', $rolesOcultos)
                 ->orderBy('name')
                 ->get()
                 ->map(function ($role) {

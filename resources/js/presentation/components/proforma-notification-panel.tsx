@@ -1,6 +1,10 @@
+import { useState } from 'react';
+import { Link, router } from '@inertiajs/react';
 import { useNotifications } from '@/application/contexts/notifications-context';
-import { useAuth } from '@/application/hooks/use-auth';
-import { Badge } from '@/presentation/components/ui/badge';
+import type {
+  CategoriaNotificacion,
+  NotificacionBandeja,
+} from '@/application/hooks/use-bandeja-notificaciones';
 import { Button } from '@/presentation/components/ui/button';
 import {
   DropdownMenu,
@@ -8,227 +12,182 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/presentation/components/ui/dropdown-menu';
-import { Bell, Trash2, BellRing } from 'lucide-react';
+import { Bell, BellRing, CheckCheck, AlertTriangle, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useEffect } from 'react';
-import type { NotificationType } from '@/domain/entities/websocket-events';
 
+type Pestana = 'todas' | CategoriaNotificacion;
+
+const PESTANAS: { id: Pestana; label: string }[] = [
+  { id: 'todas', label: 'Todas' },
+  { id: 'proformas', label: 'Proformas' },
+  { id: 'entregas', label: 'Entregas' },
+  { id: 'creditos', label: 'Créditos' },
+  { id: 'avisos', label: 'Avisos' },
+];
+
+const COLOR_CATEGORIA: Record<CategoriaNotificacion, string> = {
+  proformas: 'bg-blue-500',
+  entregas: 'bg-green-500',
+  creditos: 'bg-amber-500',
+  avisos: 'bg-purple-500',
+};
+
+/**
+ * Campana del header: bandeja persistida (hoy + no leídas), con pestañas por
+ * categoría y una tarjeta resumen de cuentas vencidas.
+ */
 export default function ProformaNotificationPanel() {
-  const { user } = useAuth();
+  const { bandeja, requestNotificationPermission } = useNotifications();
+  const { items, noLeidas, porCategoria, vencidas, cargando, marcarLeida, marcarTodasLeidas } = bandeja;
+  const [pestana, setPestana] = useState<Pestana>('todas');
+  const [abierto, setAbierto] = useState(false);
 
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    clearNotifications,
-    requestNotificationPermission,
-  } = useNotifications();
+  const visibles = pestana === 'todas' ? items : items.filter((n) => n.categoria === pestana);
 
-  // Detectar si hay alertas críticas de créditos no leídas
-  const hasUnreadCreditos = notifications.some(
-    (n) => n.type === 'creditos' && !n.read
-  );
-
-  // Reproducir sonido cuando hay alertas de créditos
-  const playAlertSound = () => {
-    try {
-      // Sonido de alerta de emergencia/crítico (usando beep múltiple)
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      // Parámetros de sonido: beep agudo y corto
-      oscillator.frequency.value = 800; // Frecuencia aguda
-      oscillator.type = 'sine';
-
-      // Volumen suave pero perceptible
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.2);
-
-      // Segundo beep para hacerlo más llamativo
-      const oscillator2 = audioContext.createOscillator();
-      const gainNode2 = audioContext.createGain();
-      oscillator2.connect(gainNode2);
-      gainNode2.connect(audioContext.destination);
-
-      oscillator2.frequency.value = 1000;
-      oscillator2.type = 'sine';
-      gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime + 0.15);
-      gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
-
-      oscillator2.start(audioContext.currentTime + 0.15);
-      oscillator2.stop(audioContext.currentTime + 0.35);
-    } catch (error) {
-      console.log('No se pudo reproducir sonido de alerta:', error);
+  const abrirNotificacion = (n: NotificacionBandeja) => {
+    marcarLeida(n.id);
+    if (n.url) {
+      setAbierto(false);
+      router.visit(n.url);
     }
   };
-
-  // Color mapping for notification types
-  const getTypeColor = (type: NotificationType) => {
-    switch (type) {
-      case 'proforma':
-        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800';
-      case 'entrega':
-        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800';
-      case 'ruta':
-        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800';
-      case 'ubicacion':
-        return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800';
-      case 'novedad':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
-      case 'chofer':
-        return 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800';
-      case 'dashboard':
-        return 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
-      case 'creditos':
-        return 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800';
-      default:
-        return 'bg-gray-100 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700';
-    }
-  };
-
-  const handleRequestNotification = async () => {
-    await requestNotificationPermission();
-  };
-
-  // Reproducir sonido cuando hay nuevas alertas de créditos
-  useEffect(() => {
-    if (hasUnreadCreditos) {
-      // Pequeño delay para que el sonido no sea inmediato
-      const timer = setTimeout(() => {
-        playAlertSound();
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasUnreadCreditos]);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={abierto} onOpenChange={setAbierto}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`relative transition-all ${hasUnreadCreditos ? 'animate-bell-jump animate-bell-pulse' : ''}`}
-          title="Notificaciones de sistema"
-        >
+        <Button variant="ghost" size="icon" className="relative" title="Notificaciones">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              className={`absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 transition-all ${
-                hasUnreadCreditos
-                  ? 'bg-red-600 dark:bg-red-500 animate-pulse'
-                  : 'bg-red-500 dark:bg-red-600'
-              }`}
-              variant="destructive"
+          {noLeidas > 0 && (
+            <span
+              aria-label={`${noLeidas} notificaciones sin leer`}
+              className="pointer-events-none absolute right-1 top-1 flex h-[18px] min-w-[18px] translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none text-white tabular-nums ring-2 ring-background"
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Badge>
+              {noLeidas > 99 ? '99+' : noLeidas}
+            </span>
           )}
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-96 max-h-96 overflow-y-auto dark:bg-slate-800 dark:border-slate-700">
-        <div className="flex items-center justify-between px-4 py-2 dark:border-slate-700">
-          <h3 className="font-semibold text-sm dark:text-gray-100">Todas las Notificaciones</h3>
-          {unreadCount > 0 && (
+      <DropdownMenuContent
+        align="end"
+        className="w-[26rem] max-w-[calc(100vw-1rem)] p-0 dark:bg-slate-800 dark:border-slate-700"
+      >
+        {/* Encabezado */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div>
+            <h3 className="font-semibold text-sm dark:text-gray-100">Notificaciones</h3>
+            <p className="text-xs text-muted-foreground">
+              {noLeidas > 0 ? `${noLeidas} sin leer` : 'Estás al día'}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              size="sm"
-              onClick={clearNotifications}
-              className="text-xs dark:hover:bg-slate-700"
+              size="icon"
+              className="h-7 w-7"
+              title="Activar notificaciones del navegador"
+              onClick={() => requestNotificationPermission()}
             >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Limpiar
+              <BellRing className="h-4 w-4" />
             </Button>
+            {noLeidas > 0 && (
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={marcarTodasLeidas}>
+                <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                Marcar todas
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Tarjeta resumen de cuentas vencidas */}
+        {vencidas && vencidas.total > 0 && (
+          <Link
+            href="/ventas/cuentas-por-cobrar"
+            onClick={() => setAbierto(false)}
+            className="mx-3 mb-2 flex items-center gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-red-800 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
+          >
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <div className="flex-1 text-xs">
+              <p className="font-semibold">
+                {vencidas.total} {vencidas.total === 1 ? 'cuenta vencida' : 'cuentas vencidas'}
+              </p>
+              <p>Bs. {vencidas.monto_total.toLocaleString('es-BO', { minimumFractionDigits: 2 })} por cobrar</p>
+            </div>
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        )}
+
+        {/* Pestañas */}
+        <div className="flex gap-1 overflow-x-auto px-3 pb-2">
+          {PESTANAS.map((p) => {
+            const count = p.id === 'todas' ? noLeidas : porCategoria[p.id];
+            const activa = pestana === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPestana(p.id)}
+                className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs transition ${
+                  activa
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {p.label}
+                {count > 0 && <span className="font-semibold">{count > 99 ? '99+' : count}</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <DropdownMenuSeparator className="m-0 dark:bg-slate-700" />
+
+        {/* Lista */}
+        <div className="max-h-[22rem] overflow-y-auto">
+          {visibles.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              <Bell className="mx-auto mb-2 h-8 w-8 opacity-40" />
+              <p>{cargando ? 'Cargando…' : 'No hay notificaciones de hoy'}</p>
+            </div>
+          ) : (
+            visibles.map((n) => (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => abrirNotificacion(n)}
+                className={`flex w-full gap-3 border-b px-4 py-3 text-left transition last:border-0 hover:bg-muted/60 dark:border-slate-700 ${
+                  n.leida ? '' : 'bg-blue-50/70 dark:bg-blue-900/20'
+                }`}
+              >
+                <span
+                  className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${
+                    n.leida ? 'bg-transparent' : COLOR_CATEGORIA[n.categoria]
+                  }`}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm dark:text-gray-100 ${n.leida ? '' : 'font-semibold'}`}>{n.titulo}</p>
+                  {n.mensaje && (
+                    <p className="mt-0.5 break-words text-xs text-gray-600 dark:text-gray-300">{n.mensaje}</p>
+                  )}
+                  <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: es })}
+                  </p>
+                </div>
+              </button>
+            ))
           )}
         </div>
 
-        <DropdownMenuSeparator className="dark:bg-slate-700" />
+        <DropdownMenuSeparator className="m-0 dark:bg-slate-700" />
 
-        {/* Opciones de configuración */}
-        <div className="px-4 py-2 space-y-2 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BellRing className="h-4 w-4 dark:text-gray-300" />
-              <span className="text-xs font-medium dark:text-gray-300">Notificaciones Push</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRequestNotification}
-              className="h-6 w-6 p-0 dark:hover:bg-slate-700"
-            >
-              ✓
-            </Button>
-          </div>
-        </div>
-
-        <DropdownMenuSeparator className="dark:bg-slate-700" />
-
-        {notifications.length === 0 ? (
-          <div className="text-center py-8 text-sm text-muted-foreground dark:text-gray-400">
-            <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>No hay notificaciones</p>
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 border-b dark:border-slate-700 last:border-0 cursor-pointer transition ${
-                  !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                }`}
-                onClick={() => markAsRead(notification.id)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    {/* Title with type badge */}
-                    <div className="flex items-start gap-2 mb-1">
-                      <span className="text-lg flex-shrink-0">{notification.title.split(' ')[0]}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold dark:text-gray-100 break-words">
-                          {notification.title.substring(notification.title.indexOf(' ') + 1)}
-                        </p>
-                        <Badge
-                          className={`inline-block text-xs mt-1 ${getTypeColor(notification.type)}`}
-                          variant="outline"
-                        >
-                          {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Message */}
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 break-words">
-                      {notification.message}
-                    </p>
-
-                    {/* Timestamp */}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      {formatDistanceToNow(new Date(notification.createdAt), {
-                        addSuffix: true,
-                        locale: es,
-                      })}
-                    </p>
-
-                    {/* Unread indicator */}
-                    {!notification.read && (
-                      <div className="mt-2 h-1 w-1 rounded-full bg-blue-500 dark:bg-blue-400" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <Link
+          href="/mis-notificaciones"
+          onClick={() => setAbierto(false)}
+          className="block px-4 py-2.5 text-center text-xs font-medium text-primary hover:bg-muted/60"
+        >
+          Ver todas las notificaciones
+        </Link>
       </DropdownMenuContent>
     </DropdownMenu>
   );

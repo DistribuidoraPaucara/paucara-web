@@ -16,15 +16,16 @@ import {
   TableRow,
 } from '@/presentation/components/ui/table';
 import { Badge } from '@/presentation/components/ui/badge';
-import { Trash2, ArrowLeft, Search, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/presentation/components/ui/tooltip';
+import { Trash2, ArrowLeft, Search, X, ExternalLink } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
 import * as routes from '@/routes/combos';
-import ComboCapacity from './components/ComboCapacity';
 
 interface Producto {
   id: number;
   nombre: string;
   sku: string;
+  stock_disponible?: number;
   precio_venta: number;
   precios: Array<{
     id: number;
@@ -95,10 +96,13 @@ interface Combo {
 interface FormProps {
   combo?: Combo;
   tipos_precio: TipoPrecio[];
+  almacen_principal_id: number;
 }
 
-export default function ComboForm({ combo, tipos_precio }: FormProps) {
-  console.log('Tipos de precio:', tipos_precio);
+const formatBs = (valor: number): string =>
+  `Bs ${valor.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+export default function ComboForm({ combo, tipos_precio, almacen_principal_id }: FormProps) {
   const isEditing = !!combo;
   const [items, setItems] = useState<ComboItem[]>(
     combo?.items?.map(item => ({
@@ -110,10 +114,6 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Producto[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
-  const [cantidad, setCantidad] = useState(1);
-  const [precioUnitario, setPrecioUnitario] = useState(0);
-  const [esObligatorio, setEsObligatorio] = useState(true);
   const [cantidadALlevar, setCantidadALlevar] = useState(2);
   const [precioGrupo, setPrecioGrupo] = useState(0);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -129,25 +129,30 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
   }, []);
 
   // Fetch stock data for all products in the combo
-  const fetchStockForItems = useCallback(async (comboItems: ComboItem[]) => {
+  const fetchStockForItems = useCallback(async (comboItems: ComboItem[], signal?: AbortSignal) => {
     if (comboItems.length === 0) return;
 
     try {
       const productIds = comboItems.map(item => item.producto_id);
       const response = await fetch('/api/productos/stock/multiples', {
         method: 'POST',
+        credentials: 'same-origin',
+        signal,
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
         },
-        body: JSON.stringify({ producto_ids: productIds }),
+        body: JSON.stringify({ producto_ids: productIds, almacen_id: almacen_principal_id }),
       });
 
       if (response.ok) {
-        const stockResults = await response.json();
+        // La API responde { success, total, stocks: [...] }
+        const { stocks } = await response.json();
         const stockMap: Record<number, { stock_disponible: number; stock_total: number }> = {};
 
-        if (Array.isArray(stockResults)) {
-          stockResults.forEach((result: any) => {
+        if (Array.isArray(stocks)) {
+          stocks.forEach((result: any) => {
             stockMap[result.producto_id] = {
               stock_disponible: result.stock_disponible || 0,
               stock_total: result.stock_total || 0,
@@ -158,9 +163,11 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
         setStockData(stockMap);
       }
     } catch (error) {
-      console.error('Error fetching stock data:', error);
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error fetching stock data:', error);
+      }
     }
-  }, []);
+  }, [almacen_principal_id]);
 
   const { data, setData, post, put, processing, errors } = useForm({
     sku: combo?.sku || '',
@@ -173,31 +180,23 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
 
   const productosOpcionales = items.filter(item => !item.es_obligatorio);
 
-  // Cargar stock cuando se abre un combo existente (edición)
-  useEffect(() => {
-    if (isEditing && combo?.items && combo.items.length > 0) {
-      console.log('📦 Cargando stock de items del combo:', combo.items);
-      fetchStockForItems(items);
-    }
-  }, [isEditing, combo?.items]);
-
   // Cargar datos del grupo opcional cuando se abre un combo existente (edición)
   useEffect(() => {
     if (isEditing && combo?.grupo_opcional) {
-      console.log('📦 Cargando grupo opcional:', combo.grupo_opcional);
       setCantidadALlevar(combo.grupo_opcional.cantidad_a_llevar || 2);
       setPrecioGrupo(combo.grupo_opcional.precio_grupo || 0);
-    } else if (isEditing) {
-      console.log('⚠️ Combo abierto pero NO tiene grupo_opcional');
     }
   }, [isEditing, combo?.grupo_opcional]);
 
-  // Fetch stock data whenever items change
+  // El stock se consulta al abrir y cuando cambia la lista de productos, no al editar cantidades o precios
+  const productosConsultados = [...new Set(items.map(item => Number(item.producto_id)))].sort((a, b) => a - b).join(',');
+
   useEffect(() => {
-    if (items.length > 0) {
-      fetchStockForItems(items);
-    }
-  }, [items]);
+    const peticion = new AbortController();
+    fetchStockForItems(items, peticion.signal);
+    // Si la lista vuelve a cambiar, se cancela esta consulta para que no pise a la siguiente
+    return () => peticion.abort();
+  }, [productosConsultados]);
 
   // Actualizar grupo_opcional cuando cambien los items, SKU o configuración del grupo
   useEffect(() => {
@@ -225,53 +224,12 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
       const response = await fetch(`/api/productos/buscar?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       const results = data.data || [];
-      console.log('Resultados de búsqueda:', results);
       setSearchResults(results);
       setShowResults(true);
 
-      // Si hay exactamente 1 resultado, agregarlo automáticamente a la tabla
+      // Si hay exactamente 1 resultado, agregarlo directo a la tabla
       if (results.length === 1) {
-        const producto = results[0];
-        setTimeout(() => {
-          // Verificar que el producto no esté ya en el combo
-          if (!items.some(item => item.producto_id === producto.id)) {
-            setSelectedProducto(producto);
-            setSearchQuery(producto.nombre);
-            setShowResults(false);
-            setSearchResults([]);
-            // Cargar precio de venta del producto
-            setPrecioUnitario(producto.precio_venta || 0);
-
-            // Agregar automáticamente a la tabla después de un pequeño delay
-            setTimeout(() => {
-              const newComboItem: ComboItem = {
-                producto_id: producto.id,
-                producto_nombre: producto.nombre,
-                producto_sku: producto.sku,
-                cantidad: 1,
-                precio_unitario: producto.precio_venta || 0,
-                tipo_precio_id: producto.tipo_precio_id_recomendado,
-                tipo_precio_nombre: producto.precios?.find(
-                  p => p.tipo_precio_id === producto.tipo_precio_id_recomendado
-                )?.tipoPrecio?.nombre,
-                es_obligatorio: true,
-                grupo_opcional: null,
-                precios: producto.precios,
-              };
-              const updatedItemsFromSearch = [...items, newComboItem];
-              setItems(updatedItemsFromSearch);
-              setData('items', normalizeItems(updatedItemsFromSearch));
-              setSelectedProducto(null);
-              setSearchQuery('');
-              setCantidad(1);
-              setPrecioUnitario(0);
-              setEsObligatorio(true);
-              setGrupoOpcional('');
-            }, 200);
-          } else {
-            alert('Este producto ya está en el combo');
-          }
-        }, 300);
+        handleSelectProducto(results[0]);
       }
     } catch (error) {
       console.error('Error searching products:', error);
@@ -312,49 +270,6 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
     setSearchQuery('');
     setShowResults(false);
     setSearchResults([]);
-    setSelectedProducto(null);
-    setCantidad(1);
-    setPrecioUnitario(0);
-    setEsObligatorio(true);
-  };
-
-  const handleAddItem = () => {
-    if (!selectedProducto) {
-      alert('Selecciona un producto');
-      return;
-    }
-    if (cantidad <= 0) {
-      alert('La cantidad debe ser mayor a 0');
-      return;
-    }
-    if (items.some(item => item.producto_id === selectedProducto.id)) {
-      alert('Este producto ya está en el combo');
-      return;
-    }
-
-    const newComboItem: ComboItem = {
-      producto_id: selectedProducto.id,
-      producto_nombre: selectedProducto.nombre,
-      producto_sku: selectedProducto.sku,
-      cantidad: cantidad,
-      precio_unitario: precioUnitario || selectedProducto.precio_venta || 0,
-      tipo_precio_id: selectedProducto.tipo_precio_id_recomendado,
-      tipo_precio_nombre: selectedProducto.precios?.find(
-        p => p.tipo_precio_id === selectedProducto.tipo_precio_id_recomendado
-      )?.tipoPrecio?.nombre,
-      es_obligatorio: esObligatorio,
-      grupo_opcional: null,
-      precios: selectedProducto.precios,
-    };
-
-    const updatedItems = [...items, newComboItem];
-    setItems(updatedItems);
-    setData('items', normalizeItems(updatedItems));
-    setSelectedProducto(null);
-    setSearchQuery('');
-    setCantidad(1);
-    setPrecioUnitario(0);
-    setEsObligatorio(true);
   };
 
   const handleRemoveItem = (productoId: number) => {
@@ -446,11 +361,26 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
     return costoObligatorios + costoGrupo;
   }, [items, productosOpcionales.length, cantidadALlevar, precioGrupo]);
 
+  // Cuántos combos alcanza a cubrir un componente (null si todavía no se conoce su stock o no tiene cantidad)
+  const combosQueAlcanza = (item: ComboItem): number | null => {
+    const stock = stockData[item.producto_id]?.stock_disponible ?? item.stock_disponible;
+    const cantidad = parseFloat(item.cantidad.toString());
+    return stock === undefined || !(cantidad > 0) ? null : Math.floor(stock / cantidad);
+  };
+
+  // Máximo de combos según los obligatorios: los opcionales no limitan (igual que ComboStockService)
+  const alcancesObligatorios = items
+    .filter(item => item.es_obligatorio !== false)
+    .map(combosQueAlcanza)
+    .filter((alcance): alcance is number => alcance !== null);
+  const capacidadCombo = alcancesObligatorios.length > 0 ? Math.min(...alcancesObligatorios) : null;
+
   // Auto-actualizar precio_venta con el totalCosto cuando items o grupo cambian
   // Solo si precio_venta es 0 o es igual al anterior totalCosto
-  const [previousTotalCosto, setPreviousTotalCosto] = useState(0);
-  const [previousItemsLength, setPreviousItemsLength] = useState(0);
-  const [previousProductosOpcionalesLength, setPreviousProductosOpcionalesLength] = useState(0);
+  // Parten de los valores cargados: abrir un combo no debe cambiar su precio
+  const [previousTotalCosto, setPreviousTotalCosto] = useState(totalCosto);
+  const [previousItemsLength, setPreviousItemsLength] = useState(items.length);
+  const [previousProductosOpcionalesLength, setPreviousProductosOpcionalesLength] = useState(productosOpcionales.length);
 
   useEffect(() => {
     const currentPrecioVenta = parseFloat(data.precio_venta.toString());
@@ -542,44 +472,112 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
         { title: isEditing ? 'Editar' : 'Crear', href: '#' },
       ]}
     >
-      <div className="space-y-6 p-6">
-        {/* Botón atrás */}
-        <Link href={routes.index().url}>
-          <Button variant="outline" className="gap-2">
-            <ArrowLeft size={18} />
-            Volver
-          </Button>
-        </Link>
+      <div className="space-y-6 p-2">
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Barra fija: top-12 para quedar bajo el encabezado de la app */}
+          <div className="sticky top-12 z-30 rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+              <div className="min-w-0 max-w-sm">
+                <h1 className="truncate font-semibold text-gray-900 dark:text-gray-100" title={data.nombre}>
+                  {data.nombre || (isEditing ? 'Combo sin nombre' : 'Nuevo combo')}
+                </h1>
+                {isEditing && combo?.id ? (
+                  <a
+                    href={`/productos/${combo.id}/edit`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Editar producto en otra pestaña"
+                    className="inline-flex items-center gap-0.5 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    ID {combo.id}
+                    <ExternalLink size={12} />
+                  </a>
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Sin guardar</p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Costo</p>
+                  <p className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{formatBs(totalCosto)}</p>
+                </div>
+                <div>
+                  <Label htmlFor="precio_venta" className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                    Venta *
+                  </Label>
+                  <Input
+                    id="precio_venta"
+                    type="number"
+                    step="0.01"
+                    value={data.precio_venta}
+                    onChange={(e) => setData('precio_venta', e.target.value ? parseFloat(e.target.value) : 0)}
+                    placeholder="0.00"
+                    className={`h-8 w-28 text-right font-semibold ${errors.precio_venta ? 'border-red-500 dark:border-red-600 dark:bg-red-950/20' : 'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100'}`}
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Margen</p>
+                  <p
+                    className={`font-semibold tabular-nums ${
+                      margen > 0 ? 'text-green-600 dark:text-green-400' : margen < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'
+                    }`}
+                  >
+                    {totalCosto > 0 ? `${margen.toLocaleString('es-BO', { maximumFractionDigits: 1 })} %` : '—'}
+                  </p>
+                </div>
+                <div title="Según el stock del almacén principal">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Se pueden armar</p>
+                  <p className={`font-semibold tabular-nums ${capacidadCombo === 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                    {capacidadCombo ?? '—'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button asChild type="button" variant="outline" size="sm">
+                  <Link href={routes.index().url}>Cancelar</Link>
+                </Button>
+                <Button type="submit" size="sm" disabled={processing}>
+                  {processing ? 'Guardando...' : isEditing ? 'Actualizar Combo' : 'Crear Combo'}
+                </Button>
+              </div>
+            </div>
+            {errors.precio_venta && <p className="mt-1 text-right text-sm text-red-500 dark:text-red-400">{errors.precio_venta}</p>}
+          </div>
+
           {/* Sección: Información básica */}
           <Card>
             <CardHeader>
               <CardTitle>Información Básica</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="sku">SKU del Combo *</Label>
-                <Input
-                  id="sku"
-                  value={data.sku}
-                  onChange={(e) => setData('sku', e.target.value)}
-                  placeholder="Ej: COMBO-001"
-                  className={errors.sku ? 'border-red-500 dark:border-red-600 dark:bg-red-950/20' : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'}
-                />
-                {errors.sku && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.sku}</p>}
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="sku">SKU del Combo *</Label>
+                  <Input
+                    id="sku"
+                    value={data.sku}
+                    onChange={(e) => setData('sku', e.target.value)}
+                    placeholder="Ej: COMBO-001"
+                    className={errors.sku ? 'border-red-500 dark:border-red-600 dark:bg-red-950/20' : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'}
+                  />
+                  {errors.sku && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.sku}</p>}
+                </div>
 
-              <div>
-                <Label htmlFor="nombre">Nombre del Combo *</Label>
-                <Input
-                  id="nombre"
-                  value={data.nombre}
-                  onChange={(e) => setData('nombre', e.target.value)}
-                  placeholder="Ej: Pack Premium"
-                  className={errors.nombre ? 'border-red-500 dark:border-red-600 dark:bg-red-950/20' : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'}
-                />
-                {errors.nombre && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.nombre}</p>}
+                <div>
+                  <Label htmlFor="nombre">Nombre del Combo *</Label>
+                  <Input
+                    id="nombre"
+                    value={data.nombre}
+                    onChange={(e) => setData('nombre', e.target.value)}
+                    placeholder="Ej: Pack Premium"
+                    className={errors.nombre ? 'border-red-500 dark:border-red-600 dark:bg-red-950/20' : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'}
+                  />
+                  {errors.nombre && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.nombre}</p>}
+                </div>
+
               </div>
 
               <div>
@@ -597,21 +595,7 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                 )}
               </div>
 
-              <div>
-                <Label htmlFor="precio_venta">Precio de Venta *</Label>
-                <Input
-                  id="precio_venta"
-                  type="number"
-                  step="0.01"
-                  value={data.precio_venta}
-                  onChange={(e) => setData('precio_venta', e.target.value ? parseFloat(e.target.value) : 0)}
-                  placeholder="0.00"
-                  className={errors.precio_venta ? 'border-red-500 dark:border-red-600 dark:bg-red-950/20' : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'}
-                />
-                {errors.precio_venta && (
-                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.precio_venta}</p>
-                )}
-              </div>
+              
             </CardContent>
           </Card>
 
@@ -650,7 +634,6 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                             setSearchQuery('');
                             setShowResults(false);
                             setSearchResults([]);
-                            setSelectedProducto(null);
                           }}
                           className="absolute right-3 top-3"
                         >
@@ -683,9 +666,16 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                               onClick={() => handleSelectProducto(producto)}
                               className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0 flex justify-between items-center dark:text-gray-100"
                             >
-                              <div>
-                                <div className="font-medium text-sm">{producto.nombre}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {producto.sku} | ID: {producto.id}</div>
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <div className="font-medium text-sm">{producto.nombre}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {producto.sku} | ID: {producto.id}</div>
+                                </div>
+                                {producto.stock_disponible !== undefined && (
+                                  <span className={`text-xs font-semibold whitespace-nowrap ${producto.stock_disponible > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    {producto.stock_disponible} disp.
+                                  </span>
+                                )}
                               </div>
                             </button>
                           ))}
@@ -696,96 +686,7 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                     </div>
                   )}
                 </div>
-                {selectedProducto && (
-                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded flex justify-between items-center">
-                    <div className="text-sm dark:text-green-200">
-                      <span className="font-medium">{selectedProducto.nombre}</span>
-                      <span className="text-gray-600 dark:text-gray-400"> • {selectedProducto.sku}</span>
-                    </div>
-                  </div>
-                )}
               </div>
-
-              {/* Cantidad, Precio unitario y Tipo de producto */}
-              {selectedProducto && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="cantidad">Cantidad *</Label>
-                      <Input
-                        id="cantidad"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="1"
-                        value={cantidad}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setCantidad(0);
-                          } else {
-                            setCantidad(parseFloat(val) || 0);
-                          }
-                        }}
-                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="precio_unitario">Precio Unitario *</Label>
-                      <Input
-                        id="precio_unitario"
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={precioUnitario}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setPrecioUnitario(0);
-                          } else {
-                            setPrecioUnitario(parseFloat(val) || 0);
-                          }
-                        }}
-                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tipo de Producto: Obligatorio vs Opcional */}
-                  <div>
-                    <Label htmlFor="es_obligatorio">Tipo de Producto *</Label>
-                    <select
-                      id="es_obligatorio"
-                      value={esObligatorio ? 'obligatorio' : 'opcional'}
-                      onChange={(e) => setEsObligatorio(e.target.value === 'obligatorio')}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-gray-100"
-                    >
-                      <option value="obligatorio">Obligatorio</option>
-                      <option value="opcional">Opcional</option>
-                    </select>
-                    {!esObligatorio && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                        ℹ️ Se asignará automáticamente al grupo: <strong>{data.sku || '[SKU del combo]'}</strong>
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Button
-                      type="button"
-                      onClick={handleAddItem}
-                      className="w-full"
-                      disabled={!selectedProducto}
-                    >
-                      Agregar a la Tabla
-                    </Button>
-                  </div>
-                </div>
-
-              )}
-
-
             </CardContent>
           </Card>
 
@@ -852,11 +753,14 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
             </Card>
           )}
 
+          
+
           {/* Sección: Tabla de productos */}
           {items.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Productos del Combo ({items.length})</CardTitle>
+                <p className="text-xs text-gray-500 dark:text-gray-400">El stock corresponde al almacén principal</p>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -878,8 +782,14 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                         const esObligatorio = item.es_obligatorio !== false;
                         const cantidad = parseFloat(item.cantidad.toString());
                         const sumaACosto = esObligatorio && cantidad > 0; // Solo obligatorios suman al costo
+                        const alcance = combosQueAlcanza(item);
+                        const limita = esObligatorio && alcance !== null && alcance === capacidadCombo;
+                        const stockDisponible = stockData[item.producto_id]?.stock_disponible ?? item.stock_disponible;
                         return (
-                          <TableRow key={item.producto_id} className={!esObligatorio ? 'bg-blue-50 dark:bg-blue-900/10' : ''}>
+                          <TableRow
+                            key={item.producto_id}
+                            className={limita ? 'bg-amber-50 dark:bg-amber-900/20' : !esObligatorio ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
+                          >
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div>
@@ -893,13 +803,28 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-center">
-                              <div className="text-sm font-medium dark:text-gray-100">
-                                {stockData[item.producto_id]?.stock_disponible ?? item.stock_disponible ?? '-'}
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                / {stockData[item.producto_id]?.stock_total ?? item.stock_total ?? '-'}
-                              </div>
+                            <TableCell className="text-center whitespace-nowrap">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0} className="cursor-help text-sm">
+                                    <span className={`font-medium ${stockDisponible === 0 ? 'text-red-600 dark:text-red-400' : 'dark:text-gray-100'}`}>
+                                      {stockDisponible ?? '-'}
+                                    </span>
+                                    {alcance !== null && (
+                                      <span className={limita ? 'font-semibold text-amber-700 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}>
+                                        {' '}→ {alcance} {alcance === 1 ? 'combo' : 'combos'}
+                                      </span>
+                                    )}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-left">
+                                  <p>Disponible: {stockDisponible ?? '-'}</p>
+                                  <p>Total: {stockData[item.producto_id]?.stock_total ?? item.stock_total ?? '-'}</p>
+                                  {alcance !== null && <p>Alcanza para {alcance} {alcance === 1 ? 'combo' : 'combos'}</p>}
+                                  {limita && <p className="font-semibold">Limita el combo</p>}
+                                  {!esObligatorio && <p>Opcional: no limita el combo</p>}
+                                </TooltipContent>
+                              </Tooltip>
                             </TableCell>
                             <TableCell>
                               <Input
@@ -990,84 +915,16 @@ export default function ComboForm({ combo, tipos_precio }: FormProps) {
                     </TableBody>
                   </Table>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Sección: Resumen de precios */}
-          {items.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumen de Precios</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Costo obligatorios */}
-                <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-gray-600 dark:text-gray-400">Costo Obligatorios:</span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    Bs {items.reduce((sum, item) => {
-                      const esObligatorio = item.es_obligatorio !== false;
-                      const cantidad = parseFloat(item.cantidad.toString());
-                      const precio = parseFloat(item.precio_unitario.toString());
-                      if (esObligatorio && cantidad > 0) {
-                        return sum + precio * cantidad;
-                      }
-                      return sum;
-                    }, 0).toFixed(2)}
-                  </span>
-                </div>
-
-                {/* Costo grupo opcional */}
                 {productosOpcionales.length > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Costo Grupo Opcional ({cantidadALlevar} × Bs {precioGrupo.toFixed(2)}):
-                    </span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">Bs {(cantidadALlevar * precioGrupo).toFixed(2)}</span>
-                  </div>
+                  <p className="mt-3 text-right text-sm text-gray-600 dark:text-gray-400">
+                    Obligatorios {formatBs(totalCosto - cantidadALlevar * precioGrupo)} + Grupo opcional ({cantidadALlevar} × {formatBs(precioGrupo)}){' '}
+                    = <strong className="text-gray-900 dark:text-gray-100">{formatBs(totalCosto)}</strong>
+                  </p>
                 )}
-
-                {/* Costo total */}
-                <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-2 rounded">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">Costo Total Calculado:</span>
-                  <span className="font-bold text-lg text-gray-900 dark:text-gray-100">Bs {totalCosto.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 bg-blue-50 dark:bg-blue-900/20 px-2 rounded border border-blue-200 dark:border-blue-800">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">Precio de Venta (Auto):</span>
-                  <span className="font-bold text-lg text-blue-700 dark:text-blue-400">Bs {typeof data.precio_venta === 'number' ? data.precio_venta.toFixed(2) : parseFloat(data.precio_venta.toString() || '0').toFixed(2)}</span>
-                </div>
-                {/* <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600 dark:text-gray-400">Margen de Ganancia:</span>
-                  <Badge
-                    variant={margen > 0 ? 'default' : margen < 0 ? 'destructive' : 'secondary'}
-                  >
-                    {margen.toFixed(2)}%
-                  </Badge>
-                </div> */}
               </CardContent>
             </Card>
           )}
 
-          {/* Capacidad de Manufactura */}
-          {isEditing && combo?.id && (
-            <ComboCapacity comboId={combo.id} />
-          )}
-
-          {/* Botones de acción */}
-          <div className="flex gap-4">
-            <Button
-              type="submit"
-              disabled={processing}
-              className="flex-1"
-            >
-              {processing ? 'Guardando...' : isEditing ? 'Actualizar Combo' : 'Crear Combo'}
-            </Button>
-            <Link href={routes.index().url} className="flex-1">
-              <Button type="button" variant="outline" className="w-full">
-                Cancelar
-              </Button>
-            </Link>
-          </div>
         </form>
       </div>
     </AppLayout>

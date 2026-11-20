@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
-import { Filter, RotateCcw, Search, X } from 'lucide-react';
+import { Filter, Loader2, RotateCcw, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchSelect from '@/presentation/components/ui/search-select';
 import { useEntitySelect } from '@/presentation/hooks/use-search-select';
@@ -17,8 +17,11 @@ interface ModernFiltersProps {
     onResetFilters: () => void;
     extraData?: Record<string, unknown>;
     isLoading?: boolean;
+    searchPlaceholder?: string;
     className?: string;
 }
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 export default function ModernFilters({
     config,
@@ -26,6 +29,8 @@ export default function ModernFilters({
     onApplyFilters,
     onResetFilters,
     extraData,
+    isLoading = false,
+    searchPlaceholder,
     className
 }: ModernFiltersProps) {
     const [filters, setFilters] = React.useState<Filters>(currentFilters);
@@ -34,6 +39,9 @@ export default function ModernFilters({
 
     // ✅ Debounce para búsqueda en tiempo real
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    // Última búsqueda enviada: evita repetir la petición si el texto no cambió (ej. "abc " → "abc")
+    const lastSentQueryRef = useRef<string>(String(currentFilters.q || '').trim());
 
     // Prepare SearchSelect data for specific filters
     const categoriasData = React.useMemo(() => {
@@ -55,7 +63,12 @@ export default function ModernFilters({
     // Sync local state with external filters
     React.useEffect(() => {
         setFilters(currentFilters);
-        setSearchQuery(String(currentFilters.q || ''));
+        const q = String(currentFilters.q || '');
+        lastSentQueryRef.current = q.trim();
+        // No pisar lo que el usuario sigue escribiendo cuando llega la respuesta de una búsqueda anterior
+        if (document.activeElement !== searchInputRef.current) {
+            setSearchQuery(q);
+        }
     }, [currentFilters]);
 
     const handleFilterChange = useCallback((key: string, value: string | number | boolean | undefined) => {
@@ -65,33 +78,42 @@ export default function ModernFilters({
         }));
     }, []);
 
+    const ejecutarBusqueda = useCallback((query: string) => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+            searchTimeoutRef.current = null;
+        }
+
+        const q = query.trim();
+        if (q === lastSentQueryRef.current) return;
+        lastSentQueryRef.current = q;
+
+        const filtrosParaBusqueda = Object.fromEntries(
+            Object.entries({ ...filters, q }).filter(([, value]) => value !== '' && value != null)
+        );
+        onApplyFilters(filtrosParaBusqueda);
+    }, [filters, onApplyFilters]);
+
     // ✅ Búsqueda en tiempo real con debounce
     const handleSearchChange = useCallback((query: string) => {
         setSearchQuery(query);
 
-        // Limpiar timeout anterior
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
+        searchTimeoutRef.current = setTimeout(() => ejecutarBusqueda(query), SEARCH_DEBOUNCE_MS);
+    }, [ejecutarBusqueda]);
 
-        // Nuevo timeout con debounce de 300ms
-        searchTimeoutRef.current = setTimeout(() => {
-            console.log('🔍 [ModernFilters] Búsqueda en tiempo real:', {
-                query,
-                filtros_activos: Object.keys(filters).filter(k => filters[k] && k !== 'order_by' && k !== 'order_dir')
-            });
-
-            const filtrosParaBusqueda = {
-                ...Object.fromEntries(
-                    Object.entries(filters).filter(([key, value]) =>
-                        key !== 'q' && value !== '' && value != null
-                    )
-                ),
-                q: query
-            };
-            onApplyFilters(filtrosParaBusqueda);
-        }, 300); // Debounce de 300ms
-    }, [filters, onApplyFilters]);
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            ejecutarBusqueda(searchQuery);
+        } else if (e.key === 'Escape' && searchQuery) {
+            e.preventDefault();
+            setSearchQuery('');
+            ejecutarBusqueda('');
+        }
+    };
 
     // Limpiar timeout al desmontar
     useEffect(() => {
@@ -106,27 +128,19 @@ export default function ModernFilters({
         const filtrosLimpios = Object.fromEntries(
             Object.entries({ ...filters, q: searchQuery }).filter(([, value]) => value !== '' && value != null)
         );
+        lastSentQueryRef.current = searchQuery.trim();
         onApplyFilters(filtrosLimpios);
     }, [filters, searchQuery, onApplyFilters]);
 
     const limpiarFiltros = useCallback(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        lastSentQueryRef.current = '';
         setFilters({});
         setSearchQuery('');
         onResetFilters();
     }, [onResetFilters]);
-
-    const busquedaRapida = (e: React.FormEvent) => {
-        e.preventDefault();
-        const filtrosParaBusqueda = {
-            ...Object.fromEntries(
-                Object.entries(filters).filter(([key, value]) =>
-                    key !== 'q' && value !== '' && value != null
-                )
-            ),
-            q: searchQuery
-        };
-        onApplyFilters(filtrosParaBusqueda);
-    };
 
     const hayFiltrosActivos = Object.values({ ...filters, q: searchQuery }).some(value =>
         value !== '' && value != null
@@ -288,17 +302,28 @@ export default function ModernFilters({
                     <div className="relative group">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 h-4 w-4 transition-colors" />
                         <Input
-                            type="text"
-                            placeholder="Buscar en tiempo real..."
+                            ref={searchInputRef}
+                            type="search"
+                            placeholder={searchPlaceholder || 'Buscar...'}
                             value={searchQuery}
                             onChange={e => handleSearchChange(e.target.value)}
-                            className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            onKeyDown={handleSearchKeyDown}
+                            autoComplete="off"
+                            aria-label="Buscar"
+                            className="pl-10 pr-9 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all [&::-webkit-search-cancel-button]:hidden"
                         />
-                        {searchQuery && (
+                        {isLoading ? (
+                            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-500" aria-label="Buscando" />
+                        ) : searchQuery && (
                             <button
                                 type="button"
-                                onClick={() => handleSearchChange('')}
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    ejecutarBusqueda('');
+                                    searchInputRef.current?.focus();
+                                }}
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                aria-label="Limpiar búsqueda"
                             >
                                 <X className="h-4 w-4" />
                             </button>

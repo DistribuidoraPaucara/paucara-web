@@ -14,7 +14,7 @@
 
 import { useState, useCallback } from 'react';
 import type { PrecioProductoDTO } from '@/domain/entities/precios';
-import { redondearDos } from '@/lib/precios.utils';
+import { redondearDos, redondearDecimales, decimalesDePrecio, DECIMALES_COSTO, TOLERANCIA_COSTO } from '@/lib/precios.utils';
 
 export interface PrecioPropuesto {
     id: number;
@@ -78,7 +78,7 @@ export function useCascadaPreciosCompra(
                         tipo_color: precio.tipo.color,
                         tipo_es_ganancia: precio.tipo.es_ganancia,
                         precio_actual: precio.precio_actual,
-                        precio_propuesto: redondearDos(precioCostoNuevo),
+                        precio_propuesto: redondearDecimales(precioCostoNuevo, DECIMALES_COSTO),
                         porcentaje_ganancia_actual: 0,
                         porcentaje_ganancia_propuesto: 0,
                         margen_ganancia_absoluto: 0
@@ -138,7 +138,7 @@ export function useCascadaPreciosCompra(
         }
 
         const nuevos = [...preciosPropuestos];
-        nuevos[indexPrecio].precio_propuesto = redondearDos(nuevoValor);
+        nuevos[indexPrecio].precio_propuesto = redondearDecimales(nuevoValor, decimalesDePrecio(nuevos[indexPrecio].tipo_codigo));
 
         // Recalcular porcentaje de ganancia
         if (precioCostoNuevo && precioCostoNuevo > 0) {
@@ -196,7 +196,7 @@ export function useCascadaPreciosCompra(
     } => {
         // Validar que haya cambios significativos
         const preciosCambiados = preciosPropuestos.filter(p =>
-            Math.abs(p.precio_propuesto - p.precio_actual) > tolerancia ||
+            Math.abs(p.precio_propuesto - p.precio_actual) > (p.tipo_codigo === 'COSTO' ? TOLERANCIA_COSTO : tolerancia) ||
             Math.abs(p.porcentaje_ganancia_propuesto - p.porcentaje_ganancia_actual) > tolerancia
         );
 
@@ -259,7 +259,10 @@ export function useCascadaPreciosCompra(
                 tipo_color: precio.tipo.color,
                 tipo_es_ganancia: precio.tipo.es_ganancia,
                 precio_actual: precio.precio_actual,
-                precio_propuesto: precio.precio_actual, // ✅ Usa el precio actual como propuesto
+                // El costo llega con el valor escrito en la compra; los precios de venta quedan como están para decidirlos a mano
+                precio_propuesto: precio.tipo.codigo === 'COSTO' && precioCostoNuevo
+                    ? redondearDecimales(precioCostoNuevo, DECIMALES_COSTO)
+                    : precio.precio_actual,
                 porcentaje_ganancia_actual: precio.porcentaje_ganancia,
                 porcentaje_ganancia_propuesto: precio.porcentaje_ganancia, // ✅ Usa la ganancia actual
             }));
@@ -272,7 +275,7 @@ export function useCascadaPreciosCompra(
                 mensaje
             });
         }
-    }, [precios]);
+    }, [precios, precioCostoNuevo]);
 
     /**
      * Restaura los precios originales

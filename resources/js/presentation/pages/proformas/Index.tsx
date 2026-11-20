@@ -31,9 +31,10 @@ interface Props {
     proformas: Pagination<Proforma>;
     usuarios?: any[];
     clientes?: any[];
+    solo_hoy?: boolean;
 }
 
-export default function ProformasIndex({ proformas, usuarios = [], clientes = [] }: Props) {
+export default function ProformasIndex({ proformas, usuarios = [], clientes = [], solo_hoy = false }: Props) {
     console.log('Proformas recibidas:', proformas);
     const { estados: estadosAPI, isLoading: estadosLoading } = useEstadosProformas();
 
@@ -45,22 +46,16 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
     };
 
     // ✅ FUNCIONES PARA FECHAS RÁPIDAS
-    const getHoyFormato = () => {
-        const hoy = new Date();
-        return hoy.toISOString().split('T')[0];
+    // Fecha local (YYYY-MM-DD) a N días de hoy. toISOString() usa UTC: en Bolivia, desde las 20:00 daría el día siguiente
+    const fechaLocal = (dias: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() + dias);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
 
-    const getAyerFormato = () => {
-        const ayer = new Date();
-        ayer.setDate(ayer.getDate() - 1);
-        return ayer.toISOString().split('T')[0];
-    };
-
-    const getMananaFormato = () => {
-        const manana = new Date();
-        manana.setDate(manana.getDate() + 1);
-        return manana.toISOString().split('T')[0];
-    };
+    const getHoyFormato = () => fechaLocal(0);
+    const getAyerFormato = () => fechaLocal(-1);
+    const getMananaFormato = () => fechaLocal(1);
 
     // ✅ FUNCIONES PARA FILTROS RÁPIDOS DE FECHA (Created)
     const filtrarPorAyer = () => {
@@ -881,6 +876,15 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                 </div>
 
                 {/* ✅ NUEVO 2026-02-21: Tabla mejorada con ordenamiento */}
+                {solo_hoy && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-200">
+                        <span>Mostrando solo las proformas creadas hoy. Al buscar o filtrar se consulta todo el historial.</span>
+                        <Button type="button" variant="outline" size="sm" onClick={() => router.get('/proformas', { ver_todas: 1 })}>
+                            Ver todas
+                        </Button>
+                    </div>
+                )}
+
                 <div className="mt-4 overflow-x-auto rounded-lg border">
                     <Table>
                         <TableHeader>
@@ -904,7 +908,9 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                     <TableCell colSpan={12} className="py-8 text-center text-muted-foreground">
                                         {hasActiveFilters
                                             ? '❌ No se encontraron proformas que coincidan con los filtros'
-                                            : '📭 No hay proformas registradas'}
+                                            : solo_hoy
+                                              ? '📭 No hay proformas creadas hoy'
+                                              : '📭 No hay proformas registradas'}
                                     </TableCell>
                                 </TableRow>
                             ) : (

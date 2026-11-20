@@ -117,7 +117,11 @@ const GestionLotesVencimientos: React.FC<Props> = ({ lotes, estadisticas, produc
     const [filtroLocal, setFiltroLocal] = useState(filtros);
     const [loteSeleccionado, setLoteSeleccionado] = useState<LoteDetalle | null>(null);
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
-    const [vistaActual, setVistaActual] = useState<'tabla' | 'calendario'>('calendario');
+    // Vista inicial desde la URL (?vista=tabla), p. ej. al llegar desde "Vencido" en Asignar Lotes:
+    // el calendario solo muestra el mes actual y un lote vencido hace meses no se vería
+    const [vistaActual, setVistaActual] = useState<'tabla' | 'calendario'>(() =>
+        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('vista') === 'tabla' ? 'tabla' : 'calendario'
+    );
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [estaDandoDeBaja, setEstaDandoDeBaja] = useState(false);
     const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([]);
@@ -849,7 +853,19 @@ const GestionLotesVencimientos: React.FC<Props> = ({ lotes, estadisticas, produc
                                                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                                     {lote.producto.nombre}
                                                                 </div>
-                                                                <div className="text-sm text-gray-500">{lote.producto.codigo}</div>
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    SKU {lote.producto.sku || 'N/A'} ·{' '}
+                                                                    <a
+                                                                        href={`/productos/${lote.producto.id}/edit`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        title="Editar producto en otra pestaña"
+                                                                        className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                                                                    >
+                                                                        ID {lote.producto.id} ↗
+                                                                    </a>
+                                                                    {lote.producto.codigo && <> · Cód. {lote.producto.codigo}</>}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </td>

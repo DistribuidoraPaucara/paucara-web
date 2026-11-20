@@ -17,12 +17,14 @@
 
     {{-- Application Configuration (Runtime) --}}
     <script>
-        // Get WebSocket URL: prioritize WEBSOCKET_URL, fallback to VITE_WEBSOCKET_URL
-        const wsUrl = "{{ env('WEBSOCKET_URL') }}" || "{{ env('VITE_WEBSOCKET_URL', 'http://localhost:3001') }}";
+        // URL del WebSocket desde config/websocket.php (WEBSOCKET_URL).
+        // ⚠️ No usar env() aquí: con `php artisan config:cache` devuelve null y se caía
+        // a localhost:3001, que desde otra máquina no conecta.
+        const wsUrl = @json(config('websocket.url'));
 
         window.__APP_CONFIG__ = {
             websocketUrl: wsUrl,
-            apiUrl: "{{ env('VITE_API_URL', '/api') }}"
+            apiUrl: @json(config('app.api_url', '/api'))
         };
         window.__APP_NAME__ = "{{ $appName }}";
     </script>

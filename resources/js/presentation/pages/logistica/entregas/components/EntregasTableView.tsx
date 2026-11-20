@@ -297,16 +297,6 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
         });
     };
 
-    // ✅ Función para calcular el total de una entrega (suma de subtotales de todas las ventas)
-    const calcularTotalEntrega = (entrega: Entrega): number => {
-        return (
-            entrega.ventas?.reduce((total, venta) => {
-                const subtotal = typeof venta.subtotal === 'string' ? parseFloat(venta.subtotal) : venta.subtotal || 0;
-                return total + subtotal;
-            }, 0) ?? 0
-        );
-    };
-
     return (
         <div className="space-y-6">
             {/* ✅ COMPONENTE DE FILTROS MEJORADO */}
@@ -456,11 +446,16 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                                 </TableCell>
 
                                                 <TableCell className="text-center text-xs">
-                                                    {entrega.ventas.length} venta{entrega.ventas.length !== 1 ? 's' : ''}
+                                                    {entrega.totales?.cantidad_ventas ?? 0} venta{entrega.totales?.cantidad_ventas !== 1 ? 's' : ''}
+                                                    {(entrega.totales?.cantidad_excluidas ?? 0) > 0 && (
+                                                        <div className="text-muted-foreground">
+                                                            +{entrega.totales?.cantidad_excluidas} sin sumar
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     <span className="text-xs text-muted-foreground">
-                                                        Bs. {calcularTotalEntrega(entrega).toFixed(2)}
+                                                        Bs. {(entrega.totales?.subtotal ?? 0).toFixed(2)}
                                                     </span>
                                                 </TableCell>
                                                 {/* ✅ NUEVO: Columna Fecha de Creación */}
@@ -480,6 +475,9 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                                                         hour: '2-digit',
                                                                         minute: '2-digit',
                                                                     })}
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground" title="Creada por">
+                                                                    por {entrega.creado_por?.name ?? 'sin registro'}
                                                                 </div>
                                                             </>
                                                         ) : (
@@ -616,11 +614,12 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                                                                 typeof venta.total === 'string'
                                                                                     ? parseFloat(venta.total)
                                                                                     : venta.total || 0;
+                                                                            const excluida = venta.es_vigente === false;
 
                                                                             return (
                                                                                 <tr
                                                                                     key={venta.id}
-                                                                                    className="transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                                                    className={`transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 ${excluida ? 'opacity-60' : ''}`}
                                                                                 >
                                                                                     {/* Folio */}
                                                                                     <td className="px-3 py-3">
@@ -658,7 +657,9 @@ export function EntregasTableView({ entregas, vehiculos = [], choferes = [], ent
                                                                                         )}
                                                                                     </td>
                                                                                     {/* Monto */}
-                                                                                    <td className="px-3 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                                                                                    <td
+                                                                                        className={`px-3 py-3 text-right font-semibold ${excluida ? 'text-gray-500 line-through dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
+                                                                                    >
                                                                                         Bs. {montoTotal.toFixed(2)}
                                                                                     </td>
 

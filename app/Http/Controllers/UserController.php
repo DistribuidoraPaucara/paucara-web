@@ -124,7 +124,8 @@ class UserController extends Controller
     {
         // Cargar permisos directos y permisos de los roles para que la vista pueda identificar permisos heredados
         $usuario->load(['roles.permissions', 'permissions']);
-        $roles       = Role::all();
+        // Incluir los permisos de cada rol para recalcular los heredados al cambiar roles en la vista
+        $roles       = Role::with('permissions:id')->get();
         $permissions = Permission::all()->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
@@ -143,7 +144,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'          => ['required', 'string', 'max:255'],
             'usernick'      => ['required', 'string', 'max:255', Rule::unique('users')->ignore($usuario->id)],
-            'email'         => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
+            'email'         => ['nullable', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
             'password'      => ['nullable', 'string', 'min:8', 'confirmed'],
             'roles'         => ['array'],
             'roles.*'       => ['exists:roles,id'],
@@ -154,7 +155,8 @@ class UserController extends Controller
         $usuario->update([
             'name'     => $validated['name'],
             'usernick' => $validated['usernick'],
-            'email'    => $validated['email'],
+            // Guardar null si se deja vacío para no chocar con el índice único
+            'email'    => $validated['email'] ?: null,
         ]);
 
         // Actualizar contraseña solo si se proporciona

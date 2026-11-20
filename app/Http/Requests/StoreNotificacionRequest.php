@@ -21,14 +21,15 @@ class StoreNotificacionRequest extends FormRequest
             // ✅ ACTUALIZADO: Soportar múltiples horarios
             "hora_envio" => "nullable|date_format:H:i", // Para retrocompatibilidad
             "horarios" => "required|array|min:1",
-            "horarios.*.hora" => "required|date_format:H:i",
+            "horarios.*.hora" => "required|date_format:H:i|distinct",
             "horarios.*.activo" => "nullable|boolean",
             "fecha_inicio" => "required|date",
-            "fecha_fin" => "nullable|date|after:fecha_inicio",
+            "fecha_fin" => "nullable|date|after_or_equal:fecha_inicio",
             "dias_semana" => "nullable|array",
             "dias_semana.*" => "string",
             "dia_mes" => "nullable|integer|min:1|max:31",
             "activo" => "boolean",
+            "imagen_url" => "nullable|string|max:255",
             // ✅ Validación de roles
             "roles" => "nullable|array",
             "roles.*" => "integer|exists:roles,id",
@@ -49,6 +50,7 @@ class StoreNotificacionRequest extends FormRequest
             "horarios.min" => "Debe agregar al menos un horario",
             "horarios.*.hora.required" => "Cada horario debe tener una hora",
             "horarios.*.hora.date_format" => "Cada hora debe estar en formato HH:mm (ej: 08:00)",
+            "horarios.*.hora.distinct" => "Hay horarios repetidos",
             "horarios.*.activo.boolean" => "El estado activo debe ser verdadero o falso",
             // ✅ Mensajes de validación de roles
             "roles.array" => "Los roles deben ser un array",

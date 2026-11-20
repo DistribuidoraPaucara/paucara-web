@@ -3,7 +3,9 @@ namespace App\Services\Notificaciones;
 
 use App\DTOs\Notificaciones\CrearNotificacionDTO;
 use App\Models\NotificacionRecurrente;
+use App\Models\User;
 use App\Services\Firebase\FirebaseNotificationService;
+use App\Services\Notifications\DatabaseNotificationService;
 use App\Services\WebSocket\NotificacionRecurrenteWebSocketService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,13 +14,16 @@ class NotificacionRecurrenteService
 {
     protected NotificacionRecurrenteWebSocketService $wsService;
     protected FirebaseNotificationService $firebaseService;
+    protected DatabaseNotificationService $dbNotificationService;
 
     public function __construct(
         NotificacionRecurrenteWebSocketService $wsService,
-        FirebaseNotificationService $firebaseService
+        FirebaseNotificationService $firebaseService,
+        DatabaseNotificationService $dbNotificationService
     ) {
         $this->wsService = $wsService;
         $this->firebaseService = $firebaseService;
+        $this->dbNotificationService = $dbNotificationService;
     }
 
     public function crear(CrearNotificacionDTO $dto): NotificacionRecurrente
@@ -44,6 +49,7 @@ class NotificacionRecurrenteService
                 'fecha_fin' => $dto->fecha_fin,
                 'activo' => $dto->activo,
                 'usuario_id' => $dto->usuario_id,
+                'imagen_url' => $dto->imagen_url,
             ]);
 
             Log::info('✅ [NotificacionService::crear] Notificación creada', [
@@ -70,6 +76,9 @@ class NotificacionRecurrenteService
                     'notificacion_id' => $notificacion->id,
                 ]);
                 $this->wsService->notifyEmitida($notificacion);
+
+                // ✅ Persistir en la bandeja de los usuarios destino (campana + historial)
+                $this->guardarEnBandeja($notificacion);
 
                 // ✅ NUEVO: Enviar a Firebase Cloud Messaging (para móviles)
                 Log::debug('🎯 [NotificacionService::enviar] Enviando a Firebase', [
@@ -109,6 +118,35 @@ class NotificacionRecurrenteService
                 'error' => $e->getMessage(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Guarda la notificación recurrente en `notifications` para los usuarios
+     * de sus roles (o todos los activos si no tiene roles), para que aparezca
+     * en la campana y en el historial. Un fallo aquí no debe frenar el envío.
+     */
+    protected function guardarEnBandeja(NotificacionRecurrente $notificacion): void
+    {
+        try {
+            $roles = $notificacion->roles()->pluck('name')->all();
+
+            $userIds = User::where('activo', true)
+                ->when(! empty($roles), fn ($q) => $q->whereHas('roles', fn ($r) => $r->whereIn('name', $roles)))
+                ->pluck('id')
+                ->all();
+
+            $this->dbNotificationService->createBulk($userIds, 'recurrente.' . ($notificacion->tipo ?: 'informativo'), [
+                'notificacion_recurrente_id' => $notificacion->id,
+                'titulo'                     => $notificacion->titulo,
+                'descripcion'                => $notificacion->descripcion,
+                'imagen_url'                 => $notificacion->imagen_url,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('⚠️ No se pudo guardar la notificación recurrente en la bandeja', [
+                'notificacion_id' => $notificacion->id,
+                'error'           => $e->getMessage(),
+            ]);
         }
     }
 

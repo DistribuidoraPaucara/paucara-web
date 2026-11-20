@@ -1,4 +1,4 @@
-import type { Entrega, VentaEntrega } from '@/domain/entities/entregas';
+import type { Entrega, EstadoEntregaVenta, VentaEntrega } from '@/domain/entities/entregas';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import {
@@ -31,6 +31,22 @@ interface VentasEntregaSectionProps {
     onCorregirPago?: (ventaId: number, ventaNumero: string, ventaTotal: number, desglose: DesglosePago[]) => void;
     onConfirmarEntrega?: (venta: VentaEntrega) => void;
 }
+
+const COLOR_UNIDADES: Record<EstadoEntregaVenta, string> = {
+    ENTREGADO: 'text-green-600 dark:text-green-400',
+    PARCIAL: 'text-amber-600 dark:text-amber-400',
+    NO_ENTREGADO: 'text-red-600 dark:text-red-400',
+    PENDIENTE: 'text-gray-500 dark:text-gray-400',
+    POR_REVISAR: 'text-purple-600 dark:text-purple-400',
+};
+
+const NOMBRE_ESTADO_UNIDADES: Record<EstadoEntregaVenta, string> = {
+    ENTREGADO: 'Entregado completo',
+    PARCIAL: 'Devolución parcial',
+    NO_ENTREGADO: 'No entregado',
+    PENDIENTE: 'Sin confirmar',
+    POR_REVISAR: 'Devolución que no cuadra con lo vendido: revisar',
+};
 
 const getEstadoColor = (estado: string) => {
     const estadoMap: Record<string, string> = {
@@ -138,7 +154,8 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
         );
     }
 
-    const montoTotal = ventas.reduce((sum, v) => sum + (typeof v.subtotal === 'string' ? parseFloat(v.subtotal) : v.subtotal || 0), 0);
+    const totales = entrega?.totales;
+    const cantidadExcluidas = totales?.cantidad_excluidas ?? 0;
 
     // Usar el peso de la entrega si está disponible, sino calcular desde las ventas
     let pesoTotal = 0;
@@ -162,11 +179,16 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     <div className="items-center justify-center rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
                         <p className="text-sm text-center font-medium text-blue-700 dark:text-blue-300">Total Ventas</p>
-                        <p className="text-2xl text-center font-bold text-blue-900 dark:text-blue-100">{ventas.length}</p>
+                        <p className="text-2xl text-center font-bold text-blue-900 dark:text-blue-100">{totales?.cantidad_ventas ?? 0}</p>
+                        {cantidadExcluidas > 0 && (
+                            <p className="text-xs text-center text-blue-700 dark:text-blue-300">
+                                {cantidadExcluidas} sin sumar (anuladas o canceladas)
+                            </p>
+                        )}
                     </div>
                     <div className="items-center justify-center rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-green-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
                         <p className="text-sm text-center font-medium text-green-700 dark:text-green-300">Monto Total</p>
-                        <p className="text-2xl text-center font-bold text-green-900 dark:text-green-100">Bs. {montoTotal.toFixed(2)}</p>
+                        <p className="text-2xl text-center font-bold text-green-900 dark:text-green-100">Bs. {(totales?.subtotal ?? 0).toFixed(2)}</p>
                     </div>
                     <div className="items-center justify-center rounded-lg border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-50/50 p-2 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/70">
                         <p className="text-sm text-center font-medium text-purple-700 dark:text-purple-300">Peso Total</p>
@@ -188,6 +210,10 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado Venta</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Logistica</th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Confirmacion</th>
+                                <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Cobrado</th>
+                                <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white" title="Unidades entregadas / vendidas">
+                                    Productos
+                                </th>
                                 <th className="px-2 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Peso</th>
                                 <th className="w-12 px-2 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">-</th>
                             </tr>
@@ -199,11 +225,12 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                 const isExpanded = expandedVentaId === Number(venta.id);
                                 const ventaTotal = (typeof venta.subtotal === 'string' ? parseFloat(venta.subtotal) : venta.subtotal) || 0;
                                 const pesoVenta = venta.peso_total_estimado || 0;
+                                const excluida = venta.es_vigente === false;
 
                                 return (
                                     <React.Fragment key={`venta-${venta.id}`}>
                                         {/* Fila principal de la venta */}
-                                        <tr className="transition hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                        <tr className={`transition hover:bg-gray-50 dark:hover:bg-slate-800/50 ${excluida ? 'opacity-60' : ''}`}>
                                             <td className="px-2 py-2 text-center">
                                                 <Link
                                                     href={`/ventas/${venta.id}`}
@@ -218,7 +245,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
 
                                             <td className="px-2 py-2">
                                                 <p>
-                                                    <span className="font-semibold text-green-600 dark:text-green-400">
+                                                    <span className={excluida ? 'font-semibold text-gray-500 line-through dark:text-gray-400' : 'font-semibold text-green-600 dark:text-green-400'}>
                                                         Bs. {ventaTotal.toFixed(2)}
                                                     </span>
                                                 </p>
@@ -285,6 +312,43 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                                         </div>
                                                     );
                                                 })()}
+                                            </td>
+                                            <td className="px-2 py-2 text-xs">
+                                                {!excluida && ((venta.cobro && venta.cobro.length > 0) || (venta.faltante_cobro ?? 0) > 0) ? (
+                                                    <div className="space-y-0.5">
+                                                        {venta.cobro?.map((pago) => (
+                                                            <div key={`${venta.id}-${pago.tipo_pago_id ?? pago.tipo_pago}`} className="whitespace-nowrap">
+                                                                <span className="text-gray-500 dark:text-gray-400">{pago.tipo_pago}:</span>{' '}
+                                                                <span
+                                                                    className={`font-semibold ${
+                                                                        (venta.faltante_cobro ?? 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
+                                                                    }`}
+                                                                >
+                                                                    Bs. {pago.monto.toFixed(2)}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                        {(venta.faltante_cobro ?? 0) > 0 && (
+                                                            <div className="whitespace-nowrap rounded bg-red-100 px-1.5 py-0.5 font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                                                Falta Bs. {(venta.faltante_cobro ?? 0).toFixed(2)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 dark:text-gray-500">—</span>
+                                                )}
+                                            </td>
+                                            <td className="px-2 py-2 text-xs whitespace-nowrap">
+                                                {!excluida && venta.unidades ? (
+                                                    <span
+                                                        className={`font-semibold ${COLOR_UNIDADES[venta.unidades.estado]}`}
+                                                        title={NOMBRE_ESTADO_UNIDADES[venta.unidades.estado]}
+                                                    >
+                                                        {venta.unidades.entregadas} / {venta.unidades.vendidas}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400 dark:text-gray-500">—</span>
+                                                )}
                                             </td>
                                             <td className="px-2 py-2 text-xs text-gray-900 dark:text-white">{pesoVenta} kg</td>
 
@@ -376,7 +440,7 @@ export default function VentasEntregaSection({ entrega, ventas, onCorregirPago, 
                                         {/* Fila expandible - Detalles de la venta */}
                                         {isExpanded && (
                                             <tr className="bg-gray-50 dark:bg-slate-900/50">
-                                                <td colSpan={9} className="px-2 py-4">
+                                                <td colSpan={11} className="px-2 py-4">
                                                     <div className="space-y-4">
                                                         {/* ✅ REFACTORIZADO: Información de Confirmación de Entrega */}
                                                         {(() => {

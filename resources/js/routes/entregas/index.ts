@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import lote from './lote'
 /**
 * @see \App\Http\Controllers\Api\EntregaController::quitarVenta
- * @see app/Http/Controllers/Api/EntregaController.php:4010
+ * @see app/Http/Controllers/Api/EntregaController.php:4011
  * @route '/api/chofer/entregas/{id}/ventas/{venta_id}'
  */
 export const quitarVenta = (args: { id: string | number, venta_id: string | number } | [id: string | number, venta_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -17,7 +17,7 @@ quitarVenta.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::quitarVenta
- * @see app/Http/Controllers/Api/EntregaController.php:4010
+ * @see app/Http/Controllers/Api/EntregaController.php:4011
  * @route '/api/chofer/entregas/{id}/ventas/{venta_id}'
  */
 quitarVenta.url = (args: { id: string | number, venta_id: string | number } | [id: string | number, venta_id: string | number ], options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ quitarVenta.url = (args: { id: string | number, venta_id: string | number } | [i
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::quitarVenta
- * @see app/Http/Controllers/Api/EntregaController.php:4010
+ * @see app/Http/Controllers/Api/EntregaController.php:4011
  * @route '/api/chofer/entregas/{id}/ventas/{venta_id}'
  */
 quitarVenta.delete = (args: { id: string | number, venta_id: string | number } | [id: string | number, venta_id: string | number ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -53,7 +53,7 @@ quitarVenta.delete = (args: { id: string | number, venta_id: string | number } |
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::quitarVenta
- * @see app/Http/Controllers/Api/EntregaController.php:4010
+ * @see app/Http/Controllers/Api/EntregaController.php:4011
  * @route '/api/chofer/entregas/{id}/ventas/{venta_id}'
  */
     const quitarVentaForm = (args: { id: string | number, venta_id: string | number } | [id: string | number, venta_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -68,7 +68,7 @@ quitarVenta.delete = (args: { id: string | number, venta_id: string | number } |
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::quitarVenta
- * @see app/Http/Controllers/Api/EntregaController.php:4010
+ * @see app/Http/Controllers/Api/EntregaController.php:4011
  * @route '/api/chofer/entregas/{id}/ventas/{venta_id}'
  */
         quitarVentaForm.delete = (args: { id: string | number, venta_id: string | number } | [id: string | number, venta_id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -357,7 +357,7 @@ descargar.head = (args: { entrega: number | { id: number } } | [entrega: number 
     descargar.form = descargarForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
 export const preview = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -372,7 +372,7 @@ preview.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
 preview.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -405,7 +405,7 @@ preview.url = (args: { entrega: number | { id: number } } | [entrega: number | {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
 preview.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -414,7 +414,7 @@ preview.get = (args: { entrega: number | { id: number } } | [entrega: number | {
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
 preview.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -424,7 +424,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
     const previewForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -434,7 +434,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
         previewForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -443,7 +443,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::preview
- * @see app/Http/Controllers/EntregaPdfController.php:255
+ * @see app/Http/Controllers/EntregaPdfController.php:256
  * @route '/api/entregas/{entrega}/preview'
  */
         previewForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -459,7 +459,7 @@ preview.head = (args: { entrega: number | { id: number } } | [entrega: number | 
     preview.form = previewForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 export const exportarExcel = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -474,7 +474,7 @@ exportarExcel.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 exportarExcel.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -507,7 +507,7 @@ exportarExcel.url = (args: { entrega: number | { id: number } } | [entrega: numb
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 exportarExcel.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -516,7 +516,7 @@ exportarExcel.get = (args: { entrega: number | { id: number } } | [entrega: numb
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
 exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -526,7 +526,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
     const exportarExcelForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -536,7 +536,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
         exportarExcelForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -545,7 +545,7 @@ exportarExcel.head = (args: { entrega: number | { id: number } } | [entrega: num
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::exportarExcel
- * @see app/Http/Controllers/EntregaPdfController.php:714
+ * @see app/Http/Controllers/EntregaPdfController.php:726
  * @route '/api/entregas/{entrega}/exportar-excel'
  */
         exportarExcelForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -663,7 +663,7 @@ debug.head = (args: { entrega: number | { id: number } } | [entrega: number | { 
     debug.form = debugForm
 /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 export const productosAgrupados = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -678,7 +678,7 @@ productosAgrupados.definition = {
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 productosAgrupados.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -711,7 +711,7 @@ productosAgrupados.url = (args: { entrega: number | { id: number } } | [entrega:
 
 /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 productosAgrupados.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -720,7 +720,7 @@ productosAgrupados.get = (args: { entrega: number | { id: number } } | [entrega:
 })
 /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
 productosAgrupados.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -730,7 +730,7 @@ productosAgrupados.head = (args: { entrega: number | { id: number } } | [entrega
 
     /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
     const productosAgrupadosForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -740,7 +740,7 @@ productosAgrupados.head = (args: { entrega: number | { id: number } } | [entrega
 
             /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
         productosAgrupadosForm.get = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -749,7 +749,7 @@ productosAgrupados.head = (args: { entrega: number | { id: number } } | [entrega
         })
             /**
 * @see \App\Http\Controllers\EntregaPdfController::productosAgrupados
- * @see app/Http/Controllers/EntregaPdfController.php:624
+ * @see app/Http/Controllers/EntregaPdfController.php:626
  * @route '/api/entregas/{entrega}/productos-agrupados'
  */
         productosAgrupadosForm.head = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1181,7 +1181,7 @@ crearConsolidada.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
     crearConsolidada.form = crearConsolidadaForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConsolidada
- * @see app/Http/Controllers/Api/EntregaController.php:3273
+ * @see app/Http/Controllers/Api/EntregaController.php:3274
  * @route '/api/entregas/{entrega}'
  */
 export const actualizarConsolidada = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1196,7 +1196,7 @@ actualizarConsolidada.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConsolidada
- * @see app/Http/Controllers/Api/EntregaController.php:3273
+ * @see app/Http/Controllers/Api/EntregaController.php:3274
  * @route '/api/entregas/{entrega}'
  */
 actualizarConsolidada.url = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -1229,7 +1229,7 @@ actualizarConsolidada.url = (args: { entrega: number | { id: number } } | [entre
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConsolidada
- * @see app/Http/Controllers/Api/EntregaController.php:3273
+ * @see app/Http/Controllers/Api/EntregaController.php:3274
  * @route '/api/entregas/{entrega}'
  */
 actualizarConsolidada.patch = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1239,7 +1239,7 @@ actualizarConsolidada.patch = (args: { entrega: number | { id: number } } | [ent
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConsolidada
- * @see app/Http/Controllers/Api/EntregaController.php:3273
+ * @see app/Http/Controllers/Api/EntregaController.php:3274
  * @route '/api/entregas/{entrega}'
  */
     const actualizarConsolidadaForm = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1254,7 +1254,7 @@ actualizarConsolidada.patch = (args: { entrega: number | { id: number } } | [ent
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::actualizarConsolidada
- * @see app/Http/Controllers/Api/EntregaController.php:3273
+ * @see app/Http/Controllers/Api/EntregaController.php:3274
  * @route '/api/entregas/{entrega}'
  */
         actualizarConsolidadaForm.patch = (args: { entrega: number | { id: number } } | [entrega: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1794,7 +1794,7 @@ localidades.head = (args: { entrega: number | { id: number } } | [entrega: numbe
     localidades.form = localidadesForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::corregirPago
- * @see app/Http/Controllers/Api/EntregaController.php:3472
+ * @see app/Http/Controllers/Api/EntregaController.php:3473
  * @route '/api/entregas/{entrega}/ventas/{venta}/corregir-pago'
  */
 export const corregirPago = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1809,7 +1809,7 @@ corregirPago.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::corregirPago
- * @see app/Http/Controllers/Api/EntregaController.php:3472
+ * @see app/Http/Controllers/Api/EntregaController.php:3473
  * @route '/api/entregas/{entrega}/ventas/{venta}/corregir-pago'
  */
 corregirPago.url = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions) => {
@@ -1835,7 +1835,7 @@ corregirPago.url = (args: { entrega: string | number, venta: string | number } |
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::corregirPago
- * @see app/Http/Controllers/Api/EntregaController.php:3472
+ * @see app/Http/Controllers/Api/EntregaController.php:3473
  * @route '/api/entregas/{entrega}/ventas/{venta}/corregir-pago'
  */
 corregirPago.patch = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1845,7 +1845,7 @@ corregirPago.patch = (args: { entrega: string | number, venta: string | number }
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::corregirPago
- * @see app/Http/Controllers/Api/EntregaController.php:3472
+ * @see app/Http/Controllers/Api/EntregaController.php:3473
  * @route '/api/entregas/{entrega}/ventas/{venta}/corregir-pago'
  */
     const corregirPagoForm = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1860,7 +1860,7 @@ corregirPago.patch = (args: { entrega: string | number, venta: string | number }
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::corregirPago
- * @see app/Http/Controllers/Api/EntregaController.php:3472
+ * @see app/Http/Controllers/Api/EntregaController.php:3473
  * @route '/api/entregas/{entrega}/ventas/{venta}/corregir-pago'
  */
         corregirPagoForm.patch = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1876,7 +1876,7 @@ corregirPago.patch = (args: { entrega: string | number, venta: string | number }
     corregirPago.form = corregirPagoForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::cambiarTipoEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3656
+ * @see app/Http/Controllers/Api/EntregaController.php:3657
  * @route '/api/entregas/{entrega}/ventas/{venta}/cambiar-tipo-entrega'
  */
 export const cambiarTipoEntrega = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1891,7 +1891,7 @@ cambiarTipoEntrega.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::cambiarTipoEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3656
+ * @see app/Http/Controllers/Api/EntregaController.php:3657
  * @route '/api/entregas/{entrega}/ventas/{venta}/cambiar-tipo-entrega'
  */
 cambiarTipoEntrega.url = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions) => {
@@ -1917,7 +1917,7 @@ cambiarTipoEntrega.url = (args: { entrega: string | number, venta: string | numb
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::cambiarTipoEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3656
+ * @see app/Http/Controllers/Api/EntregaController.php:3657
  * @route '/api/entregas/{entrega}/ventas/{venta}/cambiar-tipo-entrega'
  */
 cambiarTipoEntrega.patch = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -1927,7 +1927,7 @@ cambiarTipoEntrega.patch = (args: { entrega: string | number, venta: string | nu
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::cambiarTipoEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3656
+ * @see app/Http/Controllers/Api/EntregaController.php:3657
  * @route '/api/entregas/{entrega}/ventas/{venta}/cambiar-tipo-entrega'
  */
     const cambiarTipoEntregaForm = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1942,7 +1942,7 @@ cambiarTipoEntrega.patch = (args: { entrega: string | number, venta: string | nu
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::cambiarTipoEntrega
- * @see app/Http/Controllers/Api/EntregaController.php:3656
+ * @see app/Http/Controllers/Api/EntregaController.php:3657
  * @route '/api/entregas/{entrega}/ventas/{venta}/cambiar-tipo-entrega'
  */
         cambiarTipoEntregaForm.patch = (args: { entrega: string | number, venta: string | number } | [entrega: string | number, venta: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1958,7 +1958,7 @@ cambiarTipoEntrega.patch = (args: { entrega: string | number, venta: string | nu
     cambiarTipoEntrega.form = cambiarTipoEntregaForm
 /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
 export const ventasResumidas = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1973,7 +1973,7 @@ ventasResumidas.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
 ventasResumidas.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -2001,7 +2001,7 @@ ventasResumidas.url = (args: { id: string | number } | [id: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
 ventasResumidas.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -2010,7 +2010,7 @@ ventasResumidas.get = (args: { id: string | number } | [id: string | number ] | 
 })
 /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
 ventasResumidas.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -2020,7 +2020,7 @@ ventasResumidas.head = (args: { id: string | number } | [id: string | number ] |
 
     /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
     const ventasResumidasForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -2030,7 +2030,7 @@ ventasResumidas.head = (args: { id: string | number } | [id: string | number ] |
 
             /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
         ventasResumidasForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -2039,7 +2039,7 @@ ventasResumidas.head = (args: { id: string | number } | [id: string | number ] |
         })
             /**
 * @see \App\Http\Controllers\Api\EntregaController::ventasResumidas
- * @see app/Http/Controllers/Api/EntregaController.php:4289
+ * @see app/Http/Controllers/Api/EntregaController.php:4290
  * @route '/api/entregas/{id}/ventas-resumidas'
  */
         ventasResumidasForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

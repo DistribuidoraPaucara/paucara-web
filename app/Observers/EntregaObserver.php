@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Entrega;
 use App\Services\Notifications\EntregaNotificationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -38,6 +39,15 @@ class EntregaObserver
      * - Envía notificación en tiempo real vía WebSocket
      */
     public function created(Entrega $entrega): void
+    {
+        // Esperar al commit: el servicio crea la entrega sin número y le asigna número y ventas
+        // después, dentro de la misma transacción. Así el aviso sale con los datos finales y no
+        // se avisa de una entrega que se revierte. Sin transacción, se ejecuta enseguida.
+        // (Solo created(): updated() necesita isDirty(), que se pierde después del commit.)
+        DB::afterCommit(fn () => $this->notificarCreacion($entrega));
+    }
+
+    private function notificarCreacion(Entrega $entrega): void
     {
         try {
             Log::info('🔔 EntregaObserver: Entrega creada - disparando notificaciones', [

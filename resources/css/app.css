@@ -43,6 +43,7 @@
 
     --color-border: var(--border);
     --color-input: var(--input);
+    --color-input-background: var(--input-background);
     --color-ring: var(--ring);
 
     --color-chart-1: var(--chart-1);
@@ -80,6 +81,8 @@
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
+    /* Fondo de campos de formulario: se distingue de la tarjeta */
+    --input-background: oklch(0.97 0 0);
     --ring: oklch(0.87 0 0);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
@@ -98,6 +101,8 @@
 }
 
 .dark {
+    /* Controles nativos (calendario, reloj, scrollbars, <select>) en tema oscuro */
+    color-scheme: dark;
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.145 0 0);
@@ -116,6 +121,7 @@
     --destructive-foreground: oklch(0.637 0.237 25.331);
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
+    --input-background: oklch(0.205 0 0);
     --ring: oklch(0.439 0 0);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);

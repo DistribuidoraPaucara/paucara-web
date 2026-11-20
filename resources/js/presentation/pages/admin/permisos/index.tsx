@@ -161,7 +161,7 @@ export default function PermisosIndexPage({
 
         {/* Tabla */}
         <div className="rounded-lg bg-white dark:bg-gray-800 shadow dark:shadow-lg overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full p-2">
             <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Nombre</th>

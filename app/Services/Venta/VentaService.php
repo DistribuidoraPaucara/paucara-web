@@ -192,6 +192,21 @@ class VentaService
                 ]);
             }
 
+            // ✅ FIX (2026-11-06): politica_pago=CREDITO solo si el tipo de pago es crédito.
+            // La CxC se crea por tipoPago.es_credito y el movimiento de caja por politica_pago;
+            // si no coinciden, la venta afecta el cierre como crédito sin generar CxC (ej. venta 6334).
+            $politicaPago = $dto->politica_pago ?? 'CONTRA_ENTREGA';
+            if ($politicaPago === 'CREDITO' && $tipoPagoId) {
+                $tipoPagoVenta = \App\Models\TipoPago::find($tipoPagoId);
+                if ($tipoPagoVenta && ! $tipoPagoVenta->es_credito && strtoupper($tipoPagoVenta->codigo) !== 'CREDITO') {
+                    $politicaPago = $dto->requiere_envio ? 'CONTRA_ENTREGA' : 'ANTICIPADO_100';
+                    Log::warning('⚠️ [VentaService::crear] politica_pago CREDITO con tipo de pago no-crédito → corregida', [
+                        'tipo_pago_codigo' => $tipoPagoVenta->codigo,
+                        'politica_corregida' => $politicaPago,
+                    ]);
+                }
+            }
+
             // 3.1 Crear Venta
             Log::debug('📝 [VentaService::crear] Creando registro de Venta en BD', [
                 'cliente_id'          => $dto->cliente_id,
@@ -223,7 +238,7 @@ class VentaService
                 'estado_logistico_id'        => $estadoLogisticoId,  // ✅ MODIFICADO (2026-02-10): Usa variable calculada (SIN_ENTREGA por defecto) 
                 // Campos de política de pago
                 'tipo_pago_id'               => $dto->tipo_pago_id,  // ✅ NUEVO: Tipo de pago seleccionado
-                'politica_pago'              => $dto->politica_pago ?? 'CONTRA_ENTREGA',
+                'politica_pago'              => $politicaPago,
                 'estado_pago'                => $estadoPago,                                             // ✅ Dinámico según pago inicial
                 'monto_pagado'               => $montoPagado,  // ✅ CORREGIDO (2026-03-02): Usa monto calculado (total si CONTADO sin pago)
                 'monto_pendiente'            => max(0, ($dto->subtotal - ($dto->descuento ?? 0)) - $montoPagado), // Campos de SLA y compromisos de entrega

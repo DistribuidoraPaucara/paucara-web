@@ -62,7 +62,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function Edit({ role }: PageProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors, isDirty } = useForm({
         name: role.name,
         guard_name: role.guard_name,
         permissions: role.permissions?.map(p => Number(p.id)) || [],
@@ -77,6 +77,17 @@ export default function Edit({ role }: PageProps) {
     const [templates, setTemplates] = useState<RoleTemplate[]>([])
     const [audits, setAudits] = useState<PermisoAudit[]>([])
     const [loading, setLoading] = useState(false)
+
+    // useForm no se reinicializa con router.reload(): sincronizar los permisos que guardó el servidor
+    const reloadRolePermissions = () => {
+        router.reload({
+            only: ['role'],
+            onSuccess: (page) => {
+                const updated = page.props.role as Role
+                setData('permissions', updated.permissions?.map(p => Number(p.id)) || [])
+            },
+        })
+    }
 
     // Cargar roles para copiar
     const handleOpenCopyDialog = async () => {
@@ -135,7 +146,7 @@ export default function Edit({ role }: PageProps) {
             })
             toast.success('Permisos copiados exitosamente')
             setShowCopyDialog(false)
-            router.reload()
+            reloadRolePermissions()
         } catch (error) {
             console.log(error)
             toast.error('Error al copiar permisos')
@@ -158,7 +169,7 @@ export default function Edit({ role }: PageProps) {
             })
             toast.success('Plantilla aplicada exitosamente')
             setShowTemplateDialog(false)
-            router.reload()
+            reloadRolePermissions()
         } catch (error) {
             console.log(error)
             toast.error('Error al aplicar plantilla')
@@ -214,7 +225,7 @@ export default function Edit({ role }: PageProps) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form id="role-form" onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Nombre del Rol</Label>
@@ -244,7 +255,7 @@ export default function Edit({ role }: PageProps) {
                             </div>
 
                             {/* Botones de acciones avanzadas */}
-                            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 pt-4 border-t">
+                            <div className="grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-3">
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -275,15 +286,6 @@ export default function Edit({ role }: PageProps) {
                                     <History className="mr-2 h-4 w-4" />
                                     Auditoría
                                 </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    size="sm"
-                                    className="text-xs"
-                                >
-                                    <Save className="mr-2 h-4 w-4" />
-                                    {processing ? 'Guardando...' : 'Guardar'}
-                                </Button>
                             </div>
                         </form>
                     </CardContent>
@@ -296,11 +298,20 @@ export default function Edit({ role }: PageProps) {
                 />
 
                 {/* Botones de acción */}
-                <div className="flex justify-end gap-2">
+                <InputError message={errors.permissions} />
+
+                <div className="sticky bottom-0 flex items-center justify-end gap-2 rounded-lg border bg-background p-3 shadow-sm">
+                    <span className="mr-auto text-sm text-muted-foreground">
+                        {isDirty ? (
+                            <span className="text-amber-600 dark:text-amber-400">Hay cambios sin guardar</span>
+                        ) : (
+                            `${data.permissions.length} permisos asignados`
+                        )}
+                    </span>
                     <Button variant="outline" asChild>
                         <Link href={rolesService.indexUrl()}>Cancelar</Link>
                     </Button>
-                    <Button onClick={handleSubmit} disabled={processing}>
+                    <Button type="submit" form="role-form" disabled={processing || !isDirty}>
                         <Save className="mr-2 h-4 w-4" />
                         {processing ? 'Actualizando...' : 'Actualizar Rol'}
                     </Button>

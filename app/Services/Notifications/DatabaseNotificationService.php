@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Servicio para manejar notificaciones persistentes en la base de datos
@@ -24,16 +25,57 @@ class DatabaseNotificationService
      * @param array $relatedIds IDs relacionados (opcional: proforma_id, venta_id, envio_id, etc.)
      * @return bool
      */
+    /**
+     * Crear la misma notificación para muchos usuarios con INSERT en bloque.
+     * Pensado para envíos masivos (p. ej. todos los clientes): create() hace un INSERT por usuario.
+     */
+    public function createBulk(array $userIds, string $type, array $data): bool
+    {
+        $userIds = array_values(array_unique(array_filter($userIds)));
+        if (empty($userIds)) {
+            return true;
+        }
+
+        try {
+            $ahora = now();
+            $dataJson = json_encode($data, JSON_UNESCAPED_UNICODE);
+            $grupoId = (string) Str::uuid(); // todas las filas de este envío = un evento
+
+            foreach (array_chunk($userIds, 500) as $lote) {
+                Notification::insert(array_map(fn($userId) => [
+                    'user_id'    => $userId,
+                    'type'       => $type,
+                    'grupo_id'   => $grupoId,
+                    'data'       => $dataJson,
+                    'read'       => false,
+                    'created_at' => $ahora,
+                    'updated_at' => $ahora,
+                ], $lote));
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error al crear notificaciones en bloque', [
+                'type' => $type,
+                'total_usuarios' => count($userIds),
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
     public function create($userIds, string $type, array $data, array $relatedIds = []): bool
     {
         try {
             // Convertir a array si es un solo ID
             $userIds = is_array($userIds) ? $userIds : [$userIds];
+            $grupoId = (string) Str::uuid(); // todas las filas de esta llamada = un evento
 
             foreach ($userIds as $userId) {
                 Notification::create(array_merge([
                     'user_id' => $userId,
                     'type' => $type,
+                    'grupo_id' => $grupoId,
                     'data' => $data,
                 ], $relatedIds)); // Merge con IDs relacionados (proforma_id, venta_id, etc.)
             }

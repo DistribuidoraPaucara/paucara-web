@@ -7,7 +7,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Evento que se dispara cuando se completa una compra
+ * Evento que se dispara cuando una compra queda aprobada
  * y se registra nuevo stock disponible
  */
 class CompraCompletada
@@ -16,7 +16,10 @@ class CompraCompletada
 
     public Compra $compra;
 
-    public function __construct(Compra $compra)
+    /**
+     * @param int|null $usuarioId Usuario autenticado que creó/aprobó la compra (también recibe la notificación)
+     */
+    public function __construct(Compra $compra, public ?int $usuarioId = null)
     {
         $this->compra = $compra;
         $this->compra->load(['proveedor', 'detalles.producto', 'usuario']);

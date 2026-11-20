@@ -18,5 +18,10 @@ Route::post('admin/permisos/roles/{role}/crear-funcionalidad', [RoleController::
     ->name('roles.crear-funcionalidad')
     ->middleware('permission:roles.edit');
 
+// Permisos agrupados por módulo con descripción (usado por AdvancedPermissionSelector)
+Route::get('roles-data/permissions-grouped', [RoleController::class, 'getPermissionsGrouped'])
+    ->name('roles.permissions-grouped')
+    ->middleware('permission:roles.index|roles.create|roles.edit');
+
 // Rutas de gestión de roles (esto va AL FINAL para no interferir con rutas estáticas)
 Route::resource('admin/permisos/roles', RoleController::class);

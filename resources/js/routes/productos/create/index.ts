@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
 export const moderno = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ moderno.definition = {
 
 /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
 moderno.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ moderno.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
 moderno.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ moderno.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
 moderno.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ moderno.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
     const modernoForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ moderno.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
         modernoForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ moderno.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\ProductoController::moderno
- * @see app/Http/Controllers/ProductoController.php:321
+ * @see app/Http/Controllers/ProductoController.php:318
  * @route '/productos/crear/moderno'
  */
         modernoForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

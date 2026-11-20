@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 use App\Models\Proforma;
 use App\Models\User;
 use App\Models\Venta;
+use App\Services\Firebase\FirebaseNotificationService;
 use App\Services\WebSocket\ProformaWebSocketService;
 use Illuminate\Support\Collection;
 
@@ -20,13 +21,16 @@ class ProformaNotificationService
 {
     protected DatabaseNotificationService $dbNotificationService;
     protected ProformaWebSocketService $wsService;
+    protected FirebaseNotificationService $fcmService;
 
     public function __construct(
         DatabaseNotificationService $dbNotificationService,
-        ProformaWebSocketService $wsService
+        ProformaWebSocketService $wsService,
+        FirebaseNotificationService $fcmService
     ) {
         $this->dbNotificationService = $dbNotificationService;
         $this->wsService             = $wsService;
+        $this->fcmService            = $fcmService;
     }
 
     /**
@@ -192,8 +196,32 @@ class ProformaNotificationService
             'proforma_id' => $proforma->id,
         ]);
 
-        // 3. Enviar notificación en tiempo real vía WebSocket
-        return $this->wsService->notifyUpdated($proforma);
+        // 3. Enviar notificación en tiempo real vía WebSocket (web + app abierta)
+        $wsOk = $this->wsService->notifyUpdated($proforma);
+
+        // 4. Push FCM (app minimizada o cerrada). No debe romper el flujo si falla.
+        try {
+            $clienteNombre = trim(($proforma->cliente->nombre ?? 'Cliente') . ' ' . ($proforma->cliente->apellido ?? ''));
+            $this->fcmService->enviarAUsuarios(
+                $userIds,
+                '📝 Proforma Actualizada',
+                "Proforma {$proforma->numero} de {$clienteNombre} actualizada por Bs. " . number_format((float) $proforma->total, 2),
+                [
+                    'tipo'        => 'proforma.actualizada',
+                    'proforma_id' => $proforma->id,
+                    'numero'      => $proforma->numero,
+                    'realtime'    => true, // la app la ignora en foreground si ya llegó por WebSocket
+                ],
+                'proformas'
+            );
+        } catch (\Throwable $e) {
+            \Log::warning('⚠️ No se pudo enviar push FCM de proforma actualizada', [
+                'proforma_id' => $proforma->id,
+                'error'       => $e->getMessage(),
+            ]);
+        }
+
+        return $wsOk;
     }
 
     // ========================================

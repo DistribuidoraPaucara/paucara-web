@@ -13,6 +13,13 @@ export interface BaseFormData {
   [key: string]: unknown;
 }
 
+// Opciones para búsquedas en segundo plano (partial reload de Inertia)
+export interface SearchOptions {
+  only?: string[];
+  onStart?: () => void;
+  onFinish?: () => void;
+}
+
 // Generic configuration for each module
 export interface ModuleConfig<T extends BaseEntity, F extends BaseFormData> {
   // Module identification
@@ -46,6 +53,10 @@ export interface ModuleConfig<T extends BaseEntity, F extends BaseFormData> {
 
   // Modern index filters configuration
   indexFilters?: IndexFiltersConfig;
+
+  // Props que se recargan al buscar/filtrar (partial reload de Inertia).
+  // Si se omite, se recargan todas las props de la página.
+  searchReloadProps?: string[];
 
   // Legacy: show model-specific index filters (deprecated)
   showIndexFilters?: boolean;
@@ -188,7 +199,7 @@ export interface BaseService<T extends BaseEntity, F extends BaseFormData> {
   destroyUrl(id: Id): string;
 
   // Helper methods (with Inertia.js integration)
-  search(filters: Filters): void;        // Uses router.get() internally
+  search(filters: Filters, options?: SearchOptions): void; // Uses router.get() internally
   destroy(id: Id): void;                 // Uses router.delete() internally
 
   // Validation (client-side)

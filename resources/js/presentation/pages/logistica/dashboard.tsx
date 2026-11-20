@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 // Hooks
 import { useProformaFilters } from '@/application/hooks/use-proforma-filters';
 import { useProformaModals } from '@/application/hooks/use-proforma-modals';
-import { useProformaNotifications } from '@/application/hooks/use-proforma-notifications';
+import { useNotifications } from '@/application/contexts/notifications-context';
 
 // Componentes
 import { ProformasSection } from './components/ProformasSection';
@@ -52,8 +52,10 @@ export default function LogisticaDashboard({ estadisticas, proformasRecientes, l
     // Hooks de filtros
     const proformaFilters = useProformaFilters(proformasRecientes);
 
-    // Hook para notificaciones de proformas en tiempo real
-    const { requestNotificationPermission } = useProformaNotifications();
+    // Las notificaciones en tiempo real las gestiona el NotificationsProvider global
+    // (app.tsx). Aquí solo pedimos permiso del navegador; registrar listeners propios
+    // duplicaba los toasts de proformas en esta página.
+    const { requestNotificationPermission } = useNotifications();
 
     // Solicitar permisos de notificación al cargar
     useEffect(() => {

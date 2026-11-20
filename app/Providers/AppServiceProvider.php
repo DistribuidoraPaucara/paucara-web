@@ -17,6 +17,7 @@ use App\Observers\ModuloSidebarObserver;
 use App\Observers\PrecioProductoObserver;
 use App\Observers\ProformaObserver;
 use App\Observers\RutaObserver;
+use App\Observers\VentaPesoEntregaObserver;
 use App\Observers\RutaDetalleObserver;
 use App\Services\Notifications\EntregaNotificationService;
 use App\Services\Notifications\DatabaseNotificationService;
@@ -51,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
 
         // ✅ Observers
         Cliente::observe(ClienteObserver::class);
+        \App\Models\Venta::observe(VentaPesoEntregaObserver::class);
         ModuloSidebar::observe(ModuloSidebarObserver::class);
         PrecioProducto::observe(PrecioProductoObserver::class);
         Compra::observe(CompraObserver::class);

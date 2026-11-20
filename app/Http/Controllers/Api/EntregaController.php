@@ -2913,7 +2913,8 @@ class EntregaController extends Controller
     {
         try {
             $entrega = Entrega::with(['ventas' => function ($q) {
-                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_logistico_id', 'estado_pago', 'tipo_pago_id', 'cliente_id')
+                $q->vigentes()
+                    ->select('id', 'entrega_id', 'numero', 'total', 'estado_logistico_id', 'estado_pago', 'tipo_pago_id', 'cliente_id')
                     ->with('tipoPago:id,codigo,nombre')
                 // ✅ NUEVO 2026-03-04: Cargar información del cliente
                     ->with('cliente:id,nombre,email,telefono')

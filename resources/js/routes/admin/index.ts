@@ -3,6 +3,7 @@ import creditos from './creditos'
 import reportesProductosDanados from './reportes-productos-danados'
 import bannersPublicitarios from './banners-publicitarios'
 import categoriasCliente from './categorias-cliente'
+import notificaciones from './notificaciones'
 /**
  * @see [serialized-closure]:2
  * @route '/admin/image-backup'
@@ -317,6 +318,7 @@ categoriasCliente,
 dashboard,
 alertasStockCompleto,
 calendarioVencimientos,
+notificaciones,
 }
 
 export default admin

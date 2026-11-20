@@ -3,6 +3,8 @@ import { LucideIcon } from 'lucide-react';
 
 export interface Auth {
     user: User;
+    /** Nombres de roles del usuario (HandleInertiaRequests → getRoleNames()) */
+    roles?: string[];
 }
 
 export interface BreadcrumbItem {

@@ -206,11 +206,13 @@ export default function ComboExpandedRows({
                     </td>
 
                     {/* Categoría */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                            {item.producto_categoria || '-'}
-                        </span>
-                    </td>
+                    {tipo !== 'compra' && (
+                        <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                                {item.producto_categoria || '-'}
+                            </span>
+                        </td>
+                    )}
 
                     {/* Unidad */}
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -220,11 +222,13 @@ export default function ComboExpandedRows({
                     </td>
 
                     {/* Marca */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                            {item.producto_marca || '-'}
-                        </span>
-                    </td>
+                    {tipo !== 'compra' && (
+                        <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                                {item.producto_marca || '-'}
+                            </span>
+                        </td>
+                    )}
                 </tr>
             ))}
         </Fragment>

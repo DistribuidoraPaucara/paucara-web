@@ -94,15 +94,6 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
         }
     }, [confirmandoEntrega, entrega.confirmacionesVentas]);
 
-    // ✅ NUEVO: Calcular monto total de ventas sin CREDITO
-    const montoTotalVentas = entrega.ventas
-        ?.filter((venta: any) => {
-            // Excluir si tipo_pago.id === 3 (CREDITO)
-            const tipoPageoId = venta.tipo_pago_id || venta.tipo_pago?.id;
-            return tipoPageoId !== 3;
-        })
-        .reduce((sum: number, venta: any) => sum + (parseFloat(venta.total) || 0), 0) || 0;
-
     // Hooks para sincronización en tiempo real
     const { isConnected, on, off } = useWebSocket();
     const { showNotification } = useToastNotifications();
@@ -331,6 +322,20 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                                 Folio: {numero}
                             </h1>
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 truncate">{entrega.numero_entrega}</p>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                                Creada por{' '}
+                                <span className="font-medium text-gray-700 dark:text-gray-300">
+                                    {entrega.creado_por?.name ?? 'Sin registro'}
+                                </span>
+                                {entrega.created_at &&
+                                    ` el ${new Date(entrega.created_at).toLocaleString('es-BO', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })}`}
+                            </p>
                         </div>
                         {/* Estado Badge - Oculto en móvil */}
                         <div className="hidden sm:block">
@@ -563,7 +568,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                             <div>
                                 <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Mnt. Total (Sin Crédito)</p>
                                 <p className="font-medium text-sm sm:text-base text-green-700 dark:text-green-400">
-                                    Bs {montoTotalVentas.toFixed(2)}
+                                    Bs {(entrega.totales?.total_sin_credito ?? 0).toFixed(2)}
                                 </p>
                             </div>
                         </div>
@@ -575,7 +580,7 @@ export default function EntregaShow({ entrega: initialEntrega, tiposPago }: Show
                     <Tabs defaultValue="ventas" className="w-full">
                         <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="ventas">
-                                📦 Ventas ({entrega.ventas.length})
+                                📦 Ventas ({entrega.totales?.cantidad_ventas ?? 0})
                             </TabsTrigger>
                             <TabsTrigger value="pagos">
                                 💳 Resumen de Pagos

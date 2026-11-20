@@ -240,10 +240,6 @@ class ProductoController extends Controller
             })
             ->withQueryString();
 
-        $categorias  = Categoria::query()->orderBy('nombre')->get(['id', 'nombre']);
-        $marcas      = Marca::query()->orderBy('nombre')->get(['id', 'nombre']);
-        $proveedores = \App\Models\Proveedor::query()->orderBy('nombre')->get(['id', 'nombre', 'razon_social']);
-
         return Inertia::render('productos/index', [
             'productos'    => $items,
             'filters'      => [
@@ -256,11 +252,12 @@ class ProductoController extends Controller
                 'order_by'     => $orderBy ?: null,
                 'order_dir'    => $orderDir,
             ],
-            'categorias'   => $categorias,
-            'marcas'       => $marcas,
-            'proveedores'  => $proveedores,
-            'unidades'     => UnidadMedida::orderBy('nombre')->get(['id', 'codigo', 'nombre']),
-            'tipos_precio' => TipoPrecio::getOptions(),
+            // Closures: en búsquedas (partial reload con only=productos,filters) no se ejecutan estas consultas
+            'categorias'   => fn() => Categoria::query()->orderBy('nombre')->get(['id', 'nombre']),
+            'marcas'       => fn() => Marca::query()->orderBy('nombre')->get(['id', 'nombre']),
+            'proveedores'  => fn() => \App\Models\Proveedor::query()->orderBy('nombre')->get(['id', 'nombre', 'razon_social']),
+            'unidades'     => fn() => UnidadMedida::orderBy('nombre')->get(['id', 'codigo', 'nombre']),
+            'tipos_precio' => fn() => TipoPrecio::getOptions(),
         ]);
     }
 
@@ -827,6 +824,10 @@ class ProductoController extends Controller
 
         $payload['es_fraccionado'] = (bool) $producto->es_fraccionado;
         $payload['es_combo']       = (bool) $producto->es_combo;
+        $payload['almacen_principal_id'] = (int) (auth()->user()?->empresa?->almacen_id_principal ?? config('inventario.almacen_principal_id', 1));
+        $payload['capacidad_combo'] = $producto->es_combo
+            ? ComboStockService::calcularCapacidadConDetalles($producto->id, $payload['almacen_principal_id'])['capacidad_total']
+            : null;
 
         $empresa = auth()->user()?->empresa;
 

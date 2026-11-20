@@ -7,6 +7,9 @@ interface ProductoAgrupado {
     sku: string;
     codigo_producto: string;
     cantidad_total: number;
+    cantidad_entregada: number;
+    cantidad_no_entregada: number;
+    cantidad_pendiente: number;
     precio_unitario: number;
     subtotal: string;
     unidad_medida: string;
@@ -14,10 +17,22 @@ interface ProductoAgrupado {
         venta_id: number;
         venta_numero: string;
         cantidad: number;
+        cantidad_entregada: number;
+        estado_entrega: EstadoEntregaVenta;
         cliente_id: number;
         cliente_nombre: string;
     }>;
 }
+
+type EstadoEntregaVenta = 'ENTREGADO' | 'PARCIAL' | 'NO_ENTREGADO' | 'PENDIENTE' | 'POR_REVISAR';
+
+const ESTADO_ENTREGA_VENTA: Record<EstadoEntregaVenta, { nombre: string; clase: string }> = {
+    ENTREGADO: { nombre: 'Entregado', clase: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' },
+    PARCIAL: { nombre: 'Devolución parcial', clase: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200' },
+    NO_ENTREGADO: { nombre: 'No entregado', clase: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' },
+    PENDIENTE: { nombre: 'Sin confirmar', clase: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+    POR_REVISAR: { nombre: 'Por revisar', clase: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200' },
+};
 
 interface ProductosAgrupadsResponse {
     entrega_id: number;
@@ -25,6 +40,10 @@ interface ProductosAgrupadsResponse {
     productos: ProductoAgrupado[];
     total_items: number;
     cantidad_total: number;
+    cantidad_entregada: number;
+    cantidad_no_entregada: number;
+    cantidad_pendiente: number;
+    ventas_por_revisar: number;
 }
 
 interface ProductosAgrupadsProps {
@@ -120,15 +139,29 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                 </h2>
 
                 {/* Tarjetas de resumen */}
-                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50/50 p-4 dark:border-blue-800 dark:from-blue-900/20 dark:to-blue-900/10">
                         <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Tipos de Productos</p>
                         <p className="mt-1 text-3xl font-bold text-blue-900 dark:text-blue-100">{productos.total_items}</p>
                     </div>
 
                     <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-green-50/50 p-4 dark:border-green-800 dark:from-green-900/20 dark:to-green-900/10">
-                        <p className="text-sm font-medium text-green-700 dark:text-green-300">Cantidad Total</p>
+                        <p className="text-sm font-medium text-green-700 dark:text-green-300">Vendido</p>
                         <p className="mt-1 text-3xl font-bold text-green-900 dark:text-green-100">{Math.floor(productos.cantidad_total)} unidades</p>
+                    </div>
+
+                    <div className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-50/50 p-4 dark:border-emerald-800 dark:from-emerald-900/20 dark:to-emerald-900/10">
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Entregado</p>
+                        <p className="mt-1 text-3xl font-bold text-emerald-900 dark:text-emerald-100">
+                            {Math.floor(productos.cantidad_entregada)} unidades
+                        </p>
+                        {(productos.cantidad_no_entregada > 0 || productos.cantidad_pendiente > 0) && (
+                            <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                                {productos.cantidad_no_entregada > 0 && `${productos.cantidad_no_entregada} no entregadas`}
+                                {productos.cantidad_no_entregada > 0 && productos.cantidad_pendiente > 0 && ' · '}
+                                {productos.cantidad_pendiente > 0 && `${productos.cantidad_pendiente} sin confirmar`}
+                            </p>
+                        )}
                     </div>
 
                     <div className="rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-orange-50/50 p-4 dark:border-orange-800 dark:from-orange-900/20 dark:to-orange-900/10">
@@ -137,6 +170,16 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                     </div>
                 </div>
             </div>
+
+            {productos.ventas_por_revisar > 0 && (
+                <div className="flex items-center gap-3 rounded-lg border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-900/20">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+                    <p className="text-sm text-purple-800 dark:text-purple-200">
+                        {productos.ventas_por_revisar} venta{productos.ventas_por_revisar === 1 ? '' : 's'} con devoluciones que no cuadran con lo
+                        vendido. Revisa el detalle de los productos marcados "Por revisar".
+                    </p>
+                </div>
+            )}
 
             {/* Tabla de productos */}
             <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
@@ -148,7 +191,8 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                                 <th className="w-12 px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">#</th>
                                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Producto</th>
                                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">SKU</th>
-                                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Cantidad</th>
+                                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Vendido</th>
+                                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Entregado</th>
                                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Precio Unitario</th>
                                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">Subtotal</th>
                                 {mostrarDetalleVentas && (
@@ -181,6 +225,24 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">{producto.unidad_medida}</p>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span
+                                                className={`font-semibold ${
+                                                    producto.cantidad_entregada < producto.cantidad_total
+                                                        ? 'text-amber-600 dark:text-amber-400'
+                                                        : 'text-emerald-600 dark:text-emerald-400'
+                                                }`}
+                                            >
+                                                {producto.cantidad_entregada.toFixed(2)}
+                                            </span>
+                                            {(producto.cantidad_no_entregada > 0 || producto.cantidad_pendiente > 0) && (
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {producto.cantidad_no_entregada > 0 && `${producto.cantidad_no_entregada} no entregadas`}
+                                                    {producto.cantidad_no_entregada > 0 && producto.cantidad_pendiente > 0 && ' · '}
+                                                    {producto.cantidad_pendiente > 0 && `${producto.cantidad_pendiente} sin confirmar`}
+                                                </p>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
                                             Bs. {producto.precio_unitario.toFixed(2)}
                                         </td>
@@ -209,7 +271,7 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                                     {/* Fila expandible - Detalles de ventas */}
                                     {mostrarDetalleVentas && expandedRows.has(producto.producto_id) && producto.ventas.length > 0 && (
                                         <tr className="bg-gray-50 dark:bg-gray-800/20">
-                                            <td colSpan={7} className="px-6 py-4">
+                                            <td colSpan={8} className="px-6 py-4">
                                                 <div className="space-y-2">
                                                     <p className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                         Ventas ({producto.ventas.length}):
@@ -231,11 +293,15 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <p className="font-semibold text-gray-900 dark:text-white">
-                                                                        {venta.cantidad.toFixed(2)} | {producto.unidad_medida}
+                                                                        {venta.cantidad_entregada.toFixed(2)} de {venta.cantidad.toFixed(2)} | {producto.unidad_medida}
                                                                     </p>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    {/* <p className="text-xs text-gray-500">Cliente ID: {venta.cliente_id}</p> */}
+                                                                    <span
+                                                                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${ESTADO_ENTREGA_VENTA[venta.estado_entrega].clase}`}
+                                                                    >
+                                                                        {ESTADO_ENTREGA_VENTA[venta.estado_entrega].nombre}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -253,6 +319,7 @@ export default function ProductosAgrupados({ entregaId, mostrarDetalleVentas = t
                                 <td className="px-6 py-4 text-gray-900 dark:text-white">TOTAL</td>
                                 <td></td>
                                 <td className="px-6 py-4 text-right text-gray-900 dark:text-white">{productos.cantidad_total.toFixed(2)}</td>
+                                <td className="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400">{productos.cantidad_entregada.toFixed(2)}</td>
                                 <td className="px-6 py-4"></td>
                                 <td className="px-6 py-4 text-right text-orange-600 dark:text-orange-400">Bs. {totalGeneral.toFixed(2)}</td>
                                 {mostrarDetalleVentas && <td></td>}

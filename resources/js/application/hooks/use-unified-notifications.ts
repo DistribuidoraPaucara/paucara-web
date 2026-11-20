@@ -85,6 +85,11 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
         title: '🔄 Proforma Convertida',
         message: (d) => `${d.clienteNombre || d.cliente?.nombre || 'Cliente'} - Venta ${d.ventaNumero}`,
       },
+      'proforma.actualizada': {
+        title: '📝 Proforma Actualizada',
+        message: (d) =>
+          `${d.cliente?.nombre || 'Cliente'} - ${d.numero || `#${d.proforma_id}`} - Bs. ${Number(d.total ?? 0).toFixed(2)}`,
+      },
       'proforma.coordinacion-actualizada': {
         title: '📝 Coordinación Actualizada',
         message: (d) => `Proforma ${d.numero}`,
@@ -397,6 +402,7 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       'proforma.aprobada',
       'proforma.rechazada',
       'proforma.convertida',
+      'proforma.actualizada',
       'proforma.coordinacion-actualizada',
       'entrega.asignada',
       'entrega.en-camino',

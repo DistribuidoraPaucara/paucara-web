@@ -149,6 +149,7 @@ export default function ProductSearchBar({
                     <div className="flex-1 relative">
                         <input
                             type="text"
+                            data-buscador-productos
                             value={productSearch}
                             onChange={(e) => setProductSearch(e.target.value)}
                             onKeyDown={(e) => {

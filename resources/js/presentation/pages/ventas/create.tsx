@@ -383,13 +383,19 @@ export default function VentaForm() {
             console.log('✅ [requiere_envio=true] Auto-seleccionando politica_pago = CONTRA_ENTREGA');
         } else if (politicaPagoAnteriorRef.current !== null) {
             // Si desactiva requiere_envio, revertir política anterior
-            setData('politica_pago', politicaPagoAnteriorRef.current as any);
+            // ✅ FIX (2026-11-06): No restaurar CREDITO si el tipo de pago ya no es crédito
+            const tipoActual = (tipos_pago || []).find((t: any) => t.id === data.tipo_pago_id);
+            const anterior = politicaPagoAnteriorRef.current === 'CREDITO' && tipoActual?.codigo !== 'CREDITO'
+                ? 'ANTICIPADO_100'
+                : politicaPagoAnteriorRef.current;
+            setData('politica_pago', anterior as any);
             console.log('✅ [requiere_envio=false] Revertiendo politica_pago a:', politicaPagoAnteriorRef.current);
         }
     }, [data.requiere_envio]);
 
     // ✅ NUEVO: Guardar automáticamente en localStorage con debounce
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const clienteBorradoRef = useRef(false);
 
     useEffect(() => {
         if (isEditing) return; // No guardar si estamos editando una venta existente
@@ -476,30 +482,14 @@ export default function VentaForm() {
             setClienteValue(cliente_general.id);
             setClienteDisplay(cliente_general.nombre + (cliente_general.nit ? ` (${cliente_general.nit})` : ''));
             setClienteSeleccionado(cliente_general as Cliente);
+
+            // Solo si el usuario borró el cliente: al abrir la página los precios no deben cambiar
+            if (clienteBorradoRef.current) {
+                clienteBorradoRef.current = false;
+                aplicarTipoPrecioDeCliente(cliente_general as Cliente);
+            }
         }
     }, [data.cliente_id, cliente_general, isEditing]); // ✅ También cuando cliente_id se limpia
-
-    // ✅ NUEVO (2026-08-28): Auto-actualizar tipo_precio_id de todos los productos cuando cambia el cliente
-    useEffect(() => {
-        if (!clienteSeleccionado || detallesWithProducts.length === 0) return;
-
-        const isClienteGeneralNew = clienteSeleccionado?.codigo_cliente === 'GENERAL';
-        const nuevoTipoPrecioId = isClienteGeneralNew ? tipoPrecioLicoreriId : tipoPrecioVentaId;
-
-        // Solo actualizar si hay un tipo de precio válido
-        if (!nuevoTipoPrecioId) return;
-
-        setDetallesWithProducts((prevDetalles) =>
-            prevDetalles.map((item) => ({
-                ...item,
-                tipo_precio_id: nuevoTipoPrecioId,
-            }))
-        );
-
-        console.log(
-            `✅ [Cliente cambiado] Actualizando ${detallesWithProducts.length} productos a tipo_precio = ${isClienteGeneralNew ? 'LICORERIA' : 'VENTA'}`
-        );
-    }, [clienteSeleccionado, tipoPrecioLicoreriId, tipoPrecioVentaId, detallesWithProducts.length]);
 
     // Inicializar detalles con productos y combo items map
     useEffect(() => {
@@ -863,13 +853,15 @@ export default function VentaForm() {
         const updatedDetalles = [...detallesWithProducts];
 
         // Aplicar todos los cambios al detalle
+        const detalleActualizado = { ...updatedDetalles[index] } as any;
         Object.entries(updates).forEach(([field, value]) => {
-            const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value === null ? null : value;
-            (updatedDetalles[index] as any)[field] = numericValue;
+            // tipo_precio_nombre es texto: parseFloat lo convertiría en 0
+            detalleActualizado[field] = typeof value === 'string' && field !== 'tipo_precio_nombre' ? parseFloat(value) || 0 : value;
         });
+        updatedDetalles[index] = detalleActualizado;
 
         // Recalcular subtotal si fue necesario
-        if (updates.cantidad || updates.precio_unitario || updates.descuento) {
+        if (updates.cantidad !== undefined || updates.precio_unitario !== undefined || updates.descuento !== undefined) {
             const cantidad =
                 updates.cantidad !== undefined
                     ? typeof updates.cantidad === 'string'
@@ -906,9 +898,54 @@ export default function VentaForm() {
         calculatePeso(updatedDetalles);
     };
 
+    // Al elegir otro cliente, tipo y precio cambian juntos. No se tocan las filas elegidas a mano ni "OTROS".
+    // Solo al elegirlo el usuario: al cargar una venta o un borrador los precios no deben cambiar.
+    const aplicarTipoPrecioDeCliente = (cliente: Cliente) => {
+        // Por ID: la opción del buscador de clientes no trae codigo_cliente
+        const esGeneral =
+            cliente.codigo_cliente === 'GENERAL' ||
+            (cliente_general != null && Number((cliente as any).value ?? cliente.id) === Number(cliente_general.id));
+        const tipoPrecioId = esGeneral ? tipoPrecioLicoreriId : tipoPrecioVentaId;
+        if (!tipoPrecioId || detallesWithProducts.length === 0) return;
+
+        const actualizados = detallesWithProducts.map((item) => {
+            // Un fraccionado tiene el precio por su unidad de venta: no corresponde el precio base del tipo
+            const esFraccionadoConUnidad = (item as any).es_fraccionado && item.unidad_venta_id;
+            if (item.tipo_precio_id === null || manuallySelectedTipoPrecio[item.producto_id as number] || esFraccionadoConUnidad) return item;
+
+            const precio = (item.producto as any)?.precios?.find((p: any) => String(p.tipo_precio_id) === String(tipoPrecioId));
+            if (!precio) return item;
+
+            const precioUnitario = Number(precio.precio) || 0;
+            return {
+                ...item,
+                tipo_precio_id: tipoPrecioId,
+                tipo_precio_nombre: precio.nombre,
+                precio_unitario: precioUnitario,
+                subtotal: Number(item.cantidad) * precioUnitario - Number(item.descuento || 0),
+            };
+        });
+
+        setDetallesWithProducts(actualizados);
+        calculateTotals(actualizados);
+        calculatePeso(actualizados);
+
+        // Los rangos calculados con el cliente anterior revertirían estos precios
+        if (esGeneral) {
+            precioRango.reset();
+        } else {
+            precioRango.calcularCarritoDebounced(
+                actualizados
+                    .filter((d) => d.tipo_precio_id !== null)
+                    .map((d) => ({ producto_id: d.producto_id, cantidad: d.cantidad, tipo_precio_id: d.tipo_precio_id })),
+            );
+        }
+    };
+
     const updateDetail = (index: number, field: keyof DetalleVentaFormData, value: number | string) => {
         const updatedDetalles = [...detallesWithProducts];
-        const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+        // tipo_precio_nombre es texto: parseFloat lo convertiría en 0
+        const numericValue = typeof value === 'string' && field !== 'tipo_precio_nombre' ? parseFloat(value) || 0 : value;
         updatedDetalles[index] = { ...updatedDetalles[index], [field]: numericValue };
 
         // Recalcular subtotal del detalle
@@ -957,7 +994,7 @@ export default function VentaForm() {
         // ✅ NUEVO: Limpiar el estado de selección manual para el índice removido
         setManuallySelectedTipoPrecio((prev) => {
             const updated = { ...prev };
-            delete updated[index];
+            delete updated[detallesWithProducts[index].producto_id as number];
             return updated;
         });
 
@@ -1119,7 +1156,12 @@ export default function VentaForm() {
 
         // ✅ NUEVO: Verificar si el tipo de pago seleccionado es CREDITO y ajustar política de pago
         const tipoPagoSeleccionado = tipos_pago?.find((t: any) => t.id === data.tipo_pago_id);
-        const politicaPagoFinal = tipoPagoSeleccionado?.codigo === 'CREDITO' ? 'CREDITO' : (data.politica_pago ?? 'ANTICIPADO_100');
+        // ✅ FIX (2026-11-06): Nunca enviar CREDITO si el tipo de pago no es crédito
+        const politicaPagoFinal = tipoPagoSeleccionado?.codigo === 'CREDITO'
+            ? 'CREDITO'
+            : (data.politica_pago && data.politica_pago !== 'CREDITO'
+                ? data.politica_pago
+                : (data.requiere_envio ? 'CONTRA_ENTREGA' : 'ANTICIPADO_100'));
 
         console.log(`🔍 handleConfirmSubmit - Verificación de tipo de pago:`, {
             tipo_pago_id: data.tipo_pago_id,
@@ -1548,10 +1590,12 @@ export default function VentaForm() {
                                         setClienteRaw(option as any);
                                         // ✅ CRÍTICO (2026-08-28): Actualizar clienteSeleccionado para que se use en isClienteGeneral
                                         setClienteSeleccionado(option as Cliente);
+                                        aplicarTipoPrecioDeCliente(option as Cliente);
                                     } else {
                                         setClienteDisplay('');
                                         setClienteRaw(null);
                                         setClienteSeleccionado(null);
+                                        if (!value) clienteBorradoRef.current = true;
                                     }
                                 }}
                                 placeholder="Buscar cliente por nombre, NIT/CI o teléfono..."

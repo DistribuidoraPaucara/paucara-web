@@ -361,10 +361,10 @@ export default function ReportesDiarios({
                   <TableHead className="dark:text-gray-300 font-semibold">Apertura ID</TableHead>
                   <TableHead className="dark:text-gray-300 font-semibold">Fecha/Hora</TableHead>
                   <TableHead className="dark:text-gray-300 font-semibold">Ejecutado por</TableHead>
-                  <TableHead className="dark:text-gray-300 text-right font-semibold">Cajas Cerradas</TableHead>
-                  <TableHead className="dark:text-gray-300 text-right font-semibold">Con Discrepancias</TableHead>
-                  <TableHead className="dark:text-gray-300 text-right font-semibold">Total Monto</TableHead>
+                  <TableHead className="dark:text-gray-300 text-right font-semibold">Esperado</TableHead>
+                  <TableHead className="dark:text-gray-300 text-right font-semibold">Real</TableHead>
                   <TableHead className="dark:text-gray-300 text-right font-semibold">Diferencia</TableHead>
+                  <TableHead className="dark:text-gray-300 text-center font-semibold">Estado</TableHead>
                   <TableHead className="text-right dark:text-gray-300 font-semibold">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -384,36 +384,36 @@ export default function ReportesDiarios({
                         {format(parseISO(cierre.fecha_ejecucion), 'dd/MM/yyyy HH:mm', { locale: es })}
                       </TableCell>
                       <TableCell className="dark:text-gray-300">{cierre.usuario.name}</TableCell>
-                      <TableCell className="text-right dark:text-gray-300">
-                        <Badge className="bg-green-600 dark:bg-green-700 dark:text-green-100">
-                          {cierre.total_cajas_cerradas}
-                        </Badge>
+                      <TableCell className="text-right dark:text-gray-300 tabular-nums">
+                        Bs. {Number(cierre.total_monto_esperado).toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right dark:text-gray-300">
-                        {cierre.total_cajas_con_discrepancia > 0 ? (
-                          <Badge variant="destructive" className="dark:bg-red-900 dark:text-red-100">
-                            {cierre.total_cajas_con_discrepancia}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="dark:bg-slate-700 dark:text-gray-300">
-                            0
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right dark:text-gray-300 font-semibold">
+                      <TableCell className="text-right dark:text-gray-300 font-semibold tabular-nums">
                         Bs. {Number(cierre.total_monto_real).toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <span
-                          className={`font-semibold ${cierre.total_diferencias === 0
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-orange-600 dark:text-orange-400'
-                            }`}
-                        >
-                          {cierre.total_diferencias === 0
-                            ? '✓ Bs. 0.00'
-                            : `Bs. ${Number(cierre.total_diferencias).toFixed(2)}`}
-                        </span>
+                      <TableCell className="text-right tabular-nums">
+                        {(() => {
+                          const dif = Number(cierre.total_diferencias);
+                          if (Math.abs(dif) < 0.005) {
+                            return <span className="font-semibold text-green-600 dark:text-green-400">✓ Bs. 0.00</span>;
+                          }
+                          // Positivo = sobrante, negativo = faltante
+                          return (
+                            <span className={`font-semibold ${dif < 0 ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                              {dif > 0 ? '+' : ''}Bs. {dif.toFixed(2)}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {(() => {
+                          const dif = Number(cierre.total_diferencias);
+                          if (Math.abs(dif) < 0.005) {
+                            return <Badge className="bg-green-600 text-white dark:bg-green-700">Cuadra</Badge>;
+                          }
+                          return dif < 0
+                            ? <Badge className="bg-red-600 text-white dark:bg-red-700">Faltante</Badge>
+                            : <Badge className="bg-orange-500 text-white dark:bg-orange-600">Sobrante</Badge>;
+                        })()}
                       </TableCell>
                       <TableCell className="text-right space-x-2 flex justify-end">
                         <Button

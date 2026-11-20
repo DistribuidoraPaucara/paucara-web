@@ -11,6 +11,9 @@ class PrecioProducto extends Model
 
     protected $table = 'precios_producto';
 
+    /** Usuario a registrar en el historial del próximo cambio (lo lee PrecioProductoObserver) */
+    public ?string $usuarioCambio = null;
+
     protected $fillable = [
         'producto_id',
         'nombre',
@@ -31,7 +34,7 @@ class PrecioProducto extends Model
     protected function casts(): array
     {
         return [
-            'precio'              => 'decimal:2',
+            'precio'              => \App\Casts\PrecioHastaCuatroDecimales::class,
             'fecha_inicio'        => 'date',
             'fecha_fin'           => 'date',
             'activo'              => 'boolean',
@@ -40,6 +43,16 @@ class PrecioProducto extends Model
             'es_precio_base'      => 'boolean',
             'fecha_ultima_actualizacion' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // La columna admite 4 decimales solo por el costo; los precios de venta siguen con 2
+        static::saving(function (self $precio) {
+            if ($precio->isDirty('precio') && $precio->precio !== null) {
+                $precio->precio = round((float) $precio->precio, $precio->tipoPrecio?->codigo === 'COSTO' ? 4 : 2);
+            }
+        });
     }
 
     /**
@@ -138,18 +151,8 @@ class PrecioProducto extends Model
      */
     public function actualizarPrecio(float $nuevoPrecio, ?string $motivo = null, ?string $usuario = null): void
     {
-        $valorAnterior = $this->precio;
-
-        // Registrar en historial antes de actualizar
-        HistorialPrecio::create([
-            'precio_producto_id' => $this->id,
-            'valor_anterior'     => $valorAnterior,
-            'valor_nuevo'        => $nuevoPrecio,
-            'fecha_cambio'       => now(),
-            'motivo'             => $motivo,
-            'usuario'            => $usuario,
-            'tipo_precio_id'     => $this->tipo_precio_id, // Usar tipo_precio_id en lugar de tipo_precio
-        ]);
+        // El historial lo registra PrecioProductoObserver al actualizar
+        $this->usuarioCambio = $usuario;
 
         // Actualizar precio
         $this->update([

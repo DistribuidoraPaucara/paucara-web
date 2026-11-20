@@ -84,16 +84,35 @@ class NotificacionRecurrente extends Model
         });
     }
 
+    // Los días se guardan en español desde el formulario; índice = Carbon::dayOfWeek (0 = domingo)
+    private const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+    public function estaVigente(): bool
+    {
+        $hoy = now()->toDateString();
+
+        return (! $this->fecha_inicio || $this->fecha_inicio->toDateString() <= $hoy)
+            && (! $this->fecha_fin || $this->fecha_fin->toDateString() >= $hoy);
+    }
+
     public function debeEnviarsePorFrecuencia(): bool
     {
         $ahora = now();
-        $diaHoy = strtolower($ahora->dayName);
+        $diaHoy = self::DIAS_SEMANA[$ahora->dayOfWeek];
+        // Normalizar por si hay registros guardados sin tilde (miercoles, sabado)
+        $diasProgramados = array_map(
+            fn($d) => str_replace(['é', 'á'], ['e', 'a'], mb_strtolower((string) $d)),
+            $this->dias_semana ?? []
+        );
 
         return match ($this->frecuencia) {
-            'una_vez' => true,
+            // Una sola vez: solo el día de inicio, en cada uno de sus horarios
+            'una_vez' => $this->fecha_inicio?->isSameDay($ahora) ?? false,
             'diario' => true,
-            'semanal' => in_array($diaHoy, $this->dias_semana ?? []),
-            'mensual' => $ahora->day === $this->dia_mes,
+            'semanal' => in_array(str_replace(['é', 'á'], ['e', 'a'], $diaHoy), $diasProgramados, true),
+            'mensual' => $ahora->day === $this->dia_mes
+                // Si el día no existe este mes (p. ej. 31 en abril), enviar el último día del mes
+                || ($this->dia_mes > $ahora->daysInMonth && $ahora->day === $ahora->daysInMonth),
             default => false,
         };
     }

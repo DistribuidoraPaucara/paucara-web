@@ -103,6 +103,7 @@ import VendedorController from './VendedorController'
 import ChoferController from './ChoferController'
 import PreventistController from './PreventistController'
 import AdminController from './AdminController'
+import Admin from './Admin'
 import RutaController from './RutaController'
 import ReportePreciosController from './ReportePreciosController'
 import ReporteCreditoController from './ReporteCreditoController'
@@ -220,6 +221,7 @@ VendedorController,
 ChoferController,
 PreventistController,
 AdminController,
+Admin,
 RutaController,
 ReportePreciosController,
 ReporteCreditoController,

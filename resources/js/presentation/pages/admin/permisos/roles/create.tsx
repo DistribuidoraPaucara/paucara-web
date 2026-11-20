@@ -5,22 +5,12 @@ import { Button } from '@/presentation/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Input } from '@/presentation/components/ui/input'
 import { Label } from '@/presentation/components/ui/label'
-import { Checkbox } from '@/presentation/components/ui/checkbox'
 import InputError from '@/presentation/components/input-error'
 import toast from 'react-hot-toast'
 import { Save } from 'lucide-react'
 import { type BreadcrumbItem } from '@/types'
-import type { Permission } from '@/domain/entities/admin-permisos'
+import AdvancedPermissionSelector from '@/presentation/components/roles/AdvancedPermissionSelector'
 import { rolesService } from '@/infrastructure/services/roles.service'
-
-interface PermissionGroup {
-    [key: string]: Permission[]
-}
-
-interface PageProps {
-    permissions: PermissionGroup
-    [key: string]: unknown
-}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -33,8 +23,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ]
 
-export default function Create({ permissions }: PageProps) {
-    const { data, setData, post, processing, errors, reset } = useForm({
+export default function Create() {
+    const { data, setData, post, processing, errors, reset, isDirty } = useForm({
         name: '',
         guard_name: 'web',
         permissions: [] as number[],
@@ -52,18 +42,6 @@ export default function Create({ permissions }: PageProps) {
                 toast.error('Error al crear el rol.')
             },
         })
-    }
-
-    const handlePermissionChange = (permissionId: number, checked: boolean) => {
-        if (checked) {
-            setData('permissions', [...data.permissions, permissionId])
-        } else {
-            setData('permissions', data.permissions.filter(id => id !== permissionId))
-        }
-    }
-
-    const isPermissionSelected = (permissionId: number | string) => {
-        return data.permissions.includes(Number(permissionId))
     }
 
     return (
@@ -94,7 +72,7 @@ export default function Create({ permissions }: PageProps) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form id="role-form" onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Nombre del Rol</Label>
@@ -122,52 +100,28 @@ export default function Create({ permissions }: PageProps) {
                                     <InputError message={errors.guard_name} />
                                 </div>
                             </div>
-
-                            <div className="space-y-4">
-                                <Label>Permisos</Label>
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                    {Object.entries(permissions).map(([module, modulePermissions]) => (
-                                        <div key={module} className="space-y-3">
-                                            <h4 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
-                                                {module}
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {modulePermissions.map((permission) => (
-                                                    <div key={permission.id} className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id={`permission-${permission.id}`}
-                                                            checked={isPermissionSelected(permission.id)}
-                                                            onCheckedChange={(checked) =>
-                                                                handlePermissionChange(Number(permission.id), checked as boolean)
-                                                            }
-                                                        />
-                                                        <Label
-                                                            htmlFor={`permission-${permission.id}`}
-                                                            className="text-sm font-normal"
-                                                        >
-                                                            {permission.name.replace(`${module}.`, '')}
-                                                        </Label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <InputError message={errors.permissions} />
-                            </div>
-
-                            <div className="flex justify-end space-x-2">
-                                <Button type="button" variant="outline" asChild>
-                                    <Link href={rolesService.indexUrl()}>Cancelar</Link>
-                                </Button>
-                                <Button type="submit" disabled={processing}>
-                                    <Save className="mr-2 h-4 w-4" />
-                                    {processing ? 'Creando...' : 'Crear Rol'}
-                                </Button>
-                            </div>
                         </form>
                     </CardContent>
                 </Card>
+
+                <AdvancedPermissionSelector
+                    selectedPermissions={data.permissions}
+                    onChange={(permissions) => setData('permissions', permissions)}
+                />
+                <InputError message={errors.permissions} />
+
+                <div className="sticky bottom-0 flex items-center justify-end gap-2 rounded-lg border bg-background p-3 shadow-sm">
+                    <span className="mr-auto text-sm text-muted-foreground">
+                        {data.permissions.length} permisos seleccionados
+                    </span>
+                    <Button type="button" variant="outline" asChild>
+                        <Link href={rolesService.indexUrl()}>Cancelar</Link>
+                    </Button>
+                    <Button type="submit" form="role-form" disabled={processing || !isDirty}>
+                        <Save className="mr-2 h-4 w-4" />
+                        {processing ? 'Creando...' : 'Crear Rol'}
+                    </Button>
+                </div>
             </div>
         </AppLayout>
     )

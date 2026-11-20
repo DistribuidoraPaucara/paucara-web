@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/compras.utils';
+import { decimalesDePrecio, formatearCosto, TOLERANCIA_COSTO } from '@/lib/precios.utils';
 import { NotificationService } from '@/infrastructure/services/notification.service';
 import { useCascadaPreciosCompra } from '@/domain/hooks/useCascadaPreciosCompra';
 import { preciosService } from '@/application/services/precios.service';
@@ -34,6 +35,10 @@ interface ModalComprasDiferenciaCostoProps {
         motivo: string;
     }>) => Promise<void>;
     onSuccess?: () => void;
+    /** Se llama tras guardar, solo si cambió la fila COSTO, con el costo nuevo */
+    onCostoActualizado?: (costo: number) => void;
+    /** Se llama tras guardar, con todos los precios que cambiaron */
+    onPreciosGuardados?: (cambios: Array<{ id: number; precio: number }>) => void;
 }
 
 export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenciaCostoProps> = ({
@@ -44,6 +49,8 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
     precioCostoNuevo,
     onActualizarPrecios,
     onSuccess,
+    onCostoActualizado,
+    onPreciosGuardados,
 }) => {
     const [activeTab, setActiveTab] = useState<'precios'>('precios');
     const [guardando, setGuardando] = useState(false);
@@ -123,13 +130,10 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
                 [index]: { ...prev[index], precio: undefined }
             }));
 
-            // Enfocar el input de ganancia más cercano
-            const gridDiv = e.currentTarget.nextElementSibling as HTMLElement;
-            if (gridDiv) {
-                const ganananciaInput = gridDiv.querySelector('input[type="number"]') as HTMLInputElement;
-                if (ganananciaInput) {
-                    setTimeout(() => ganananciaInput.focus(), 0);
-                }
+            // Enfocar el input de ganancia de la misma fila
+            const gananciaInput = e.currentTarget.closest('[data-precio-card]')?.querySelector<HTMLInputElement>('input[data-ganancia-input]');
+            if (gananciaInput) {
+                setTimeout(() => gananciaInput.focus(), 0);
             }
         }
     };
@@ -149,8 +153,8 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
             // Obtener todos los inputs de precio en orden
             const allPrecioInputs = document.querySelectorAll('input[data-precio-input]') as NodeListOf<HTMLInputElement>;
 
-            // Encontrar cuál es el input de precio en la card actual
-            const cardActual = e.currentTarget.closest('div[data-precio-card]');
+            // Encontrar cuál es el input de precio en la fila actual
+            const cardActual = e.currentTarget.closest('[data-precio-card]');
             const precioInputActual = cardActual?.querySelector('input[data-precio-input]');
 
             // Encontrar el índice del input actual
@@ -194,6 +198,14 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
         setGuardando(true);
         try {
             await onActualizarPrecios(preciosCambiados);
+
+            onPreciosGuardados?.(validacion.preciosCambiados.map(p => ({ id: Number(p.id), precio: p.precio_propuesto })));
+
+            const filaCosto = preciosPropuestos.find(p => p.tipo_codigo === 'COSTO');
+            if (filaCosto && validacion.preciosCambiados.some(p => p.id === filaCosto.id)) {
+                onCostoActualizado?.(filaCosto.precio_propuesto);
+            }
+
             NotificationService.success(
                 `✅ ${preciosCambiados.length} precio(s) actualizado(s) exitosamente`
             );
@@ -252,7 +264,7 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
 
             {/* Modal */}
             <div className="flex min-h-screen items-center justify-center p-4">
-                <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-lg shadow-xl dark:shadow-slate-900/50 border border-gray-200 dark:border-slate-700 overflow-hidden">
+                <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-lg shadow-xl dark:shadow-slate-900/50 border border-gray-200 dark:border-slate-700 overflow-hidden">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-b border-blue-200 dark:border-blue-800/50 px-6 py-4">
                         <div className="flex items-center justify-between">
@@ -266,10 +278,10 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
                                         {producto.nombre} (SKU: {producto.sku || 'N/A'})
                                     </p>
                                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-mono">
-                                        Costo actual: {formatCurrency(precioActual || 0)}
+                                        Costo actual: {formatearCosto(precioActual || 0)}
                                         {precioCostoNuevo && precioCostoNuevo !== precioActual && (
                                             <span className="ml-3 text-blue-600 dark:text-blue-400 font-semibold">
-                                                → Nuevo: {formatCurrency(precioCostoNuevo)}
+                                                → Nuevo: {formatearCosto(precioCostoNuevo)}
                                             </span>
                                         )}
                                     </div>
@@ -297,73 +309,77 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
                             </div>
                         ) : (
                             <>
-                                <div className="space-y-4">
-                                    {preciosPropuestos
-                                        .sort((a, b) => a.tipo_precio_id - b.tipo_precio_id)
-                                        .map((precio, index) => (
-                                            <div key={precio.id} data-precio-card className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {/* Precio Actual */}
-                                                    <div className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span
-                                                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white"
-                                                                style={{ backgroundColor: precio.tipo_color || '#999999' }}
-                                                            >
-                                                                {precio.tipo_nombre}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                                {precio.tipo_codigo}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                                            Precio Actual
-                                                        </div>
-                                                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                            {formatCurrency(precio.precio_actual)}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                            Ganancia: {precio.porcentaje_ganancia_actual.toFixed(1)}%
-                                                        </div>
-                                                    </div>
+                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700">
+                                    <table className="min-w-full text-sm">
+                                        <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                                            <tr>
+                                                <th scope="col" className="px-3 py-2 text-left font-medium">Tipo de precio</th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">Precio actual</th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">Ganancia actual</th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">Precio propuesto</th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">Ganancia (%)</th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">Diferencia</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                                            {preciosPropuestos
+                                                .sort((a, b) => a.tipo_precio_id - b.tipo_precio_id)
+                                                .map((precio, index) => {
+                                                    const diferencia = precio.precio_propuesto - precio.precio_actual;
+                                                    const esCosto = precio.tipo_codigo === 'COSTO';
+                                                    const decimales = decimalesDePrecio(precio.tipo_codigo);
+                                                    const formato = esCosto ? formatearCosto : formatCurrency;
+                                                    const hayCambio = Math.abs(diferencia) > (esCosto ? TOLERANCIA_COSTO : 0.01);
 
-                                                    {/* Precio Propuesto (Editable) */}
-                                                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 rounded">
-                                                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                                            Precio Propuesto
-                                                        </div>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            min="0"
-                                                            data-precio-input
-                                                            value={inputsEditando[index]?.precio !== undefined ? inputsEditando[index].precio : precio.precio_propuesto.toFixed(2)}
-                                                            onChange={(e) => {
-                                                                setInputsEditando(prev => ({
-                                                                    ...prev,
-                                                                    [index]: { ...prev[index], precio: e.target.value }
-                                                                }));
-                                                            }}
-                                                            onKeyDown={(e) => handleKeyDownPrecio(e, index)}
-                                                            onBlur={(e) => {
-                                                                const valor = e.target.value ? Number(e.target.value) : 0;
-                                                                handleCambioPrecioPropuesto(index, valor);
-                                                                setInputsEditando(prev => ({
-                                                                    ...prev,
-                                                                    [index]: { ...prev[index], precio: undefined }
-                                                                }));
-                                                            }}
-                                                            className="w-full text-2xl font-bold px-3 py-2 border border-blue-300 dark:border-blue-700 rounded bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
-                                                        />
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            <div>
-                                                                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
-                                                                    Ganancia (%)
-                                                                </label>
+                                                    return (
+                                                        <tr key={precio.id} data-precio-card className={hayCambio ? 'bg-blue-50/60 dark:bg-blue-950/20' : ''}>
+                                                            <td className="px-3 py-2 whitespace-nowrap">
+                                                                <span
+                                                                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                                                                    style={{ backgroundColor: precio.tipo_color || '#999999' }}
+                                                                >
+                                                                    {precio.tipo_nombre}
+                                                                </span>
+                                                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{precio.tipo_codigo}</span>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right font-mono whitespace-nowrap text-gray-900 tabular-nums dark:text-white">
+                                                                {formato(precio.precio_actual)}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right font-mono whitespace-nowrap text-gray-600 tabular-nums dark:text-gray-300">
+                                                                {precio.porcentaje_ganancia_actual.toFixed(1)}%
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right">
+                                                                <input
+                                                                    type="number"
+                                                                    step={esCosto ? '0.0001' : '0.01'}
+                                                                    min="0"
+                                                                    data-precio-input
+                                                                    aria-label={`Precio propuesto ${precio.tipo_nombre}`}
+                                                                    value={inputsEditando[index]?.precio !== undefined ? inputsEditando[index].precio : precio.precio_propuesto.toFixed(decimales)}
+                                                                    onChange={(e) => {
+                                                                        setInputsEditando(prev => ({
+                                                                            ...prev,
+                                                                            [index]: { ...prev[index], precio: e.target.value }
+                                                                        }));
+                                                                    }}
+                                                                    onKeyDown={(e) => handleKeyDownPrecio(e, index)}
+                                                                    onBlur={(e) => {
+                                                                        const valor = e.target.value ? Number(e.target.value) : 0;
+                                                                        handleCambioPrecioPropuesto(index, valor);
+                                                                        setInputsEditando(prev => ({
+                                                                            ...prev,
+                                                                            [index]: { ...prev[index], precio: undefined }
+                                                                        }));
+                                                                    }}
+                                                                    className="w-28 rounded border border-blue-300 bg-white px-2 py-1 text-right font-semibold text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-blue-700 dark:bg-slate-800 dark:text-white"
+                                                                />
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right">
                                                                 <input
                                                                     type="number"
                                                                     step="0.01"
                                                                     data-ganancia-input
+                                                                    aria-label={`Ganancia propuesta ${precio.tipo_nombre}`}
                                                                     value={inputsEditando[index]?.ganancia !== undefined ? inputsEditando[index].ganancia : precio.porcentaje_ganancia_propuesto.toFixed(2)}
                                                                     onChange={(e) => {
                                                                         setInputsEditando(prev => ({
@@ -380,30 +396,23 @@ export const ModalComprasDiferenciaCostoComponent: React.FC<ModalComprasDiferenc
                                                                             [index]: { ...prev[index], ganancia: undefined }
                                                                         }));
                                                                     }}
-                                                                    className="w-full px-2 py-1 text-sm border border-blue-300 dark:border-blue-700 rounded bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                                    className="w-24 rounded border border-blue-300 bg-white px-2 py-1 text-right text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-blue-700 dark:bg-slate-800 dark:text-white"
                                                                 />
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                                    Actual
-                                                                </div>
-                                                                <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                                                    {precio.porcentaje_ganancia_actual.toFixed(1)}%
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        {Math.abs(precio.precio_propuesto - precio.precio_actual) > 0.01 && (
-                                                            <div className={`text-xs font-semibold mt-2 ${precio.precio_propuesto > precio.precio_actual
-                                                                ? 'text-green-600 dark:text-green-400'
-                                                                : 'text-red-600 dark:text-red-400'
-                                                                }`}>
-                                                                {precio.precio_propuesto > precio.precio_actual ? '↑ Aumento' : '↓ Disminución'}: {formatCurrency(Math.abs(precio.precio_propuesto - precio.precio_actual))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">
+                                                                {hayCambio ? (
+                                                                    <span className={diferencia > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                                                        {diferencia > 0 ? '↑' : '↓'} {formato(Math.abs(diferencia))}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-gray-400">—</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                        </tbody>
+                                    </table>
                                 </div>
 
                                 {/* Campo de motivo */}

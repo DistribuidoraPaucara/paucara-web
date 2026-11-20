@@ -389,6 +389,8 @@ export const EVENT_ROLE_MAPPING: Record<string, string[]> = {
   'proforma.rechazada': ['preventista', 'cajero', 'cliente', 'manager', 'admin'],
   'proforma.convertida': ['preventista', 'logistica', 'cobrador', 'manager', 'admin', 'cliente'],
   'proforma.coordinacion-actualizada': ['manager', 'admin'],
+  // El servidor ya limita destinatarios (staff, creador y cliente dueño); cajero cubre al creador
+  'proforma.actualizada': ['preventista', 'cajero', 'manager', 'admin', 'cliente'],
 
   'entrega.asignada': ['chofer', 'logistica', 'manager', 'admin'],
   'entrega.listo': ['logistica', 'manager', 'admin'],

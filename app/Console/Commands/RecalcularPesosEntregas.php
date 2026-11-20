@@ -2,8 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Entrega;
+use App\Models\EstadoDocumento;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class RecalcularPesosEntregas extends Command
 {
@@ -12,70 +13,72 @@ class RecalcularPesosEntregas extends Command
      *
      * @var string
      */
-    protected $signature = 'app:recalcular-pesos-entregas {--entrega_id= : Recalcular solo una entrega específica}';
+    protected $signature = 'app:recalcular-pesos-entregas
+        {--entrega_id= : Recalcular solo una entrega específica}
+        {--solo-con-anuladas : Recalcular solo las entregas que tienen ventas anuladas o canceladas}
+        {--dry-run : Mostrar los cambios sin guardarlos}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Recalcular peso total de entregas basado en las ventas que contienen';
+    protected $description = 'Recalcular peso total de entregas sumando sus ventas vigentes (sin anuladas ni canceladas)';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('Iniciando recálculo de pesos para entregas...');
+        $simular = (bool) $this->option('dry-run');
 
-        $query = DB::table('entregas');
+        $this->info($simular ? 'Simulando recálculo (no se guarda nada)...' : 'Iniciando recálculo de pesos para entregas...');
+
+        $query = Entrega::query();
 
         if ($this->option('entrega_id')) {
-            $query->where('id', $this->option('entrega_id'));
-            $this->info('Recalculando solo entrega ID: ' . $this->option('entrega_id'));
+            $query->whereKey($this->option('entrega_id'));
         }
 
-        $entregas = $query->get(['id', 'numero_entrega', 'peso_kg']);
-        $updated = 0;
-        $failed = 0;
-        $totalDiferencia = 0;
+        if ($this->option('solo-con-anuladas')) {
+            $query->whereHas('ventas.estadoDocumento', fn ($q) => $q->whereIn('codigo', EstadoDocumento::CODIGOS_SIN_EFECTO));
+        }
 
-        foreach ($entregas as $entrega) {
-            try {
-                // Calcular peso total de la entrega basado en sus ventas
-                $pesoTotal = DB::table('entrega_venta')
-                    ->join('ventas', 'entrega_venta.venta_id', '=', 'ventas.id')
-                    ->where('entrega_venta.entrega_id', $entrega->id)
-                    ->sum('ventas.peso_estimado');
+        $cambiadas = 0;
+        $omitidas = 0;
+        $totalDiferencia = 0.0;
 
-                $pesoAnterior = $entrega->peso_kg;
-                $diferencia = $pesoTotal - $pesoAnterior;
+        $query->chunkById(200, function ($entregas) use ($simular, &$cambiadas, &$omitidas, &$totalDiferencia) {
+            foreach ($entregas as $entrega) {
+                $pesoNuevo = $entrega->calcularPesoVigente();
 
-                // Actualizar entrega
-                DB::table('entregas')
-                    ->where('id', $entrega->id)
-                    ->update(['peso_kg' => $pesoTotal ?? 0]);
+                if ($pesoNuevo === null) {
+                    $this->warn("{$entrega->numero_entrega}: omitida, tiene ventas vigentes sin peso");
+                    $omitidas++;
 
-                $estado = $diferencia != 0 ? '⚠️' : '✓';
-                $signo = $diferencia >= 0 ? '+' : '';
-                $this->line("{$estado} {$entrega->numero_entrega}: {$pesoAnterior} kg → {$pesoTotal} kg (Δ {$signo}" . number_format($diferencia, 2) . " kg)");
+                    continue;
+                }
 
+                $pesoAnterior = (float) $entrega->peso_kg;
+                $diferencia = round($pesoNuevo - $pesoAnterior, 2);
+
+                if ($diferencia == 0.0) {
+                    continue;
+                }
+
+                $this->line("{$entrega->numero_entrega}: {$pesoAnterior} kg -> {$pesoNuevo} kg ({$diferencia} kg)");
+
+                if (! $simular) {
+                    $entrega->recalcularPeso();
+                }
+
+                $cambiadas++;
                 $totalDiferencia += $diferencia;
-                $updated++;
-            } catch (\Exception $e) {
-                $this->error("✗ {$entrega->numero_entrega}: {$e->getMessage()}");
-                $failed++;
             }
-        }
+        });
 
-        $this->info("\n" . str_repeat('─', 60));
-        $this->info("Resumen: {$updated} actualizadas, {$failed} errores");
-        if ($totalDiferencia != 0) {
-            $signoTotal = $totalDiferencia >= 0 ? '+' : '';
-            $this->info("Diferencia total de peso: {$signoTotal}" . number_format($totalDiferencia, 2) . " kg");
-        }
-        $this->info(str_repeat('─', 60));
+        $this->info("Resumen: {$cambiadas} con cambios, {$omitidas} omitidas, diferencia total " . number_format($totalDiferencia, 2) . ' kg');
 
-        return 0;
+        return self::SUCCESS;
     }
 }

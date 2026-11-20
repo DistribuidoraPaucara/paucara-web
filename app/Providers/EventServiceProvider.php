@@ -393,8 +393,8 @@ class EventServiceProvider extends ServiceProvider
         // COMPRA EVENTS
         // ══════════════════════════════════════════════════════════
 
-        // ✅ NUEVO: Notificar cuando se completa una compra (nuevo stock disponible)
-        // Listeners notifican a: admins, managers, cajeros
+        // Notificar nuevo stock al aprobar una compra
+        // Destinatarios: admin, manager, cajero, preventista, el usuario que aprobó y todos los clientes con usuario
         CompraCompletada::class => [
             SendCompraCompletedNotification::class,
         ],

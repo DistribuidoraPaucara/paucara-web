@@ -74,7 +74,8 @@ class CierreDiarioGeneralController extends Controller
                 'id' => $cierre->id,
                 'apertura_caja_id' => $cierre->apertura_caja_id,
                 'usuario_id' => $cierre->user_id,
-                'fecha_ejecucion' => $cierre->fecha,
+                // created_at = momento real del cierre (fecha puede ser endOfDay si se cerró con fecha pasada)
+                'fecha_ejecucion' => ($cierre->created_at ?? $cierre->fecha)?->toIso8601String(),
                 'total_cajas_procesadas' => 1,
                 'total_cajas_cerradas' => 1,
                 'total_cajas_con_discrepancia' => $cierre->diferencia != 0 ? 1 : 0,
@@ -300,7 +301,8 @@ class CierreDiarioGeneralController extends Controller
                         'nombre' => $cierre->caja->nombre,
                     ],
                     'fecha_apertura' => $cierre->apertura->fecha->toIso8601String(),
-                    'fecha_cierre' => $cierre->fecha->toIso8601String(),
+                    // created_at = momento real del cierre (fecha puede ser endOfDay si se cerró con fecha pasada)
+                    'fecha_cierre' => ($cierre->created_at ?? $cierre->fecha)->toIso8601String(),
                     'monto_apertura' => (float) $cierre->apertura->monto_apertura,
                     'monto_esperado' => (float) $cierre->monto_esperado,
                     'monto_real' => (float) $cierre->monto_real,

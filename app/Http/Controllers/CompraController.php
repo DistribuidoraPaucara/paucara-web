@@ -36,7 +36,8 @@ class CompraController extends Controller
         ExcelExportService $excelExportService,
         ImpresionService $impresionService,
         CompraDistribucionService $compraDistribucionService,
-        \App\Services\Compra\CompraPrestablesReverseService $compraPrestablesReverseService
+        \App\Services\Compra\CompraPrestablesReverseService $compraPrestablesReverseService,
+        private \App\Services\Compra\CompraAnulacionStockService $compraAnulacionStockService
     )
     {
         $this->excelExportService = $excelExportService;
@@ -67,7 +68,7 @@ class CompraController extends Controller
             'fecha_desde'         => ['nullable', 'date'],
             'fecha_hasta'         => ['nullable', 'date'],
             'per_page'            => ['nullable', 'integer', 'min:10', 'max:100'],
-            'sort_by'             => ['nullable', 'string', 'in:numero,fecha,proveedor,total,created_at'],
+            'sort_by'             => ['nullable', 'string', 'in:id,numero,fecha,estado,proveedor,total,created_at'],
             'sort_dir'            => ['nullable', 'string', 'in:asc,desc'],
         ]);
 
@@ -121,12 +122,22 @@ class CompraController extends Controller
         $sortBy  = $filtros['sort_by'] ?? 'created_at';
         $sortDir = $filtros['sort_dir'] ?? 'desc';
 
-        if ($sortBy === 'proveedor') {
-            $query->leftJoin('proveedores', 'compras.proveedor_id', '=', 'proveedores.id')
-                ->orderBy('proveedores.nombre', $sortDir)
-                ->select('compras.*');
-        } else {
-            $query->orderBy($sortBy, $sortDir);
+        // Relaciones: ordenar por subconsulta (sin JOIN, así los filtros por id/numero no quedan ambiguos)
+        match ($sortBy) {
+            'proveedor' => $query->orderBy(
+                Proveedor::select('nombre')->whereColumn('proveedores.id', 'compras.proveedor_id'),
+                $sortDir
+            ),
+            'estado' => $query->orderBy(
+                EstadoDocumento::select('nombre')->whereColumn('estados_documento.id', 'compras.estado_documento_id'),
+                $sortDir
+            ),
+            default => $query->orderBy("compras.{$sortBy}", $sortDir),
+        };
+
+        // Desempate estable: con valores iguales (mismo proveedor, estado o total) el orden no salta entre páginas
+        if ($sortBy !== 'id') {
+            $query->orderBy('compras.id', $sortDir);
         }
 
         // Paginación
@@ -644,8 +655,11 @@ class CompraController extends Controller
 
             DB::commit();
 
-            // ✅ NUEVO: Disparar evento para notificar nuevo stock disponible
-            event(new CompraCompletada($compra));
+            // Notificar nuevo stock solo si la compra se creó ya aprobada/recibida (el stock entra en este momento).
+            // Un borrador o pendiente notificará al aprobarse en update().
+            if ($compra->estado_documento_id == $estadoAprobado?->id || $compra->estado_documento_id == $estadoRecibido?->id) {
+                event(new CompraCompletada($compra, Auth::id()));
+            }
 
             // ✅ NUEVO: Procesar prestables cuando se crea compra (entrada de stock al almacén)
             try {
@@ -960,7 +974,8 @@ class CompraController extends Controller
             }
 
             // ✅ CUARTO: Detectar cambios de estado importantes
-            $cambioAAprobado = $estadoAnterior == $estadoBorrador?->id &&
+            // BORRADOR o PENDIENTE → APROBADO: ninguno de los dos tiene stock registrado todavía
+            $cambioAAprobado = in_array($estadoAnterior, array_filter([$estadoBorrador?->id, $estadoPendiente?->id])) &&
             $compra->estado_documento_id == $estadoAprobado?->id;
             $cambioARecibido = $estadoAnterior != $estadoRecibido?->id &&
             $compra->estado_documento_id == $estadoRecibido?->id;
@@ -974,7 +989,7 @@ class CompraController extends Controller
                 'detalles_count'    => $compra->detalles->count(),
             ]);
 
-            // ✅ QUINTO: Si BORRADOR → APROBADO, registrar inventario Y movimiento de caja (o CuentaPorPagar si es crédito)
+            // ✅ QUINTO: Si BORRADOR/PENDIENTE → APROBADO, registrar inventario Y movimiento de caja (o CuentaPorPagar si es crédito)
             if ($cambioAAprobado && $compra->detalles()->exists()) {
                 // Determine which scenario:
                 // Escenario 1: Detalles fueron modificados (recreadas)
@@ -1159,6 +1174,11 @@ class CompraController extends Controller
                 'compra_id' => $compra->id,
                 'mensaje' => 'Compra actualizada y guardada en BD',
             ]);
+
+            // Al aprobar la compra (BORRADOR/PENDIENTE → APROBADO) entra el stock: notificar
+            if ($cambioAAprobado) {
+                event(new CompraCompletada($compra, Auth::id()));
+            }
 
             return redirect()->route('compras.index')
                 ->with('success', 'Compra actualizada exitosamente');
@@ -1376,9 +1396,35 @@ class CompraController extends Controller
     }
 
     /**
+     * Motivos por los que una compra aprobada no se puede anular (vacío si se puede).
+     *
+     * @return string[]
+     */
+    private function motivosNoAnulable(Compra $compra): array
+    {
+        $motivos = [];
+
+        // Pagos activos (los pagos ANULADOS no cuentan)
+        $pagosActivos = \App\Models\Pago::whereHas('cuentaPorPagar', fn($q) => $q->where('compra_id', $compra->id))
+            ->where(fn($q) => $q->whereNull('estado')->orWhere('estado', '!=', 'ANULADO'))
+            ->get(['id', 'monto']);
+        if ($pagosActivos->isNotEmpty()) {
+            $motivos[] = "La cuenta por pagar tiene {$pagosActivos->count()} pago(s) registrado(s) por "
+                . number_format((float) $pagosActivos->sum('monto'), 2) . '. Anula primero esos pagos.';
+        }
+
+        if ($compra->asientoContable?->cerrado) {
+            $motivos[] = 'La compra tiene un asiento contable cerrado que no puede revertirse.';
+        }
+
+        return array_merge($motivos, $this->compraAnulacionStockService->motivosBloqueo($compra));
+    }
+
+    /**
      * Anular una compra aprobada
      *
-     * Revierte inventario, caja y actualiza estado a ANULADO
+     * Devuelve el stock desde los mismos lotes donde ingresó, anula la cuenta por pagar
+     * (si no tiene pagos activos) y cambia el estado a ANULADO. Si no se puede, responde 422 con los motivos.
      */
     public function anular(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
@@ -1422,29 +1468,34 @@ class CompraController extends Controller
                 ], 422);
             }
 
-            // 4. Validar integridad
-            try {
-                $this->validarIntegridadReferencialCompra($compra);
-            } catch (\Exception $e) {
-                Log::warning('🟠 [ANULAR COMPRA] VALIDACIÓN FALLIDA', [
+            // 4. Validar que se pueda anular (pagos, contabilidad y stock), con todos los motivos juntos
+            $motivos = $this->motivosNoAnulable($compra);
+            if (!empty($motivos)) {
+                Log::warning('🟠 [ANULAR COMPRA] NO ANULABLE', [
                     'compra_id' => $compra->id,
-                    'error' => $e->getMessage(),
+                    'motivos' => $motivos,
                 ]);
-                return response()->json(['message' => $e->getMessage()], 422);
+                return response()->json([
+                    'message' => "No se puede anular la compra {$compra->numero}",
+                    'motivos' => $motivos,
+                ], 422);
             }
 
-            // 5. Ejecutar anulación
+            // 5. Ejecutar anulación: si algo falla, no se anula nada
             DB::transaction(function () use ($compra, $motivo) {
-                // Revertir inventario
-                if ($compra->estadoDocumento?->codigo === 'APROBADO') {
-                    try {
-                        $compra->revertirMovimientosInventario();
-                    } catch (\Exception $e) {
-                        Log::warning('No se pudo revertir inventario al anular compra', [
-                            'compra_id' => $compra->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
+                $usuarioNombre = auth()->user()->name ?? 'Sistema';
+
+                // Devolver el stock desde los mismos lotes donde ingresó (vuelve a verificar con las filas bloqueadas)
+                $this->compraAnulacionStockService->revertir($compra, $motivo);
+
+                // Anular la cuenta por pagar (ya se verificó que no tiene pagos activos)
+                if ($compra->cuentaPorPagar) {
+                    $cuenta = $compra->cuentaPorPagar;
+                    $cuenta->update([
+                        'estado'          => 'ANULADO',
+                        'saldo_pendiente' => 0,
+                        'observaciones'   => trim(($cuenta->observaciones ?? '') . "\n[ANULADO] Por anulación de la compra {$compra->numero}. Motivo: {$motivo} - {$usuarioNombre} - " . now()->toDateTimeString()),
+                    ]);
                 }
 
                 // Revertir prestables (si existen préstamos a proveedores)
@@ -1458,7 +1509,6 @@ class CompraController extends Controller
                 }
 
                 // Actualizar observaciones
-                $usuarioNombre = auth()->user()->name ?? 'Sistema';
                 $fechaActual = now()->toDateTimeString();
                 $observacionesExistentes = $compra->observaciones ?? '';
 
@@ -1490,6 +1540,12 @@ class CompraController extends Controller
                 'message' => 'Compra anulada exitosamente',
             ], 200);
 
+        } catch (\App\Exceptions\CompraNoAnulableException $e) {
+            // El stock cambió entre la validación y la anulación (p. ej. una venta simultánea)
+            return response()->json([
+                'message' => "No se puede anular la compra {$e->compraNumero}",
+                'motivos' => $e->motivos,
+            ], 422);
         } catch (\Exception $e) {
             Log::error('🟠 [ANULAR COMPRA] ERROR', [
                 'compra_id' => $id,
@@ -2371,7 +2427,8 @@ class CompraController extends Controller
 
         // Mapear detalles con información del stock existente
         $detallesConStock = $compra->detalles->map(function ($detalle) use ($compra) {
-            // Buscar todos los registros de stock creados para este detalle
+            // Lotes ACTIVOS del producto en el almacén: StockProducto usa SoftDeletes, así que los
+            // dados de baja (deleted_at != null) quedan fuera de la lista, de los totales y de los movimientos
             $stockProductos = \App\Models\StockProducto::where('producto_id', $detalle->producto_id)
                 ->where('almacen_id', $compra->almacen_id)
                 ->orderByDesc('id')
@@ -2457,6 +2514,125 @@ class CompraController extends Controller
     }
 
     /**
+     * Validaciones de la asignación de lotes que dependen de los datos (solo lotes activos).
+     * - Cada detalle pertenece a la compra
+     * - Cada lote usado es del mismo producto y del almacén de la compra, y no está dado de baja
+     * - Los lotes nuevos o renombrados no chocan con otro lote del producto: el índice único
+     *   (producto, almacén, sector, lote) incluye los lotes dados de baja
+     *
+     * @return string[] Mensajes para el usuario (vacío si todo está bien)
+     */
+    /**
+     * "Sin lote: solo hay 18 disponibles para transferir (3 están reservadas en proformas)."
+     */
+    private function mensajeSoloDisponible(DetalleCompra $detalle, StockProducto $stock): string
+    {
+        $fmt = fn($n) => rtrim(rtrim(number_format((float) $n, 4, ',', '.'), '0'), ',');
+        $producto = $detalle->producto?->nombre ?? "Producto #{$detalle->producto_id}";
+        $lote = $stock->lote ?: 'Sin lote';
+        $reservada = (float) $stock->cantidad_reservada;
+        $reservadas = match (true) {
+            $reservada <= 0 => '',
+            $reservada == 1 => ' (1 está reservada en proformas)',
+            default         => " ({$fmt($reservada)} están reservadas en proformas)",
+        };
+
+        return "{$producto} – {$lote}: solo hay {$fmt($stock->cantidad_disponible)} disponibles para transferir{$reservadas}.";
+    }
+
+    private function erroresAsignacionLotes(Compra $compra, array $detalles): array
+    {
+        $errores = [];
+
+        foreach ($detalles as $detalleData) {
+            $detalle = DetalleCompra::with('producto:id,nombre')->find($detalleData['detalle_id']);
+            if (!$detalle || (int) $detalle->compra_id !== (int) $compra->id) {
+                $errores[] = "El detalle #{$detalleData['detalle_id']} no pertenece a la compra {$compra->numero}.";
+                continue;
+            }
+            $producto = $detalle->producto?->nombre ?? "Producto #{$detalle->producto_id}";
+
+            // Lotes activos del producto en el almacén de la compra (SoftDeletes excluye los dados de baja)
+            $activos = StockProducto::where('producto_id', $detalle->producto_id)
+                ->where('almacen_id', $compra->almacen_id)
+                ->get(['id', 'lote'])
+                ->keyBy('id');
+
+            $idsUsados = array_merge(
+                array_column($detalleData['stock_anterior_actualizar'] ?? [], 'stock_id'),
+                array_column($detalleData['transferencias'] ?? [], 'origen_stock_id'),
+                array_column($detalleData['transferencias'] ?? [], 'destino_stock_id'),
+            );
+            foreach (array_unique(array_filter($idsUsados)) as $stockId) {
+                if (!$activos->has($stockId)) {
+                    $errores[] = "{$producto}: el lote #{$stockId} no es un lote activo de este producto en el almacén de la compra.";
+                }
+            }
+
+            // Lo que sale de cada lote (reducciones + transferencias) no puede superar lo DISPONIBLE:
+            // lo reservado se queda en su lote porque las reservas de proformas apuntan a esa fila
+            $salidas = [];
+            foreach ($detalleData['stock_anterior_actualizar'] ?? [] as $s) {
+                if (isset($s['cantidad'])) {
+                    $actual = (float) (StockProducto::find($s['stock_id'])?->cantidad ?? 0);
+                    $reduccion = $actual - (float) $s['cantidad'];
+                    if ($reduccion > 0) {
+                        $salidas[$s['stock_id']] = ($salidas[$s['stock_id']] ?? 0) + $reduccion;
+                    }
+                }
+            }
+            foreach ($detalleData['transferencias'] ?? [] as $t) {
+                if ((float) $t['cantidad'] > 0) {
+                    $salidas[$t['origen_stock_id']] = ($salidas[$t['origen_stock_id']] ?? 0) + (float) $t['cantidad'];
+                }
+            }
+            foreach ($salidas as $stockId => $sale) {
+                $stock = StockProducto::find($stockId);
+                if ($stock && $sale > (float) $stock->cantidad_disponible + 0.0001) {
+                    $errores[] = $this->mensajeSoloDisponible($detalle, $stock);
+                }
+            }
+
+            // Nombres finales de lote: renombrados + nuevos
+            $nombres = [];
+            foreach ($detalleData['stock_anterior_actualizar'] ?? [] as $s) {
+                if (!empty($s['nuevo_lote'])) {
+                    $nombres[] = ['lote' => trim($s['nuevo_lote']), 'excluir' => (int) $s['stock_id']];
+                }
+            }
+            foreach ($detalleData['stock_nuevo'] ?? [] as $s) {
+                if (!empty($s['lote'])) {
+                    $nombres[] = ['lote' => trim($s['lote']), 'excluir' => null];
+                }
+            }
+
+            $vistos = [];
+            foreach ($nombres as ['lote' => $lote, 'excluir' => $excluir]) {
+                if (isset($vistos[mb_strtolower($lote)])) {
+                    $errores[] = "{$producto}: el lote «{$lote}» está repetido en la asignación.";
+                    continue;
+                }
+                $vistos[mb_strtolower($lote)] = true;
+
+                $existente = StockProducto::withTrashed()
+                    ->where('producto_id', $detalle->producto_id)
+                    ->where('almacen_id', $compra->almacen_id)
+                    ->where('lote', $lote)
+                    ->when($excluir, fn($q) => $q->where('id', '!=', $excluir))
+                    ->first(['id', 'deleted_at']);
+
+                if ($existente?->trashed()) {
+                    $errores[] = "{$producto}: el lote «{$lote}» está dado de baja. Restáuralo desde Lotes y vencimientos o usa otro nombre.";
+                } elseif ($existente) {
+                    $errores[] = "{$producto}: ya existe el lote «{$lote}». Para mover unidades a ese lote usa una transferencia.";
+                }
+            }
+        }
+
+        return array_values(array_unique($errores));
+    }
+
+    /**
      * ✅ NUEVO 2026-05-19: Guardar asignación de lotes y fechas de vencimiento
      * POST /compras/{compra}/asignar-lotes
      *
@@ -2477,11 +2653,15 @@ class CompraController extends Controller
             ]);
         }
 
+        // Solo lotes activos: exists por defecto NO filtra los dados de baja (deleted_at)
+        $loteActivo = \Illuminate\Validation\Rule::exists('stock_productos', 'id')->whereNull('deleted_at');
+        $mensajeLoteDadoDeBaja = 'Uno de los lotes fue dado de baja o eliminado mientras editabas. Recarga la página para ver los lotes actuales.';
+
         $validated = $request->validate([
             'detalles' => 'required|array',
             'detalles.*.detalle_id' => 'required|integer|exists:detalle_compras,id',
             'detalles.*.stock_anterior_actualizar' => 'array',
-            'detalles.*.stock_anterior_actualizar.*.stock_id' => 'required|integer|exists:stock_productos,id',
+            'detalles.*.stock_anterior_actualizar.*.stock_id' => ['required', 'integer', $loteActivo],
             'detalles.*.stock_anterior_actualizar.*.cantidad' => 'nullable|numeric|min:0',
             'detalles.*.stock_anterior_actualizar.*.nuevo_lote' => 'nullable|string|max:100',
             'detalles.*.stock_anterior_actualizar.*.nueva_fecha_vencimiento' => 'nullable|date',
@@ -2490,10 +2670,24 @@ class CompraController extends Controller
             'detalles.*.stock_nuevo.*.lote' => 'nullable|string|max:100',
             'detalles.*.stock_nuevo.*.fecha_vencimiento' => 'nullable|date',
             'detalles.*.transferencias' => 'array',
-            'detalles.*.transferencias.*.origen_stock_id' => 'required|integer|exists:stock_productos,id',
-            'detalles.*.transferencias.*.destino_stock_id' => 'required|integer|exists:stock_productos,id',
+            'detalles.*.transferencias.*.origen_stock_id' => ['required', 'integer', $loteActivo],
+            'detalles.*.transferencias.*.destino_stock_id' => ['required', 'integer', $loteActivo],
             'detalles.*.transferencias.*.cantidad' => 'required|numeric|min:0',
+        ], [
+            'detalles.*.stock_anterior_actualizar.*.stock_id.exists' => $mensajeLoteDadoDeBaja,
+            'detalles.*.transferencias.*.origen_stock_id.exists'     => $mensajeLoteDadoDeBaja,
+            'detalles.*.transferencias.*.destino_stock_id.exists'    => $mensajeLoteDadoDeBaja,
         ]);
+
+        // Verificar pertenencia y nombres de lote antes de modificar nada
+        $errores = $this->erroresAsignacionLotes($compra, $validated['detalles']);
+        if (!empty($errores)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pueden guardar los lotes',
+                'errores' => $errores,
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();
@@ -2514,14 +2708,14 @@ class CompraController extends Controller
                 ]);
 
                 // 1. ACTUALIZAR stocks anteriores
-                $totalReservadaTransferida = 0; // Guardar para transferir al nuevo stock
-
+                // Regla: lo reservado se queda en su lote (reservas_proforma apunta a esta fila).
+                // Solo se puede reducir hasta lo disponible; la reserva no cambia.
                 foreach ($stocksAActualizar as $stockActual) {
                     if (empty($stockActual['stock_id'])) {
                         continue;
                     }
 
-                    $stock = StockProducto::findOrFail($stockActual['stock_id']);
+                    $stock = StockProducto::lockForUpdate()->findOrFail($stockActual['stock_id']);
 
                     // Capturar valores anteriores para auditoría
                     $cantidadAnterior = $stock->cantidad;
@@ -2532,17 +2726,12 @@ class CompraController extends Controller
                     $nuevaCantidad = (float)($stockActual['cantidad'] ?? $stock->cantidad);
                     $diferencia = $nuevaCantidad - $cantidadAnterior;
 
-                    // TRANSFERENCIA COMPLETA: si se reduce cantidad, transfiere TODO lo reservado
+                    if ($diferencia < 0 && -$diferencia > $cantidadDisponibleAnterior + 0.0001) {
+                        throw new \Exception($this->mensajeSoloDisponible($detalle, $stock));
+                    }
+
                     $nuevaCantidadReservada = $cantidadReservadaAnterior;
                     $nuevaCantidadDisponible = $cantidadDisponibleAnterior + $diferencia;
-
-                    if ($diferencia < 0) { // Se reduce cantidad
-                        // Transferir TODA la cantidad_reservada
-                        $totalReservadaTransferida += $cantidadReservadaAnterior;
-                        $nuevaCantidadReservada = 0;
-                        // Garantizar que cantidad = disponible + reservada
-                        $nuevaCantidadDisponible = $nuevaCantidad - $nuevaCantidadReservada;
-                    }
 
                     // Convertir strings vacíos a null
                     $nuevoLote = !empty($stockActual['nuevo_lote']) ? $stockActual['nuevo_lote'] : null;
@@ -2584,8 +2773,7 @@ class CompraController extends Controller
                         'cantidad_anterior' => $cantidadAnterior,
                         'cantidad_nueva' => $nuevaCantidad,
                         'cantidad_reservada_anterior' => $cantidadReservadaAnterior,
-                        'cantidad_reservada_nueva' => (int)$nuevaCantidadReservada,
-                        'reservada_transferida' => ($diferencia < 0) ? $cantidadReservadaAnterior : 0,
+                        'cantidad_reservada_nueva' => $nuevaCantidadReservada,
                         'nuevo_lote' => $stockActual['nuevo_lote'],
                         'nueva_fecha' => $stockActual['nueva_fecha_vencimiento'],
                     ]);
@@ -2603,11 +2791,9 @@ class CompraController extends Controller
                         continue;
                     }
 
-                    // TRANSFERENCIA COMPLETA: Asignar toda la cantidad_reservada transferida
-                    $cantidadReservadaNueva = $totalReservadaTransferida;
-
-                    // Validar regla: cantidad = disponible + reservada
-                    $cantidadDisponibleNueva = max(0, $cantidad - $cantidadReservadaNueva);
+                    // Un lote nuevo no hereda reservas: las reservas siguen en el lote donde se hicieron
+                    $cantidadReservadaNueva = 0;
+                    $cantidadDisponibleNueva = $cantidad;
 
                     $nuevoStock = StockProducto::create([
                         'producto_id' => $detalle->producto_id,
@@ -2651,7 +2837,6 @@ class CompraController extends Controller
                         'cantidad_reservada' => $cantidadReservadaNueva,
                         'lote' => $loteNuevo,
                         'con_cantidad' => $cantidad > 0,
-                        'reservada_transferida' => $cantidadReservadaNueva > 0,
                     ]);
                 }
 
@@ -2661,60 +2846,29 @@ class CompraController extends Controller
                         continue;
                     }
 
-                    $stockOrigen = StockProducto::findOrFail($transferencia['origen_stock_id']);
-                    $stockDestino = StockProducto::findOrFail($transferencia['destino_stock_id']);
-
-                    // Validar que hay suficiente cantidad en el origen
-                    if ($stockOrigen->cantidad < $transferencia['cantidad']) {
-                        throw new \Exception("No hay suficiente cantidad en el lote origen ({$stockOrigen->lote}) para transferir {$transferencia['cantidad']} unidades");
-                    }
+                    $stockOrigen = StockProducto::lockForUpdate()->findOrFail($transferencia['origen_stock_id']);
+                    $stockDestino = StockProducto::lockForUpdate()->findOrFail($transferencia['destino_stock_id']);
 
                     $cantidadATransferir = (float)$transferencia['cantidad'];
+
+                    // Solo se transfieren unidades DISPONIBLES: lo reservado se queda en el lote origen,
+                    // porque las reservas de proformas (reservas_proforma.stock_producto_id) apuntan a esa fila
+                    if ($cantidadATransferir > $stockOrigen->cantidad_disponible + 0.0001) {
+                        throw new \Exception($this->mensajeSoloDisponible($detalle, $stockOrigen));
+                    }
 
                     // ORIGEN: Obtener valores anteriores
                     $cantidadOrigenAnterior = $stockOrigen->cantidad;
                     $cantidadDisponibleOrigenAnterior = $stockOrigen->cantidad_disponible;
                     $cantidadReservadaOrigenAnterior = $stockOrigen->cantidad_reservada;
 
-                    // TRANSFERENCIA COMPLETA vs PARCIAL
-                    // Si se transfiere TODO el stock, transfiere TODO (no proporcional)
-                    // Si es parcial, transfiere proporcionalmente
-                    $esTransferenciaCompleta = abs($cantidadATransferir - $cantidadOrigenAnterior) < 0.01;
+                    $disponibleATransferir = $cantidadATransferir;
+                    $reservadaATransferir = 0;
 
-                    if ($esTransferenciaCompleta) {
-                        // Transferencia completa: pasar TODO
-                        $disponibleATransferir = $cantidadDisponibleOrigenAnterior;
-                        $reservadaATransferir = $cantidadReservadaOrigenAnterior;
-                    } else {
-                        // Transferencia parcial: calcular proporcionalmente
-                        $proporcionDisponible = $cantidadOrigenAnterior > 0
-                            ? ($cantidadDisponibleOrigenAnterior / $cantidadOrigenAnterior)
-                            : 0;
-                        $proporcionReservada = $cantidadOrigenAnterior > 0
-                            ? ($cantidadReservadaOrigenAnterior / $cantidadOrigenAnterior)
-                            : 0;
-
-                        // Calcular cuánto de disponible y reservada se transfiere
-                        $disponibleATransferir = $cantidadATransferir * $proporcionDisponible;
-                        $reservadaATransferir = $cantidadATransferir * $proporcionReservada;
-
-                        // Validar que no exceda los valores disponibles
-                        $disponibleATransferir = min($disponibleATransferir, $cantidadDisponibleOrigenAnterior);
-                        $reservadaATransferir = min($reservadaATransferir, $cantidadReservadaOrigenAnterior);
-                    }
-
-                    // Calcular nuevos valores ORIGEN (restar)
+                    // Nuevos valores ORIGEN: baja el total y el disponible; la reserva no cambia
                     $nuevaCantidadOrigen = $cantidadOrigenAnterior - $cantidadATransferir;
-                    $nuevaCantidadDisponibleOrigen = $cantidadDisponibleOrigenAnterior - $disponibleATransferir;
-                    $nuevaCantidadReservadaOrigen = $cantidadReservadaOrigenAnterior - $reservadaATransferir;
-
-                    // Validar regla: cantidad = disponible + reservada
-                    $sumaOrigen = $nuevaCantidadDisponibleOrigen + $nuevaCantidadReservadaOrigen;
-                    if (abs($sumaOrigen - $nuevaCantidadOrigen) > 0.01) {
-                        // Ajustar si hay desviación por redondeo
-                        $diferencia = $nuevaCantidadOrigen - $sumaOrigen;
-                        $nuevaCantidadDisponibleOrigen += $diferencia;
-                    }
+                    $nuevaCantidadDisponibleOrigen = $cantidadDisponibleOrigenAnterior - $cantidadATransferir;
+                    $nuevaCantidadReservadaOrigen = $cantidadReservadaOrigenAnterior;
 
                     $stockOrigen->update([
                         'cantidad' => max(0, $nuevaCantidadOrigen),
@@ -2748,18 +2902,10 @@ class CompraController extends Controller
                     $cantidadDisponibleDestinoAnterior = $stockDestino->cantidad_disponible;
                     $cantidadReservadaDestinoAnterior = $stockDestino->cantidad_reservada;
 
-                    // Calcular nuevos valores DESTINO (sumar)
+                    // Nuevos valores DESTINO: llega todo como disponible
                     $nuevaCantidadDestino = $cantidadDestinoAnterior + $cantidadATransferir;
                     $nuevaCantidadDisponibleDestino = $cantidadDisponibleDestinoAnterior + $disponibleATransferir;
-                    $nuevaCantidadReservadaDestino = $cantidadReservadaDestinoAnterior + $reservadaATransferir;
-
-                    // Validar regla: cantidad = disponible + reservada
-                    $sumaDestino = $nuevaCantidadDisponibleDestino + $nuevaCantidadReservadaDestino;
-                    if (abs($sumaDestino - $nuevaCantidadDestino) > 0.01) {
-                        // Ajustar si hay desviación por redondeo
-                        $diferencia = $nuevaCantidadDestino - $sumaDestino;
-                        $nuevaCantidadDisponibleDestino += $diferencia;
-                    }
+                    $nuevaCantidadReservadaDestino = $cantidadReservadaDestinoAnterior;
 
                     $stockDestino->update([
                         'cantidad' => $nuevaCantidadDestino,

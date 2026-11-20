@@ -65,6 +65,7 @@ class EntregaPdfController extends Controller
 
             // Cargar relaciones necesarias (SIN entregador - lo haremos después)
             $entrega->load([
+                'ventas' => fn ($q) => $q->vigentes(),
                 'ventas.cliente.localidad',  // ✅ NUEVO: Cargar localidades de clientes
                 'ventas.detalles.producto.unidad',
                 'ventas.estadoLogistica',  // ✅ NUEVO 2026-07-20: Cargar estado logístico de ventas
@@ -259,6 +260,7 @@ class EntregaPdfController extends Controller
 
             // ✅ Cargar relaciones (SIN entregador - lo haremos después)
             $entrega = Entrega::with([
+                'ventas' => fn ($q) => $q->vigentes(),
                 'ventas.cliente.localidad',  // ✅ NUEVO: Cargar localidades de clientes
                 'ventas.detalles.producto.unidad',
                 'ventas.estadoLogistica',  // ✅ NUEVO 2026-07-20: Cargar estado logístico de ventas
@@ -626,58 +628,68 @@ class EntregaPdfController extends Controller
         try {
             // Cargar relaciones necesarias
             $entrega->load([
+                'ventas' => fn ($q) => $q->vigentes(),
                 'ventas.cliente',
                 'ventas.detalles.producto.unidad',
+                'ventas.confirmaciones',
             ]);
 
             // Agrupar productos consolidando cantidades (SIN expandir combos)
             $productosAgrupados = [];
-            $cantidadTotal = 0;
+            $totales = ['cantidad_total' => 0.0, 'cantidad_entregada' => 0.0, 'cantidad_no_entregada' => 0.0, 'cantidad_pendiente' => 0.0];
+            $ventasPorRevisar = 0;
 
             foreach ($entrega->ventas as $venta) {
+                $resultado = $venta->resultadoEntrega();
+                $pendiente = $resultado['estado'] === \App\Models\Venta::ENTREGA_PENDIENTE;
+
+                if ($resultado['estado'] === \App\Models\Venta::ENTREGA_POR_REVISAR) {
+                    $ventasPorRevisar++;
+                }
+
                 foreach ($venta->detalles as $detalle) {
                     $productoId = $detalle->producto_id;
+                    $cantidad = (float) $detalle->cantidad;
+                    $entregada = $resultado['lineas'][$detalle->id];
+                    $noEntregada = $pendiente ? 0.0 : $cantidad - $entregada;
+                    $enPendiente = $pendiente ? $cantidad : 0.0;
 
-                    // Si el producto ya existe en el array, sumar cantidad
-                    if (isset($productosAgrupados[$productoId])) {
-                        $productosAgrupados[$productoId]['cantidad_total'] += (float) $detalle->cantidad;
-                        $productosAgrupados[$productoId]['subtotal'] = round(
-                            $productosAgrupados[$productoId]['subtotal'] +
-                            ($detalle->cantidad * $detalle->precio_unitario),
-                            2
-                        );
-                        // Agregar venta a la lista
-                        $productosAgrupados[$productoId]['ventas'][] = [
-                            'venta_id' => $venta->id,
-                            'venta_numero' => $venta->numero,
-                            'cantidad' => (float) $detalle->cantidad,
-                            'cliente_id' => $venta->cliente_id,
-                            'cliente_nombre' => $venta->cliente?->nombre ?? 'Sin cliente',
-                        ];
-                    } else {
-                        // Crear nuevo producto en el array
-                        $productosAgrupados[$productoId] = [
-                            'producto_id' => $productoId,
-                            'producto_nombre' => $detalle->producto?->nombre ?? 'Producto desconocido',
-                            'sku' => $detalle->producto?->sku ?? '',
-                            'codigo_producto' => $detalle->producto?->codigo_barras ?? '',
-                            'cantidad_total' => (float) $detalle->cantidad,
-                            'precio_unitario' => (float) $detalle->precio_unitario,
-                            'subtotal' => round($detalle->cantidad * $detalle->precio_unitario, 2),
-                            'unidad_medida' => $detalle->producto?->unidad?->nombre ?? 'Unidad',
-                            'ventas' => [
-                                [
-                                    'venta_id' => $venta->id,
-                                    'venta_numero' => $venta->numero,
-                                    'cantidad' => (float) $detalle->cantidad,
-                                    'cliente_id' => $venta->cliente_id,
-                                    'cliente_nombre' => $venta->cliente?->nombre ?? 'Sin cliente',
-                                ]
-                            ]
-                        ];
-                    }
+                    $productosAgrupados[$productoId] ??= [
+                        'producto_id' => $productoId,
+                        'producto_nombre' => $detalle->producto?->nombre ?? 'Producto desconocido',
+                        'sku' => $detalle->producto?->sku ?? '',
+                        'codigo_producto' => $detalle->producto?->codigo_barras ?? '',
+                        'cantidad_total' => 0.0,
+                        'cantidad_entregada' => 0.0,
+                        'cantidad_no_entregada' => 0.0,
+                        'cantidad_pendiente' => 0.0,
+                        'precio_unitario' => (float) $detalle->precio_unitario,
+                        'subtotal' => 0.0,
+                        'unidad_medida' => $detalle->producto?->unidad?->nombre ?? 'Unidad',
+                        'ventas' => [],
+                    ];
 
-                    $cantidadTotal += (float) $detalle->cantidad;
+                    $producto = &$productosAgrupados[$productoId];
+                    $producto['cantidad_total'] += $cantidad;
+                    $producto['cantidad_entregada'] += $entregada;
+                    $producto['cantidad_no_entregada'] += $noEntregada;
+                    $producto['cantidad_pendiente'] += $enPendiente;
+                    $producto['subtotal'] = round($producto['subtotal'] + $cantidad * $detalle->precio_unitario, 2);
+                    $producto['ventas'][] = [
+                        'venta_id' => $venta->id,
+                        'venta_numero' => $venta->numero,
+                        'cantidad' => $cantidad,
+                        'cantidad_entregada' => $entregada,
+                        'estado_entrega' => $resultado['estado'],
+                        'cliente_id' => $venta->cliente_id,
+                        'cliente_nombre' => $venta->cliente?->nombre ?? 'Sin cliente',
+                    ];
+                    unset($producto);
+
+                    $totales['cantidad_total'] += $cantidad;
+                    $totales['cantidad_entregada'] += $entregada;
+                    $totales['cantidad_no_entregada'] += $noEntregada;
+                    $totales['cantidad_pendiente'] += $enPendiente;
                 }
             }
 
@@ -686,13 +698,13 @@ class EntregaPdfController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => [
+                'data' => array_merge([
                     'entrega_id' => $entrega->id,
                     'numero_entrega' => $entrega->numero_entrega,
                     'productos' => $productosAgrupados,
                     'total_items' => count($productosAgrupados),
-                    'cantidad_total' => $cantidadTotal,
-                ]
+                    'ventas_por_revisar' => $ventasPorRevisar,
+                ], $totales),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -737,7 +749,8 @@ class EntregaPdfController extends Controller
             // ✅ REFACTORIZADO 2026-02-16: Usar MISMA lógica que endpoint API para evitar discrepancias
             // Cargar ventas con relaciones necesarias
             $ventasCargas = $entrega->load(['ventas' => function ($q) {
-                $q->select('id', 'entrega_id', 'numero', 'total', 'estado_pago', 'tipo_pago_id', 'cliente_id', 'estado_logistico_id')  // ✅ Incluir FK del estado logístico
+                $q->vigentes()
+                  ->select('id', 'entrega_id', 'numero', 'total', 'estado_pago', 'tipo_pago_id', 'cliente_id', 'estado_logistico_id')  // ✅ Incluir FK del estado logístico
                   ->with('tipoPago:id,codigo,nombre', 'cliente:id,nombre');  // Cargar relaciones de pago y cliente
             }])->ventas;
 

@@ -3,6 +3,7 @@
 namespace App\Services\Firebase;
 
 use App\Models\DispositivoTokenFcm;
+use App\Models\NotificacionEnvio;
 use App\Models\NotificacionRecurrente;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -48,6 +49,11 @@ class FirebaseNotificationService
             $fallidos = 0;
             $errores = [];
 
+            // token → user_id, para el historial de envíos
+            $usuarioPorToken = DispositivoTokenFcm::whereIn('token_fcm', $tokens)->pluck('user_id', 'token_fcm');
+            $tipo = 'recurrente.' . ($notificacion->tipo ?: 'informativo');
+            $referencia = ['notificacion_recurrente_id' => $notificacion->id];
+
             foreach ($tokens as $token) {
                 try {
                     $payload = $this->construirPayload($notificacion, $token, $metadata);
@@ -57,8 +63,10 @@ class FirebaseNotificationService
 
                     if ($response->successful()) {
                         $enviados++;
+                        $this->registrarEnvio($tipo, $usuarioPorToken[$token] ?? null, $token, $notificacion->titulo, $referencia);
                     } else {
                         $fallidos++;
+                        $this->registrarEnvio($tipo, $usuarioPorToken[$token] ?? null, $token, $notificacion->titulo, $referencia, $response);
                         $errores[] = [
                             'token' => $token,
                             'error' => $response->body(),
@@ -116,8 +124,11 @@ class FirebaseNotificationService
         ?array $metadata = null
     ): array {
         // ✅ NUEVO: Usar imagen de la notificación o imagen por defecto
-        $imageUrl = $notificacion->imagen_url
-            ?? (config('app.url') . '/storage/notificacion/ic_notification.png');
+        $imageUrl = $notificacion->imagen_url ?: '/storage/notificacion/ic_notification.png';
+        // Las imágenes subidas se guardan como ruta relativa; FCM necesita la URL absoluta
+        if (str_starts_with($imageUrl, '/')) {
+            $imageUrl = rtrim(config('app.url'), '/') . $imageUrl;
+        }
 
         return [
             'message' => [
@@ -242,6 +253,165 @@ class FirebaseNotificationService
         $base64Signature = rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
 
         return "{$signatureInput}.{$base64Signature}";
+    }
+
+    /**
+     * Enviar un push FCM a los dispositivos activos de usuarios específicos.
+     *
+     * Llega aunque la app esté minimizada o cerrada (Android muestra el
+     * bloque `notification` por su cuenta). Los tokens que FCM reporta como
+     * inválidos se desactivan.
+     *
+     * @param  int[]  $userIds
+     * @param  array<string, scalar>  $data  Datos extra (se convierten a string, FCM lo exige)
+     * @return array{enviados:int, fallidos:int}
+     */
+    public function enviarAUsuarios(
+        array $userIds,
+        string $titulo,
+        string $cuerpo,
+        array $data = [],
+        string $canalAndroid = 'proformas'
+    ): array {
+        $resultado = ['enviados' => 0, 'fallidos' => 0];
+
+        if (empty($userIds) || ! config('firebase.fcm.enabled', true)) {
+            return $resultado;
+        }
+
+        // token_fcm => user_id (un token repetido se envía una sola vez)
+        $usuarioPorToken = DispositivoTokenFcm::where('activo', true)
+            ->whereIn('user_id', $userIds)
+            ->pluck('user_id', 'token_fcm');
+        $tokens = $usuarioPorToken->keys();
+        $tipoEnvio = (string) ($data['tipo'] ?? 'push');
+        $referencia = array_filter([
+            'proforma_id' => $data['proforma_id'] ?? null,
+            'numero'      => $data['numero'] ?? null,
+        ]);
+
+        if ($tokens->isEmpty()) {
+            Log::info('ℹ️ FCM: ningún dispositivo registrado para los usuarios destino', [
+                'user_ids' => $userIds,
+            ]);
+            return $resultado;
+        }
+
+        try {
+            $accessToken = $this->obtenerAccessToken();
+        } catch (\Throwable $e) {
+            Log::error('❌ FCM: no se pudo obtener access token', ['error' => $e->getMessage()]);
+            $resultado['fallidos'] = $tokens->count();
+            return $resultado;
+        }
+
+        $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+        $dataString = array_map(fn ($v) => is_bool($v) ? ($v ? 'true' : 'false') : (string) $v, $data);
+        $dataString['timestamp'] = now()->toIso8601String();
+
+        foreach ($tokens as $token) {
+            $payload = [
+                'message' => [
+                    'token'        => $token,
+                    'notification' => [
+                        'title' => $titulo,
+                        'body'  => mb_substr($cuerpo, 0, 240),
+                    ],
+                    'data'    => $dataString,
+                    'android' => [
+                        'priority'     => 'high',
+                        'ttl'          => '3600s',
+                        'notification' => [
+                            'channel_id'   => $canalAndroid,
+                            'sound'        => 'default',
+                            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        ],
+                    ],
+                    'apns' => [
+                        'payload' => ['aps' => ['sound' => 'default']],
+                    ],
+                ],
+            ];
+
+            try {
+                $response = Http::withToken($accessToken)
+                    ->timeout((int) config('firebase.fcm.timeout', 10))
+                    ->post($url, $payload);
+
+                if ($response->successful()) {
+                    $resultado['enviados']++;
+                    $this->registrarEnvio($tipoEnvio, $usuarioPorToken[$token] ?? null, $token, $titulo, $referencia);
+                    continue;
+                }
+
+                $resultado['fallidos']++;
+                $this->registrarEnvio($tipoEnvio, $usuarioPorToken[$token] ?? null, $token, $titulo, $referencia, $response);
+                $errorCode = $response->json('error.details.0.errorCode') ?? $response->json('error.status');
+
+                // Token caducado o de una app desinstalada: desactivarlo
+                if (in_array($errorCode, ['UNREGISTERED', 'INVALID_ARGUMENT', 'NOT_FOUND'], true)) {
+                    DispositivoTokenFcm::where('token_fcm', $token)->update(['activo' => false]);
+                }
+
+                Log::warning('⚠️ FCM: fallo al enviar a usuario', [
+                    'token'  => substr($token, 0, 30) . '...',
+                    'status' => $response->status(),
+                    'error'  => $errorCode,
+                ]);
+            } catch (\Throwable $e) {
+                $resultado['fallidos']++;
+                $this->registrarEnvio($tipoEnvio, $usuarioPorToken[$token] ?? null, $token, $titulo, $referencia, null, $e->getMessage());
+                Log::warning('⚠️ FCM: excepción enviando push', ['error' => $e->getMessage()]);
+            }
+        }
+
+        Log::info('📲 FCM enviado a usuarios', $resultado + ['user_ids' => count($userIds)]);
+
+        return $resultado;
+    }
+
+    /**
+     * Guarda el resultado de un envío push en notificaciones_envios.
+     * Nunca lanza: el historial no debe romper el envío.
+     */
+    protected function registrarEnvio(
+        string $tipo,
+        ?int $userId,
+        string $token,
+        ?string $titulo,
+        array $referencia = [],
+        ?\Illuminate\Http\Client\Response $response = null,
+        ?string $excepcion = null
+    ): void {
+        try {
+            $fallido = $excepcion !== null || ($response !== null && ! $response->successful());
+
+            $errorCodigo = null;
+            $errorDetalle = null;
+            if ($excepcion !== null) {
+                $errorCodigo = 'EXCEPCION';
+                $errorDetalle = mb_substr($excepcion, 0, 500);
+            } elseif ($fallido) {
+                $errorCodigo = $response->json('error.details.0.errorCode')
+                    ?? $response->json('error.status')
+                    ?? (string) $response->status();
+                $errorDetalle = mb_substr((string) ($response->json('error.message') ?? $response->body()), 0, 500);
+            }
+
+            NotificacionEnvio::create([
+                'canal'         => 'fcm',
+                'tipo'          => $tipo,
+                'user_id'       => $userId,
+                'token_sufijo'  => substr($token, -12),
+                'estado'        => $fallido ? 'fallido' : 'enviado',
+                'error_codigo'  => $errorCodigo,
+                'error_detalle' => $errorDetalle,
+                'titulo'        => $titulo ? mb_substr($titulo, 0, 250) : null,
+                'referencia'    => $referencia ?: null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('⚠️ No se pudo registrar el envío push', ['error' => $e->getMessage()]);
+        }
     }
 
     /**

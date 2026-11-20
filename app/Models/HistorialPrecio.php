@@ -25,8 +25,8 @@ class HistorialPrecio extends Model
     protected function casts(): array
     {
         return [
-            'valor_anterior' => 'decimal:2',
-            'valor_nuevo' => 'decimal:2',
+            'valor_anterior' => \App\Casts\PrecioHastaCuatroDecimales::class,
+            'valor_nuevo' => \App\Casts\PrecioHastaCuatroDecimales::class,
             'fecha_cambio' => 'datetime',
             'porcentaje_cambio' => 'decimal:2',
         ];

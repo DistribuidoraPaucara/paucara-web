@@ -1,587 +1,614 @@
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { route } from '@/infrastructure/routing/routes';
-import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import AppLayout from '@/layouts/app-layout';
-import { useState, useCallback } from 'react';
 import { NotificationService } from '@/infrastructure/services/notification.service';
-import { AlertCircle, Trash2, Plus, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '@/presentation/components/ui/alert';
+import AppLayout from '@/layouts/app-layout';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/presentation/components/ui/tooltip';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink, Plus, Search, Trash2, X } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 
 interface PageProps extends InertiaPageProps {
-  compra: {
-    id: number;
-    numero: string;
-    fecha: string;
-    proveedor_nombre: string;
-    almacen_nombre: string;
-    almacen_id: number;
-    estado_nombre: string;
-  };
-  moneda: {
-    id: number;
-    nombre: string;
-    simbolo: string;
-  };
-  detalles: Array<{
-    id: number;
-    producto_id: number;
-    producto_nombre: string;
-    producto_sku: string;
-    cantidad_original: number;
-    cantidad_actual: number;
-    lote_actual: string | null;
-    fecha_vencimiento_actual: string | null;
-    precio_unitario: number;
-    subtotal: number;
-    stock_total: number;
-    stock_disponible: number;
-    stock_reservado: number;
-    stock_registrados: Array<{
-      id: number;
-      cantidad: number;
-      cantidad_disponible: number;
-      cantidad_reservada: number;
-      lote: string | null;
-      fecha_vencimiento: string | null;
+    compra: {
+        id: number;
+        numero: string;
+        fecha: string;
+        proveedor_nombre: string;
+        almacen_nombre: string;
+        almacen_id: number;
+        estado_nombre: string;
+    };
+    moneda: {
+        id: number;
+        nombre: string;
+        simbolo: string;
+    };
+    detalles: Array<{
+        id: number;
+        producto_id: number;
+        producto_nombre: string;
+        producto_sku: string;
+        cantidad_original: number;
+        cantidad_actual: number;
+        lote_actual: string | null;
+        fecha_vencimiento_actual: string | null;
+        precio_unitario: number;
+        subtotal: number;
+        stock_total: number;
+        stock_disponible: number;
+        stock_reservado: number;
+        stock_registrados: Array<{
+            id: number;
+            cantidad: number;
+            cantidad_disponible: number;
+            cantidad_reservada: number;
+            lote: string | null;
+            fecha_vencimiento: string | null;
+        }>;
+        movimientos: Array<{
+            id: number;
+            fecha: string;
+            tipo: string;
+            cantidad: number;
+            cantidad_anterior: number;
+            cantidad_posterior: number;
+            lote: string;
+            descripcion: string;
+            referencia: string;
+        }>;
     }>;
-    movimientos: Array<{
-      id: number;
-      fecha: string;
-      tipo: string;
-      cantidad: number;
-      cantidad_anterior: number;
-      cantidad_posterior: number;
-      lote: string;
-      descripcion: string;
-      referencia: string;
-    }>;
-  }>;
 }
 
 interface StockAnteriorActualizar {
-  stock_id: number;
-  cantidad?: number;
-  nuevo_lote: string;
-  nueva_fecha_vencimiento: string;
+    stock_id: number;
+    cantidad?: number;
+    nuevo_lote: string;
+    nueva_fecha_vencimiento: string;
 }
 
 interface StockNuevo {
-  cantidad: number;
-  lote: string;
-  fecha_vencimiento: string;
+    cantidad: number;
+    lote: string;
+    fecha_vencimiento: string;
 }
 
 interface Transferencia {
-  origen_stock_id: number;
-  destino_stock_id: number;
-  cantidad: number;
+    origen_stock_id: number;
+    destino_stock_id: number;
+    cantidad: number;
 }
 
 interface DetalleDistribuido {
-  detalle_id: number;
-  stock_anterior_actualizar: StockAnteriorActualizar[];
-  stock_nuevo: StockNuevo[];
-  transferencias?: Transferencia[];
+    detalle_id: number;
+    stock_anterior_actualizar: StockAnteriorActualizar[];
+    stock_nuevo: StockNuevo[];
+    transferencias?: Transferencia[];
+}
+
+// Inputs compactos para las celdas de la tabla
+const claseInput =
+    'rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white';
+
+/**
+ * Cantidad no negativa:
+ * - bloquea "-", "+" y "e" (notación científica) al escribir, y lleva a 0 lo negativo que llegue al pegar
+ * - la rueda del mouse no cambia el valor: el campo pierde el foco y la página sigue con su scroll
+ */
+function CantidadInput({
+    value,
+    onValor,
+    min = 0,
+    max,
+    ...props
+}: { value: number; onValor: (valor: number) => void; min?: number; max?: number } & Omit<
+    React.InputHTMLAttributes<HTMLInputElement>,
+    'value' | 'onChange' | 'type' | 'max' | 'min'
+>) {
+    return (
+        <input
+            {...props}
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min={min}
+            max={max}
+            value={value}
+            onKeyDown={(e) => {
+                if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
+            }}
+            onWheel={(e) => e.currentTarget.blur()}
+            onChange={(e) => {
+                const v = Math.max(0, parseFloat(e.target.value) || 0);
+                onValor(max !== undefined ? Math.min(max, v) : v);
+            }}
+            // El mínimo se aplica al salir del campo, para no estorbar mientras se escribe
+            onBlur={() => {
+                if (value < min) onValor(min);
+            }}
+            className={`${claseInput} w-24 text-right`}
+        />
+    );
 }
 
 export default function AsignarLotes() {
-  const { props } = usePage<PageProps>();
-  const { compra, detalles, moneda } = props;
+    const { props } = usePage<PageProps>();
+    const { compra, detalles, moneda } = props;
 
-  // Función para detectar si un lote está vencido
-  const isLoteVencido = (fechaVencimiento: string | null): boolean => {
-    if (!fechaVencimiento) return false;
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const fecha = new Date(fechaVencimiento);
-    fecha.setHours(0, 0, 0, 0);
-    return fecha < hoy;
-  };
+    // Función para detectar si un lote está vencido
+    const isLoteVencido = (fechaVencimiento: string | null): boolean => {
+        if (!fechaVencimiento) return false;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fecha = new Date(fechaVencimiento);
+        fecha.setHours(0, 0, 0, 0);
+        return fecha < hoy;
+    };
 
-  // Obtener clase de color según si está vencido
-  const getLoteColorClass = (fechaVencimiento: string | null): string => {
-    if (isLoteVencido(fechaVencimiento)) {
-      return 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
-    }
-    return 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800';
-  };
-
-  // ✅ DEBUG: Mostrar datos que llegan del backend
-  console.log('=== DATOS DEL BACKEND ===');
-  console.log('Compra:', compra);
-  console.log('Moneda:', moneda);
-  console.log('Detalles con movimientos:', detalles);
-  detalles.forEach((detalle) => {
-    console.log(`\n📦 Producto: ${detalle.producto_nombre}`);
-    console.log('  Stock registrados:', detalle.stock_registrados);
-    console.log('  Movimientos:', detalle.movimientos);
-  });
-
-  // Guardar valores originales para detectar cambios
-  const valoresOriginales = useCallback(() =>
-    detalles.reduce((acc, detalle) => {
-      acc[detalle.id] = (detalle.stock_registrados || []).reduce((inner, stock) => {
-        inner[stock.id] = {
-          cantidad: stock.cantidad,
-          nuevo_lote: stock.lote || '',
-          nueva_fecha: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
-        };
-        return inner;
-      }, {} as Record<number, { cantidad: number; nuevo_lote: string; nueva_fecha: string }>);
-      return acc;
-    }, {} as Record<number, Record<number, { cantidad: number; nuevo_lote: string; nueva_fecha: string }>>)
-  , [detalles]);
-
-  // Estado para stock anterior (actualizar)
-  const [stockAnteriorActualizar, setStockAnteriorActualizar] = useState<Record<number, Record<number, { cantidad: number; nuevo_lote: string; nueva_fecha: string }>>>(
-    valoresOriginales()
-  );
-
-  // Crear referencia de valores originales para comparación
-  const valoresOriginalesRef = useCallback(() => valoresOriginales(), [valoresOriginales]);
-
-  // Estado para stock nuevo (crear)
-  const [stockNuevo, setStockNuevo] = useState<Record<number, StockNuevo[]>>(
-    detalles.reduce((acc, detalle) => {
-      acc[detalle.id] = [
-        {
-          cantidad: 0,
-          lote: '',
-          fecha_vencimiento: '',
-        },
-      ];
-      return acc;
-    }, {} as Record<number, StockNuevo[]>)
-  );
-
-  // Estado para controlar el historial desplegable por detalle
-  const [movimientosExpandidos, setMovimientosExpandidos] = useState<Record<number, boolean>>(
-    detalles.reduce((acc, detalle) => {
-      acc[detalle.id] = false;
-      return acc;
-    }, {} as Record<number, boolean>)
-  );
-
-  // Estado para controlar si la información del lote está expandida
-  const [lotesExpandidos, setLotesExpandidos] = useState<Record<string, boolean>>(
-    detalles.reduce((acc, detalle) => {
-      const loteKeys = detalle.stock_registrados.map(s => `${detalle.id}-${s.id}`);
-      loteKeys.forEach(key => {
-        acc[key] = false;
-      });
-      return acc;
-    }, {} as Record<string, boolean>)
-  );
-
-  // Estado para mostrar modal de confirmación
-  const [mostrarResumen, setMostrarResumen] = useState(false);
-  const [resumenCambios, setResumenCambios] = useState<any>(null);
-
-  // Estado para transferencias entre lotes
-  const [transferencias, setTransferencias] = useState<Record<number, Transferencia[]>>(
-    detalles.reduce((acc, detalle) => {
-      acc[detalle.id] = [];
-      return acc;
-    }, {} as Record<number, Transferencia[]>)
-  );
-
-  // Estado para controlar dropdown de transferencia abierto
-  const [dropdownTransferencia, setDropdownTransferencia] = useState<string | null>(null);
-
-  const { post, processing } = useForm();
-
-  // Agregar un nuevo stock a crear
-  const agregarStockNuevo = useCallback(
-    (detalleId: number) => {
-      setStockNuevo((prev) => {
-        const nuevas = [...(prev[detalleId] || [])];
-        nuevas.push({
-          cantidad: 0,
-          lote: '',
-          fecha_vencimiento: '',
-        });
-        return { ...prev, [detalleId]: nuevas };
-      });
-    },
-    []
-  );
-
-  // Eliminar un stock nuevo
-  const eliminarStockNuevo = useCallback(
-    (detalleId: number, index: number) => {
-      setStockNuevo((prev) => {
-        const nuevas = [...(prev[detalleId] || [])];
-        if (nuevas.length > 1) {
-          nuevas.splice(index, 1);
-        }
-        return { ...prev, [detalleId]: nuevas };
-      });
-    },
-    []
-  );
-
-  // Actualizar stock nuevo
-  const actualizarStockNuevo = useCallback(
-    (detalleId: number, index: number, field: keyof StockNuevo, value: string | number) => {
-      setStockNuevo((prev) => {
-        const nuevas = [...(prev[detalleId] || [])];
-        nuevas[index] = { ...nuevas[index], [field]: value };
-        return { ...prev, [detalleId]: nuevas };
-      });
-    },
-    []
-  );
-
-  // Actualizar stock anterior
-  const actualizarStockAnterior = useCallback(
-    (detalleId: number, stockId: number, field: 'nuevo_lote' | 'nueva_fecha', value: string) => {
-      setStockAnteriorActualizar((prev) => {
-        const updated = { ...prev };
-        if (!updated[detalleId]) updated[detalleId] = {};
-        updated[detalleId][stockId] = {
-          ...updated[detalleId][stockId],
-          [field]: value,
-        };
-        return updated;
-      });
-    },
-    []
-  );
-
-  // Agregar una transferencia entre lotes
-  const agregarTransferencia = useCallback(
-    (detalleId: number, origenStockId: number) => {
-      setTransferencias((prev) => {
-        const nuevas = [...(prev[detalleId] || [])];
-        nuevas.push({
-          origen_stock_id: origenStockId,
-          destino_stock_id: 0, // El usuario deberá seleccionar
-          cantidad: 0,
-        });
-        return { ...prev, [detalleId]: nuevas };
-      });
-    },
-    []
-  );
-
-  // Eliminar una transferencia
-  const eliminarTransferencia = useCallback(
-    (detalleId: number, index: number) => {
-      setTransferencias((prev) => {
-        const nuevas = [...(prev[detalleId] || [])];
-        nuevas.splice(index, 1);
-        return { ...prev, [detalleId]: nuevas };
-      });
-    },
-    []
-  );
-
-  // Actualizar transferencia
-  const actualizarTransferencia = useCallback(
-    (detalleId: number, index: number, field: keyof Transferencia, value: number) => {
-      setTransferencias((prev) => {
-        const nuevas = [...(prev[detalleId] || [])];
-        nuevas[index] = { ...nuevas[index], [field]: value };
-        return { ...prev, [detalleId]: nuevas };
-      });
-    },
-    []
-  );
-
-  // Validar que haya al menos un lote/fecha asignado
-  const validarAsignaciones = (): boolean => {
-    let tieneAlgunCambio = false;
-
-    for (const detalle of detalles) {
-      const anteriores = stockAnteriorActualizar[detalle.id] || {};
-      const nuevos = stockNuevo[detalle.id] || [];
-
-      // Verificar si este detalle tiene cambios
-      const tieneAlgoParaActualizar = Object.values(anteriores).some(stock => stock.nuevo_lote || stock.nueva_fecha);
-      const tieneAlgoParaCrear = nuevos.some(stock => stock.cantidad > 0 || stock.lote || stock.fecha_vencimiento);
-
-      if (tieneAlgoParaActualizar || tieneAlgoParaCrear) {
-        tieneAlgunCambio = true;
-
-        // Validar que los nuevos stocks tengan al menos lote o fecha (incluso si cantidad=0)
-        for (const nuevoStock of nuevos) {
-          if ((nuevoStock.cantidad > 0 || nuevoStock.lote || nuevoStock.fecha_vencimiento) && !nuevoStock.lote && !nuevoStock.fecha_vencimiento) {
-            NotificationService.error(
-              `Todo nuevo stock debe tener al menos lote o fecha de vencimiento`
-            );
-            return false;
-          }
-        }
-      }
-    }
-
-    // Verificar que al menos haya UN cambio
-    if (!tieneAlgunCambio) {
-      NotificationService.error(
-        'Debe hacer al menos un cambio a algún lote'
-      );
-      return false;
-    }
-
-    return true;
-  };
-
-  // Mostrar resumen de cambios
-  const mostrarResumenCambios = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validarAsignaciones()) {
-      return;
-    }
-
-    // Construir resumen
-    const originales = valoresOriginalesRef();
-    const resumen = detalles
-      .map((detalle) => {
-        const anteriores = stockAnteriorActualizar[detalle.id] || {};
-        const nuevos = stockNuevo[detalle.id] || [];
-        const trans = transferencias[detalle.id] || [];
-        const originalesDetalle = originales[detalle.id] || {};
-
-        const actualizacionesConCambios = Object.entries(anteriores)
-          .filter(([stockId, data]) => {
-            const original = originalesDetalle[parseInt(stockId)];
-            // Solo mostrar si cambió respecto al original
-            if (!original) return false;
-            return data.nuevo_lote !== original.nuevo_lote || data.nueva_fecha !== original.nueva_fecha;
-          })
-          .map(([stockId, data]) => ({
-            stockId: parseInt(stockId),
-            cantidad: data.cantidad,
-            lote: data.nuevo_lote,
-            fecha: data.nueva_fecha,
-          }));
-
-        const creaciones = nuevos.filter(s => s.cantidad > 0 || s.lote || s.fecha_vencimiento);
-        const transferenciasValidas = trans.filter(t => t.cantidad > 0 && t.destino_stock_id > 0);
-
-        if (actualizacionesConCambios.length === 0 && creaciones.length === 0 && transferenciasValidas.length === 0) return null;
-
-        return {
-          detalleId: detalle.id,
-          productoNombre: detalle.producto_nombre,
-          actualizaciones: actualizacionesConCambios,
-          creaciones: creaciones.map((s, idx) => ({
-            index: idx,
-            cantidad: s.cantidad,
-            lote: s.lote,
-            fecha: s.fecha_vencimiento,
-          })),
-          transferencias: transferenciasValidas.map((t) => {
-            const origenStock = detalle.stock_registrados.find(s => s.id === t.origen_stock_id);
-            const destinoStock = detalle.stock_registrados.find(s => s.id === t.destino_stock_id);
-            return {
-              origen_stock_id: t.origen_stock_id,
-              origen_lote: origenStock?.lote || 'Sin lote',
-              destino_stock_id: t.destino_stock_id,
-              destino_lote: destinoStock?.lote || 'Sin lote',
-              cantidad: t.cantidad,
-            };
-          }),
-        };
-      })
-      .filter(Boolean);
-
-    setResumenCambios(resumen);
-    setMostrarResumen(true);
-  };
-
-  // Enviar datos después de confirmación
-  const confirmarEnvio = () => {
-    const detallesPayload: DetalleDistribuido[] = detalles
-      .map((detalle) => {
-        const anteriores = stockAnteriorActualizar[detalle.id] || {};
-        const nuevos = stockNuevo[detalle.id] || [];
-        const trans = transferencias[detalle.id] || [];
-        const stocksNuevosFiltrados = nuevos.filter(s => s.cantidad > 0 || s.lote || s.fecha_vencimiento);
-        const transferenciasValidas = trans.filter(t => t.cantidad > 0 && t.destino_stock_id > 0);
-
-        // Si hay nuevos stocks, buscar el stock sin lote/sin fecha y restar automáticamente
-        let stocksActualizarFiltrados = Object.entries(anteriores)
-          .filter(([, data]) => data.nuevo_lote || data.nueva_fecha)
-          .map(([stockId, data]) => ({
-            stock_id: parseInt(stockId),
-            nuevo_lote: data.nuevo_lote,
-            nueva_fecha_vencimiento: data.nueva_fecha,
-          }));
-
-        // Si hay nuevos stocks creados, buscar el stock sin lote y restarle esas unidades
-        if (stocksNuevosFiltrados.length > 0) {
-          const totalNuevasUnidades = stocksNuevosFiltrados.reduce((sum, s) => sum + s.cantidad, 0);
-
-          // Buscar el stock sin lote/sin fecha
-          const stockSinLoteEntry = Object.entries(anteriores).find(
-            ([_, data]) => !data.nuevo_lote && !data.nueva_fecha
-          );
-
-          if (stockSinLoteEntry) {
-            const [stockIdStr, stockData] = stockSinLoteEntry;
-            const stockSinLoteIdNum = parseInt(stockIdStr);
-
-            // Buscar si ya está en la lista de actualización
-            const yaExiste = stocksActualizarFiltrados.find(s => s.stock_id === stockSinLoteIdNum);
-
-            if (!yaExiste) {
-              // Calcular nueva cantidad (restando las unidades del nuevo stock)
-              const nuevaCantidad = Math.max(0, stockData.cantidad - totalNuevasUnidades);
-
-              // Agregar el stock sin lote con cantidad reducida
-              stocksActualizarFiltrados.push({
-                stock_id: stockSinLoteIdNum,
-                cantidad: nuevaCantidad,
-                nuevo_lote: '',
-                nueva_fecha_vencimiento: '',
-              });
-            }
-          }
-        }
-
-        // Solo incluir detalles que tengan cambios
-        if (stocksActualizarFiltrados.length === 0 && stocksNuevosFiltrados.length === 0 && transferenciasValidas.length === 0) {
-          return null;
-        }
-
-        const payload: DetalleDistribuido = {
-          detalle_id: detalle.id,
-          stock_anterior_actualizar: stocksActualizarFiltrados,
-          stock_nuevo: stocksNuevosFiltrados,
-        };
-
-        // Agregar transferencias si las hay
-        if (transferenciasValidas.length > 0) {
-          payload.transferencias = transferenciasValidas;
-        }
-
-        return payload;
-      })
-      .filter((detalle): detalle is DetalleDistribuido => detalle !== null);
-
-    const payloadToSend = { detalles: detallesPayload };
-
-    console.log('%c📤 PAYLOAD QUE SE ENVÍA AL BACKEND', 'font-size: 16px; font-weight: bold; color: #2563eb;');
-    console.log('%cCompra ID: ' + compra.id, 'font-size: 12px;');
-    console.log('%cTotal detalles: ' + detallesPayload.length, 'font-size: 12px;');
-    console.log('');
-
-    detallesPayload.forEach((detalle, idx) => {
-      const productoInfo = detalles.find(d => d.id === detalle.detalle_id);
-      console.log(`%c[DETALLE ${idx + 1}] Producto: ${productoInfo?.producto_nombre} (ID: ${productoInfo?.producto_id}, SKU: ${productoInfo?.producto_sku})`, 'font-size: 12px; font-weight: bold; color: #7c3aed;');
-
-      if (detalle.stock_anterior_actualizar.length > 0) {
-        console.log('%c  ✏️ STOCKS ANTERIORES A ACTUALIZAR:', 'color: #0891b2; font-weight: bold;');
-        detalle.stock_anterior_actualizar.forEach(stock => {
-          console.log(`    - Stock ID: ${stock.stock_id} → Nuevo Lote: "${stock.nuevo_lote || 'sin cambio'}" | Nueva Fecha: "${stock.nueva_fecha_vencimiento || 'sin cambio'}"`);
-        });
-      }
-
-      if (detalle.stock_nuevo.length > 0) {
-        console.log('%c  ✨ STOCKS NUEVOS A CREAR:', 'color: #059669; font-weight: bold;');
-        detalle.stock_nuevo.forEach((stock, sIdx) => {
-          console.log(`    - Stock Nuevo ${sIdx + 1}: Cantidad=${stock.cantidad} | Lote="${stock.lote || 'sin lote'}" | Fecha="${stock.fecha_vencimiento || 'sin fecha'}"`);
-        });
-      }
-      console.log('');
+    // ✅ DEBUG: Mostrar datos que llegan del backend
+    console.log('=== DATOS DEL BACKEND ===');
+    console.log('Compra:', compra);
+    console.log('Moneda:', moneda);
+    console.log('Detalles con movimientos:', detalles);
+    detalles.forEach((detalle) => {
+        console.log(`\n📦 Producto: ${detalle.producto_nombre}`);
+        console.log('  Stock registrados:', detalle.stock_registrados);
+        console.log('  Movimientos:', detalle.movimientos);
     });
 
-    console.log('%cJSON COMPLETO:', 'font-size: 12px; font-weight: bold; color: #dc2626;');
-    console.log(JSON.stringify(payloadToSend, null, 2));
+    // Guardar valores originales para detectar cambios
+    const valoresOriginales = useCallback(
+        () =>
+            detalles.reduce(
+                (acc, detalle) => {
+                    acc[detalle.id] = (detalle.stock_registrados || []).reduce(
+                        (inner, stock) => {
+                            inner[stock.id] = {
+                                cantidad: stock.cantidad,
+                                nuevo_lote: stock.lote || '',
+                                nueva_fecha: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
+                            };
+                            return inner;
+                        },
+                        {} as Record<number, { cantidad: number; nuevo_lote: string; nueva_fecha: string }>,
+                    );
+                    return acc;
+                },
+                {} as Record<number, Record<number, { cantidad: number; nuevo_lote: string; nueva_fecha: string }>>,
+            ),
+        [detalles],
+    );
 
-    setMostrarResumen(false);
+    // Estado para stock anterior (actualizar)
+    const [stockAnteriorActualizar, setStockAnteriorActualizar] =
+        useState<Record<number, Record<number, { cantidad: number; nuevo_lote: string; nueva_fecha: string }>>>(valoresOriginales());
 
-    const url = route('compras.guardar-lotes', compra.id);
-    console.log('⏳ Iniciando fetch a:', url);
+    // Crear referencia de valores originales para comparación
+    const valoresOriginalesRef = useCallback(() => valoresOriginales(), [valoresOriginales]);
 
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-      },
-      body: JSON.stringify(payloadToSend),
-    })
-      .then(response => {
-        console.log('📡 Status de respuesta:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('✅ RESPUESTA DEL BACKEND (ÉXITO):', data);
-        // Limpiar loading y mostrar éxito
-        NotificationService.success('Lotes asignados exitosamente');
-        // Redirigir inmediatamente
-        router.visit(route('compras.show', compra.id));
-      })
-      .catch(error => {
-        console.error('❌ ERROR EN LA SOLICITUD:', error);
-        // Limpiar loading antes de mostrar error
-        NotificationService.error('Error al asignar lotes: ' + error.message);
-      });
-  };
+    // Estado para stock nuevo (crear): empieza sin filas; se agregan con "Agregar lote nuevo" o "Mover a… Lote nuevo"
+    const [stockNuevo, setStockNuevo] = useState<Record<number, StockNuevo[]>>(
+        detalles.reduce(
+            (acc, detalle) => {
+                acc[detalle.id] = [];
+                return acc;
+            },
+            {} as Record<number, StockNuevo[]>,
+        ),
+    );
 
-  return (
-    <AppLayout
-      breadcrumbs={[
-        { title: 'Compras', href: '/compras' },
-        { title: compra.numero, href: `/compras/${compra.id}` },
-        { title: 'Asignar Lotes', href: '#' },
-      ]}
-    >
-      <Head title="Asignar Lotes y Fechas de Vencimiento" />
+    // Estado para controlar el historial desplegable por detalle
+    const [movimientosExpandidos, setMovimientosExpandidos] = useState<Record<number, boolean>>(
+        detalles.reduce(
+            (acc, detalle) => {
+                acc[detalle.id] = false;
+                return acc;
+            },
+            {} as Record<number, boolean>,
+        ),
+    );
 
-      <div className="space-y-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Asignar Lotes y Fechas de Vencimiento
-          </h1>
-          <div className="flex gap-3">
-            <Link
-              href={`/compras/${compra.id}`}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-            >
-              Cancelar
-            </Link>
-            <button
-              onClick={(e) => mostrarResumenCambios(e as any)}
-              disabled={processing}
-              className="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {processing ? 'Guardando...' : 'Guardar Asignaciones'}
-            </button>
-          </div>
-        </div>
+    // Estado para mostrar modal de confirmación
+    const [mostrarResumen, setMostrarResumen] = useState(false);
+    const [resumenCambios, setResumenCambios] = useState<any>(null);
 
-        {/* Información de la Compra */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Compra</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">#{compra.numero} | ID: #{compra.id}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Fecha</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {new Date(compra.fecha).toLocaleDateString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Proveedor</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">{compra.proveedor_nombre}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Almacén</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">{compra.almacen_nombre}</p>
-            </div>
-          </div>
-        </div>
+    // Estado para transferencias entre lotes
+    const [transferencias, setTransferencias] = useState<Record<number, Transferencia[]>>(
+        detalles.reduce(
+            (acc, detalle) => {
+                acc[detalle.id] = [];
+                return acc;
+            },
+            {} as Record<number, Transferencia[]>,
+        ),
+    );
 
-        {/* Alert de Información */}
-        {/* <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100">
+    const { post, processing } = useForm();
+
+    // Buscador: solo filtra lo que se ve. El estado y el envío siguen usando TODOS los detalles,
+    // así que lo editado en un producto oculto por el filtro se conserva y se guarda.
+    const [busqueda, setBusqueda] = useState('');
+    const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const detallesVisibles = useMemo(() => {
+        const termino = normalizar(busqueda.trim());
+        if (!termino) return detalles;
+        return detalles.filter((d) =>
+            [d.producto_nombre, d.producto_sku, String(d.producto_id), ...d.stock_registrados.map((s) => s.lote ?? '')].some((campo) =>
+                normalizar(campo ?? '').includes(termino),
+            ),
+        );
+    }, [busqueda, detalles]);
+
+    // Agregar un nuevo stock a crear
+    const agregarStockNuevo = useCallback((detalleId: number) => {
+        setStockNuevo((prev) => {
+            const nuevas = [...(prev[detalleId] || [])];
+            nuevas.push({
+                cantidad: 0,
+                lote: '',
+                fecha_vencimiento: '',
+            });
+            return { ...prev, [detalleId]: nuevas };
+        });
+    }, []);
+
+    // Eliminar un stock nuevo
+    const eliminarStockNuevo = useCallback((detalleId: number, index: number) => {
+        setStockNuevo((prev) => {
+            const nuevas = [...(prev[detalleId] || [])];
+            nuevas.splice(index, 1);
+            return { ...prev, [detalleId]: nuevas };
+        });
+    }, []);
+
+    // Actualizar stock nuevo
+    const actualizarStockNuevo = useCallback((detalleId: number, index: number, field: keyof StockNuevo, value: string | number) => {
+        setStockNuevo((prev) => {
+            const nuevas = [...(prev[detalleId] || [])];
+            nuevas[index] = { ...nuevas[index], [field]: value };
+            return { ...prev, [detalleId]: nuevas };
+        });
+    }, []);
+
+    // Actualizar stock anterior
+    const actualizarStockAnterior = useCallback((detalleId: number, stockId: number, field: 'nuevo_lote' | 'nueva_fecha', value: string) => {
+        setStockAnteriorActualizar((prev) => {
+            const updated = { ...prev };
+            if (!updated[detalleId]) updated[detalleId] = {};
+            updated[detalleId][stockId] = {
+                ...updated[detalleId][stockId],
+                [field]: value,
+            };
+            return updated;
+        });
+    }, []);
+
+    // Eliminar una transferencia
+    const eliminarTransferencia = useCallback((detalleId: number, index: number) => {
+        setTransferencias((prev) => {
+            const nuevas = [...(prev[detalleId] || [])];
+            nuevas.splice(index, 1);
+            return { ...prev, [detalleId]: nuevas };
+        });
+    }, []);
+
+    // Actualizar transferencia
+    const actualizarTransferencia = useCallback((detalleId: number, index: number, field: keyof Transferencia, value: number) => {
+        setTransferencias((prev) => {
+            const nuevas = [...(prev[detalleId] || [])];
+            nuevas[index] = { ...nuevas[index], [field]: value };
+            return { ...prev, [detalleId]: nuevas };
+        });
+    }, []);
+
+    // Validar que haya al menos un lote/fecha asignado
+    const validarAsignaciones = (): boolean => {
+        let tieneAlgunCambio = false;
+
+        for (const detalle of detalles) {
+            const anteriores = stockAnteriorActualizar[detalle.id] || {};
+            const nuevos = stockNuevo[detalle.id] || [];
+
+            // Verificar si este detalle tiene cambios
+            const tieneAlgoParaActualizar = Object.values(anteriores).some((stock) => stock.nuevo_lote || stock.nueva_fecha);
+            const tieneAlgoParaCrear = nuevos.some((stock) => stock.cantidad > 0 || stock.lote || stock.fecha_vencimiento);
+
+            if (tieneAlgoParaActualizar || tieneAlgoParaCrear) {
+                tieneAlgunCambio = true;
+
+                // Validar que los nuevos stocks tengan al menos lote o fecha (incluso si cantidad=0)
+                for (const nuevoStock of nuevos) {
+                    if (
+                        (nuevoStock.cantidad > 0 || nuevoStock.lote || nuevoStock.fecha_vencimiento) &&
+                        !nuevoStock.lote &&
+                        !nuevoStock.fecha_vencimiento
+                    ) {
+                        NotificationService.error(`Todo nuevo stock debe tener al menos lote o fecha de vencimiento`);
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Verificar que al menos haya UN cambio
+        if (!tieneAlgunCambio) {
+            NotificationService.error('Debe hacer al menos un cambio a algún lote');
+            return false;
+        }
+
+        return true;
+    };
+
+    // Mostrar resumen de cambios
+    const mostrarResumenCambios = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validarAsignaciones()) {
+            return;
+        }
+
+        // Construir resumen
+        const originales = valoresOriginalesRef();
+        const resumen = detalles
+            .map((detalle) => {
+                const anteriores = stockAnteriorActualizar[detalle.id] || {};
+                const nuevos = stockNuevo[detalle.id] || [];
+                const trans = transferencias[detalle.id] || [];
+                const originalesDetalle = originales[detalle.id] || {};
+
+                const actualizacionesConCambios = Object.entries(anteriores)
+                    .filter(([stockId, data]) => {
+                        const original = originalesDetalle[parseInt(stockId)];
+                        // Solo mostrar si cambió respecto al original
+                        if (!original) return false;
+                        return data.nuevo_lote !== original.nuevo_lote || data.nueva_fecha !== original.nueva_fecha;
+                    })
+                    .map(([stockId, data]) => ({
+                        stockId: parseInt(stockId),
+                        cantidad: data.cantidad,
+                        lote: data.nuevo_lote,
+                        fecha: data.nueva_fecha,
+                    }));
+
+                const creaciones = nuevos.filter((s) => s.cantidad > 0 || s.lote || s.fecha_vencimiento);
+                const transferenciasValidas = trans.filter((t) => t.cantidad > 0 && t.destino_stock_id > 0);
+
+                if (actualizacionesConCambios.length === 0 && creaciones.length === 0 && transferenciasValidas.length === 0) return null;
+
+                return {
+                    detalleId: detalle.id,
+                    productoNombre: detalle.producto_nombre,
+                    actualizaciones: actualizacionesConCambios,
+                    creaciones: creaciones.map((s, idx) => ({
+                        index: idx,
+                        cantidad: s.cantidad,
+                        lote: s.lote,
+                        fecha: s.fecha_vencimiento,
+                    })),
+                    transferencias: transferenciasValidas.map((t) => {
+                        const origenStock = detalle.stock_registrados.find((s) => s.id === t.origen_stock_id);
+                        const destinoStock = detalle.stock_registrados.find((s) => s.id === t.destino_stock_id);
+                        return {
+                            origen_stock_id: t.origen_stock_id,
+                            origen_lote: origenStock?.lote || 'Sin lote',
+                            destino_stock_id: t.destino_stock_id,
+                            destino_lote: destinoStock?.lote || 'Sin lote',
+                            cantidad: t.cantidad,
+                        };
+                    }),
+                };
+            })
+            .filter(Boolean);
+
+        setResumenCambios(resumen);
+        setMostrarResumen(true);
+    };
+
+    // Enviar datos después de confirmación
+    const confirmarEnvio = () => {
+        const detallesPayload: DetalleDistribuido[] = detalles
+            .map((detalle) => {
+                const anteriores = stockAnteriorActualizar[detalle.id] || {};
+                const nuevos = stockNuevo[detalle.id] || [];
+                const trans = transferencias[detalle.id] || [];
+                const stocksNuevosFiltrados = nuevos.filter((s) => s.cantidad > 0 || s.lote || s.fecha_vencimiento);
+                const transferenciasValidas = trans.filter((t) => t.cantidad > 0 && t.destino_stock_id > 0);
+
+                // Cambios en lotes existentes: lote/fecha asignados y, si cambió, la nueva cantidad.
+                // La cantidad se compara con la ORIGINAL para enviar la reducción del lote correcto.
+                const originalesDetalle = valoresOriginalesRef()[detalle.id] || {};
+                const stocksActualizarFiltrados: StockAnteriorActualizar[] = [];
+                let reduccionExplicita = 0;
+
+                for (const [stockIdStr, data] of Object.entries(anteriores)) {
+                    const stockId = parseInt(stockIdStr);
+                    const original = originalesDetalle[stockId];
+                    const cambioCantidad = !!original && Math.abs(data.cantidad - original.cantidad) > 0.0001;
+                    if (!data.nuevo_lote && !data.nueva_fecha && !cambioCantidad) continue;
+
+                    if (cambioCantidad && data.cantidad < original.cantidad) {
+                        reduccionExplicita += original.cantidad - data.cantidad;
+                    }
+                    stocksActualizarFiltrados.push({
+                        stock_id: stockId,
+                        nuevo_lote: data.nuevo_lote,
+                        nueva_fecha_vencimiento: data.nueva_fecha,
+                        ...(cambioCantidad ? { cantidad: data.cantidad } : {}),
+                    });
+                }
+
+                // Unidades de lotes nuevos que no salieron de una reducción explícita ("Mover a…" o editar Cantidad):
+                // se toman del lote sin lote/sin fecha, una sola vez y partiendo de su cantidad original
+                const totalNuevasUnidades = stocksNuevosFiltrados.reduce((sum, s) => sum + s.cantidad, 0);
+                const pendiente = totalNuevasUnidades - reduccionExplicita;
+                if (pendiente > 0.0001) {
+                    const stockSinLoteEntry = Object.entries(anteriores).find(([, data]) => !data.nuevo_lote && !data.nueva_fecha);
+                    if (stockSinLoteEntry) {
+                        const stockSinLoteId = parseInt(stockSinLoteEntry[0]);
+                        const original = originalesDetalle[stockSinLoteId];
+                        const enLista = stocksActualizarFiltrados.find((s) => s.stock_id === stockSinLoteId);
+                        const base = enLista?.cantidad ?? original?.cantidad ?? 0;
+                        const nuevaCantidad = Math.max(0, base - pendiente);
+                        if (enLista) {
+                            enLista.cantidad = nuevaCantidad;
+                        } else {
+                            stocksActualizarFiltrados.push({
+                                stock_id: stockSinLoteId,
+                                cantidad: nuevaCantidad,
+                                nuevo_lote: '',
+                                nueva_fecha_vencimiento: '',
+                            });
+                        }
+                    }
+                }
+
+                // Solo incluir detalles que tengan cambios
+                if (stocksActualizarFiltrados.length === 0 && stocksNuevosFiltrados.length === 0 && transferenciasValidas.length === 0) {
+                    return null;
+                }
+
+                const payload: DetalleDistribuido = {
+                    detalle_id: detalle.id,
+                    stock_anterior_actualizar: stocksActualizarFiltrados,
+                    stock_nuevo: stocksNuevosFiltrados,
+                };
+
+                // Agregar transferencias si las hay
+                if (transferenciasValidas.length > 0) {
+                    payload.transferencias = transferenciasValidas;
+                }
+
+                return payload;
+            })
+            .filter((detalle): detalle is DetalleDistribuido => detalle !== null);
+
+        const payloadToSend = { detalles: detallesPayload };
+
+        console.log('%c📤 PAYLOAD QUE SE ENVÍA AL BACKEND', 'font-size: 16px; font-weight: bold; color: #2563eb;');
+        console.log('%cCompra ID: ' + compra.id, 'font-size: 12px;');
+        console.log('%cTotal detalles: ' + detallesPayload.length, 'font-size: 12px;');
+        console.log('');
+
+        detallesPayload.forEach((detalle, idx) => {
+            const productoInfo = detalles.find((d) => d.id === detalle.detalle_id);
+            console.log(
+                `%c[DETALLE ${idx + 1}] Producto: ${productoInfo?.producto_nombre} (ID: ${productoInfo?.producto_id}, SKU: ${productoInfo?.producto_sku})`,
+                'font-size: 12px; font-weight: bold; color: #7c3aed;',
+            );
+
+            if (detalle.stock_anterior_actualizar.length > 0) {
+                console.log('%c  ✏️ STOCKS ANTERIORES A ACTUALIZAR:', 'color: #0891b2; font-weight: bold;');
+                detalle.stock_anterior_actualizar.forEach((stock) => {
+                    console.log(
+                        `    - Stock ID: ${stock.stock_id} → Nuevo Lote: "${stock.nuevo_lote || 'sin cambio'}" | Nueva Fecha: "${stock.nueva_fecha_vencimiento || 'sin cambio'}"`,
+                    );
+                });
+            }
+
+            if (detalle.stock_nuevo.length > 0) {
+                console.log('%c  ✨ STOCKS NUEVOS A CREAR:', 'color: #059669; font-weight: bold;');
+                detalle.stock_nuevo.forEach((stock, sIdx) => {
+                    console.log(
+                        `    - Stock Nuevo ${sIdx + 1}: Cantidad=${stock.cantidad} | Lote="${stock.lote || 'sin lote'}" | Fecha="${stock.fecha_vencimiento || 'sin fecha'}"`,
+                    );
+                });
+            }
+            console.log('');
+        });
+
+        console.log('%cJSON COMPLETO:', 'font-size: 12px; font-weight: bold; color: #dc2626;');
+        console.log(JSON.stringify(payloadToSend, null, 2));
+
+        setMostrarResumen(false);
+
+        const url = route('compras.guardar-lotes', compra.id);
+        console.log('⏳ Iniciando fetch a:', url);
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+            },
+            body: JSON.stringify(payloadToSend),
+        })
+            .then(async (response) => {
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    // 422: errores de negocio (errores[]) o de validación de Laravel (errors{campo: [msg]})
+                    const motivos: string[] =
+                        data.errores ?? (data.errors ? [...new Set(Object.values(data.errors as Record<string, string[]>).flat())] : []);
+                    const mensaje = motivos.length > 0 ? motivos.join(' · ') : data.message || `Error ${response.status}`;
+                    NotificationService.error(`No se guardaron los lotes: ${mensaje}`);
+                    return;
+                }
+
+                NotificationService.success('Lotes asignados exitosamente');
+                router.visit(route('compras.show', compra.id));
+            })
+            .catch((error) => {
+                console.error('❌ ERROR EN LA SOLICITUD:', error);
+                NotificationService.error('Error de conexión al asignar lotes: ' + error.message);
+            });
+    };
+
+    return (
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Compras', href: '/compras' },
+                { title: compra.numero, href: `/compras/${compra.id}` },
+                { title: 'Asignar Lotes', href: '#' },
+            ]}
+        >
+            <Head title="Asignar Lotes y Fechas de Vencimiento" />
+
+            <div className="space-y-6 p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Asignar Lotes y Fechas de Vencimiento</h1>
+                    <div className="flex gap-3">
+                        <Link
+                            href={`/compras/${compra.id}`}
+                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                            Cancelar
+                        </Link>
+                        <button
+                            onClick={(e) => mostrarResumenCambios(e as any)}
+                            disabled={processing}
+                            className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none active:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
+                        >
+                            {processing ? 'Guardando...' : 'Guardar Asignaciones'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Información de la Compra */}
+                <div className="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Compra</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                #{compra.numero} | ID: #{compra.id}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Fecha</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">{new Date(compra.fecha).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Proveedor</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">{compra.proveedor_nombre}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Almacén</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">{compra.almacen_nombre}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Alert de Información */}
+                {/* <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Asignación de Lotes</AlertTitle>
           <AlertDescription>
@@ -590,635 +617,682 @@ export default function AsignarLotes() {
           </AlertDescription>
         </Alert> */}
 
-        {/* Modal de Resumen */}
-        {mostrarResumen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">📋 Resumen de Cambios</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Revisa los cambios antes de confirmar</p>
-              </div>
-
-              <div className="p-6 space-y-6">
-                {resumenCambios?.map((item: any) => (
-                  <div key={item.detalleId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">
-                      📦 {item.productoNombre} | {item.productoCodigo}
-                    </h3>
-
-                    {/* Actualizaciones */}
-                    {item.actualizaciones.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-semibold text-green-700 dark:text-green-300 mb-2">
-                          ✏️ Stock Anterior - Actualizar ({item.actualizaciones.length})
-                        </p>
-                        <div className="space-y-2 bg-green-50 dark:bg-green-900/20 p-3 rounded">
-                          {item.actualizaciones.map((act: any, idx: number) => (
-                            <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
-                              <span className="font-mono">Stock #{act.stockId}</span>
-                              {act.cantidad !== undefined && <span> → Cantidad: {act.cantidad}</span>}
-                              {act.lote && <span> → Lote: {act.lote}</span>}
-                              {act.fecha && <span> → Fecha: {act.fecha}</span>}
+                {/* Modal de Resumen */}
+                {mostrarResumen && (
+                    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+                        <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800">
+                            <div className="border-b border-gray-200 p-6 dark:border-gray-700">
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">📋 Resumen de Cambios</h2>
+                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Revisa los cambios antes de confirmar</p>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Creaciones */}
-                    {item.creaciones.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
-                          ✨ Stock Nuevo - Crear ({item.creaciones.length})
-                        </p>
-                        <div className="space-y-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
-                          {item.creaciones.map((nuevo: any, idx: number) => (
-                            <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
-                              <span className="font-semibold">Nuevo Stock #{idx + 1}</span>
-                              <span> → Cantidad: {nuevo.cantidad}</span>
-                              {nuevo.lote && <span> → Lote: {nuevo.lote}</span>}
-                              {nuevo.fecha && <span> → Fecha: {nuevo.fecha}</span>}
+                            <div className="space-y-6 p-6">
+                                {resumenCambios?.map((item: any) => (
+                                    <div key={item.detalleId} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                                        <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+                                            📦 {item.productoNombre} | {item.productoCodigo}
+                                        </h3>
+
+                                        {/* Actualizaciones */}
+                                        {item.actualizaciones.length > 0 && (
+                                            <div className="mb-4">
+                                                <p className="mb-2 text-sm font-semibold text-green-700 dark:text-green-300">
+                                                    ✏️ Stock Anterior - Actualizar ({item.actualizaciones.length})
+                                                </p>
+                                                <div className="space-y-2 rounded bg-green-50 p-3 dark:bg-green-900/20">
+                                                    {item.actualizaciones.map((act: any, idx: number) => (
+                                                        <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
+                                                            <span className="font-mono">Stock #{act.stockId}</span>
+                                                            {act.cantidad !== undefined && <span> → Cantidad: {act.cantidad}</span>}
+                                                            {act.lote && <span> → Lote: {act.lote}</span>}
+                                                            {act.fecha && <span> → Fecha: {act.fecha}</span>}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Creaciones */}
+                                        {item.creaciones.length > 0 && (
+                                            <div className="mb-4">
+                                                <p className="mb-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                                                    ✨ Stock Nuevo - Crear ({item.creaciones.length})
+                                                </p>
+                                                <div className="space-y-2 rounded bg-blue-50 p-3 dark:bg-blue-900/20">
+                                                    {item.creaciones.map((nuevo: any, idx: number) => (
+                                                        <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
+                                                            <span className="font-semibold">Nuevo Stock #{idx + 1}</span>
+                                                            <span> → Cantidad: {nuevo.cantidad}</span>
+                                                            {nuevo.lote && <span> → Lote: {nuevo.lote}</span>}
+                                                            {nuevo.fecha && <span> → Fecha: {nuevo.fecha}</span>}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Transferencias */}
+                                        {item.transferencias && item.transferencias.length > 0 && (
+                                            <div>
+                                                <p className="mb-2 text-sm font-semibold text-purple-700 dark:text-purple-300">
+                                                    🔄 Transferencias entre Lotes ({item.transferencias.length})
+                                                </p>
+                                                <div className="space-y-2 rounded bg-purple-50 p-3 dark:bg-purple-900/20">
+                                                    {item.transferencias.map((trans: any, idx: number) => (
+                                                        <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
+                                                            <span className="font-semibold">Transferencia #{idx + 1}</span>
+                                                            <span> → De: {trans.origen_lote}</span>
+                                                            <span> → A: {trans.destino_lote}</span>
+                                                            <span> → Cantidad: {trans.cantidad}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Transferencias */}
-                    {item.transferencias && item.transferencias.length > 0 && (
-                      <div>
-                        <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
-                          🔄 Transferencias entre Lotes ({item.transferencias.length})
-                        </p>
-                        <div className="space-y-2 bg-purple-50 dark:bg-purple-900/20 p-3 rounded">
-                          {item.transferencias.map((trans: any, idx: number) => (
-                            <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
-                              <span className="font-semibold">Transferencia #{idx + 1}</span>
-                              <span> → De: {trans.origen_lote}</span>
-                              <span> → A: {trans.destino_lote}</span>
-                              <span> → Cantidad: {trans.cantidad}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setMostrarResumen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
-                  Volver
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmarEnvio}
-                  disabled={processing}
-                  className="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {processing ? 'Guardando...' : 'Confirmar y Guardar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={mostrarResumenCambios} className="space-y-6">
-          {detalles.map((detalle) => (
-            <div key={detalle.id} className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-              {/* Header del Producto */}
-              <div className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {detalle.producto_nombre} | SKU: {detalle.producto_sku} | ID: {detalle.producto_id}
-                </h3>
-                {/* <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <p><span className="font-medium">ID:</span> {detalle.producto_id}</p>
-                  <p><span className="font-medium">SKU:</span> {detalle.producto_sku}</p>
-                </div> */}
-
-                {/* Información de la Compra */}
-                {/* <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400">Cantidad en Compra</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{detalle.cantidad_original}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400">Precio Unitario</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {moneda.simbolo} {detalle.precio_unitario.toFixed(2)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400">Subtotal</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{moneda.simbolo} {detalle.subtotal.toFixed(2)}</p>
-                  </div>
-                </div> */}
-
-                {/* ✅ NUEVO 2026-05-19: Historial de Movimientos Desplegable */}
-                {detalle.movimientos && detalle.movimientos.length > 0 && (() => {
-                  const entradas = detalle.movimientos.filter(m => m.tipo.includes('ENTRADA')).reduce((sum, m) => sum + m.cantidad, 0);
-                  const salidas = detalle.movimientos.filter(m => m.tipo.includes('SALIDA')).reduce((sum, m) => sum + Math.abs(m.cantidad), 0);
-                  const isExpanded = movimientosExpandidos[detalle.id] || false;
-
-                  return (
-                    <div className="mt-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                      {/* Header Desplegable */}
-                      <button
-                        type="button"
-                        onClick={() => setMovimientosExpandidos(prev => ({ ...prev, [detalle.id]: !prev[detalle.id] }))}
-                        className="w-full flex items-center justify-between p-3 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition rounded-t-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">📋 HISTORIAL DE MOVIMIENTOS</p>
-                          <span className="text-xs text-amber-700 dark:text-amber-300">({detalle.movimientos.length} registros)</span>
-                        </div>
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-amber-900 dark:text-amber-100" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-amber-900 dark:text-amber-100" />
-                        )}
-                      </button>
-
-                      {/* Resumen */}
-                      <div className="px-3 pb-3 border-t border-amber-200 dark:border-amber-800">
-                        <div className="grid grid-cols-4 gap-6 pt-3">
-                          <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded">
-                            <p className="text-xs text-green-700 dark:text-green-300">Cantidad Comprada</p>
-                            <p className="text-sm font-bold text-green-900 dark:text-green-100">{detalle.cantidad_original}</p>
-                          </div>
-                          {/* <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded">
-                            <p className="text-xs text-green-700 dark:text-green-300">Entradas</p>
-                            <p className="text-sm font-bold text-green-900 dark:text-green-100">+{entradas.toFixed(2)}</p>
-                          </div>
-                          <div className="text-center p-2 bg-red-100 dark:bg-red-900/20 rounded">
-                            <p className="text-xs text-red-700 dark:text-red-300">Salidas</p>
-                            <p className="text-sm font-bold text-red-900 dark:text-red-100">-{salidas.toFixed(2)}</p>
-                          </div> */}
-                          <div className="text-center p-2 bg-blue-100 dark:bg-blue-900/20 rounded">
-                            <span className="text-xs text-blue-700 dark:text-blue-300">Stock Total:</span>
-                            <p className="font-bold text-blue-900 dark:text-blue-100">{detalle.stock_total.toFixed(2)}</p>
-                          </div>
-                          <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded">
-                              <span className="text-xs text-green-700 dark:text-green-300">Disponible:</span>
-                              <p className="font-bold text-green-900 dark:text-green-100">
-                                {detalle.stock_disponible.toFixed(2)}
-                              </p>
-                            </div>
-                          <div className="text-center p-2 bg-orange-100 dark:bg-orange-900/20 rounded">
-                              <span className="text-xs text-orange-700 dark:text-orange-300">Reservado:</span>
-                              <p className="font-bold text-orange-900 dark:text-orange-100">
-                                {detalle.stock_reservado.toFixed(2)}
-                              </p>
+                            <div className="flex justify-end gap-3 border-t border-gray-200 p-6 dark:border-gray-700">
+                                <button
+                                    type="button"
+                                    onClick={() => setMostrarResumen(false)}
+                                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                >
+                                    Volver
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmarEnvio}
+                                    disabled={processing}
+                                    className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none active:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
+                                >
+                                    {processing ? 'Guardando...' : 'Confirmar y Guardar'}
+                                </button>
                             </div>
                         </div>
-                      </div>
-
-                      {/* Tabla Desplegable */}
-                      {isExpanded && (
-                        <div className="border-t border-amber-200 dark:border-amber-800 overflow-x-auto">
-                          <table className="w-full text-xs">
-                            <thead className="bg-amber-100 dark:bg-amber-900/40">
-                              <tr>
-                                <th className="px-2 py-1 text-left text-amber-900 dark:text-amber-100 font-semibold">Fecha</th>
-                                <th className="px-2 py-1 text-left text-amber-900 dark:text-amber-100 font-semibold">Tipo</th>
-                                <th className="px-2 py-1 text-left text-amber-900 dark:text-amber-100 font-semibold">Lote</th>
-                                <th className="px-2 py-1 text-right text-amber-900 dark:text-amber-100 font-semibold">Cant. Anterior</th>
-                                <th className="px-2 py-1 text-right text-amber-900 dark:text-amber-100 font-semibold">Cantidad</th>
-                                <th className="px-2 py-1 text-right text-amber-900 dark:text-amber-100 font-semibold">Cant. Posterior</th>
-                                <th className="px-2 py-1 text-left text-amber-900 dark:text-amber-100 font-semibold">Referencia</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-amber-200 dark:divide-amber-800">
-                              {detalle.movimientos.map((mov, idx) => (
-                                <tr key={idx} className="hover:bg-amber-100/50 dark:hover:bg-amber-900/20">
-                                  <td className="px-2 py-1 text-amber-900 dark:text-amber-100">
-                                    {new Date(mov.fecha).toLocaleDateString()}
-                                  </td>
-                                  <td className="px-2 py-1">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${mov.tipo.includes('ENTRADA')
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
-                                        : mov.tipo.includes('SALIDA')
-                                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-                                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                                      }`}>
-                                      {mov.tipo}
-                                    </span>
-                                  </td>
-                                  <td className="px-2 py-1 text-amber-700 dark:text-amber-300 font-mono font-semibold">
-                                    {mov.lote}
-                                  </td>
-                                  <td className="px-2 py-1 text-right text-gray-600 dark:text-gray-400">
-                                    {mov.cantidad_anterior.toFixed(2)}
-                                  </td>
-                                  <td className="px-2 py-1 text-right font-semibold text-amber-900 dark:text-amber-100">
-                                    {mov.cantidad > 0 ? '+' : ''}{mov.cantidad.toFixed(2)}
-                                  </td>
-                                  <td className="px-2 py-1 text-right font-semibold text-blue-600 dark:text-blue-400">
-                                    {mov.cantidad_posterior.toFixed(2)}
-                                  </td>
-                                  <td className="px-2 py-1 text-amber-600 dark:text-amber-400 text-xs font-mono">
-                                    {mov.referencia}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
                     </div>
-                  );
-                })()}
-              </div>
+                )}
 
-              {/* Stock Anterior - Actualizar */}
-              {detalle.stock_registrados && detalle.stock_registrados.length > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">📦 STOCK ANTERIOR (ACTUALIZAR)</h4>
-                  <div className="space-y-3">
-                    {detalle.stock_registrados.map((stock) => (
-                      <div key={stock.id} className={`border p-4 rounded-lg ${getLoteColorClass(stock.fecha_vencimiento)}`}>
-                        {/* Información del Lote - Collapsible */}
-                        <div className="mb-3 pb-3 border-b border-green-200 dark:border-green-700">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const key = `${detalle.id}-${stock.id}`;
-                              setLotesExpandidos(prev => ({
-                                ...prev,
-                                [key]: !prev[key]
-                              }));
-                            }}
-                            className="w-full flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-900/20 p-2 -mx-2 -my-2 rounded transition"
-                          >
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                                🏷️ Lote: <span className={`font-mono ${isLoteVencido(stock.fecha_vencimiento) ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}>{stock.lote || 'Sin lote'}</span>
-                              </p>
-                              {isLoteVencido(stock.fecha_vencimiento) && (
-                                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" title="Lote vencido" />
-                              )}
-                            </div>
-                            {lotesExpandidos[`${detalle.id}-${stock.id}`] ? (
-                              <ChevronUp className="w-4 h-4 text-green-700 dark:text-green-300" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-green-700 dark:text-green-300" />
+                {/* Buscador de productos */}
+                <div className="sticky top-12 z-10 -mx-6 bg-gray-100/90 px-6 py-2 backdrop-blur dark:bg-gray-900/90">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative w-full max-w-md">
+                            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="search"
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Escape' && setBusqueda('')}
+                                placeholder="Buscar producto por nombre, SKU, ID o lote…"
+                                aria-label="Buscar producto"
+                                className="w-full rounded-md border border-gray-300 bg-white py-2 pr-9 pl-9 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            />
+                            {busqueda && (
+                                <button
+                                    type="button"
+                                    onClick={() => setBusqueda('')}
+                                    title="Limpiar búsqueda (Esc)"
+                                    className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
                             )}
-                          </button>
-
-                          {lotesExpandidos[`${detalle.id}-${stock.id}`] && (
-                            <div className="grid grid-cols-3 gap-2 mt-3">
-                              <div className="bg-blue-100 dark:bg-blue-900/30 rounded px-2 py-1">
-                                <p className="text-xs text-blue-700 dark:text-blue-300">Total</p>
-                                <p className="text-sm font-bold text-blue-900 dark:text-blue-100">{stock.cantidad}</p>
-                              </div>
-                              <div className="bg-green-100 dark:bg-green-900/30 rounded px-2 py-1">
-                                <p className="text-xs text-green-700 dark:text-green-300">Disponible</p>
-                                <p className="text-sm font-bold text-green-900 dark:text-green-100">{stock.cantidad_disponible}</p>
-                              </div>
-                              <div className="bg-orange-100 dark:bg-orange-900/30 rounded px-2 py-1">
-                                <p className="text-xs text-orange-700 dark:text-orange-300">Reservado</p>
-                                <p className="text-sm font-bold text-orange-900 dark:text-orange-100">{stock.cantidad_reservada}</p>
-                              </div>
-                            </div>
-                          )}
                         </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
+                            {busqueda.trim() ? `${detallesVisibles.length} de ${detalles.length} productos` : `${detalles.length} productos`}
+                        </span>
+                    </div>
+                </div>
 
-                        <div className="grid grid-cols-3 gap-3">
-                          {/* Cantidad - EDITABLE */}
-                          <div className="flex gap-2 items-end">
-                            <div className="flex-1">
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Cantidad
-                              </label>
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad}
-                                onChange={(e) =>
-                                  setStockAnteriorActualizar(prev => {
+                {/* Form: una tabla por producto (lotes actuales, transferencias y lotes nuevos comparten columnas) */}
+                <form onSubmit={mostrarResumenCambios} className="space-y-6">
+                    {detallesVisibles.length === 0 && (
+                        <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Ningún producto coincide con «{busqueda.trim()}».</p>
+                            <button
+                                type="button"
+                                onClick={() => setBusqueda('')}
+                                className="mt-3 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                                Limpiar búsqueda
+                            </button>
+                        </div>
+                    )}
+                    {detallesVisibles.map((detalle) => {
+                        const nuevos = stockNuevo[detalle.id] || [];
+                        const transDetalle = transferencias[detalle.id] || [];
+                        const historialAbierto = movimientosExpandidos[detalle.id] || false;
+                        const cantidadDe = (stock: { id: number; cantidad: number }) =>
+                            stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad;
+
+                        // Parte de la cantidad que se puede mover: lo reservado se queda en el lote (sus proformas apuntan a él)
+                        const movibleDe = (stock: PageProps['detalles'][number]['stock_registrados'][number]) =>
+                            Math.max(0, Math.min(cantidadDe(stock) - stock.cantidad_reservada, stock.cantidad_disponible));
+
+                        // "Mover a…": pasar la parte disponible a un lote nuevo o transferirla a otro lote existente
+                        const moverCantidad = (stock: PageProps['detalles'][number]['stock_registrados'][number], destino: string) => {
+                            const cantidadATransferir = movibleDe(stock);
+                            if (!destino || cantidadATransferir <= 0) return;
+
+                            if (destino === 'nuevo') {
+                                setStockNuevo((prev) => {
+                                    const lista = [...(prev[detalle.id] || [])];
+                                    const fila = {
+                                        cantidad: cantidadATransferir,
+                                        lote: stock.lote || '',
+                                        fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
+                                    };
+                                    // Reutilizar una fila recién agregada y todavía vacía; si no, agregar otra
+                                    const vacia = lista.findIndex((f) => f.cantidad === 0 && !f.lote && !f.fecha_vencimiento);
+                                    if (vacia >= 0) lista[vacia] = fila;
+                                    else lista.push(fila);
+                                    return { ...prev, [detalle.id]: lista };
+                                });
+                                setStockAnteriorActualizar((prev) => {
                                     const updated = { ...prev };
                                     if (!updated[detalle.id]) updated[detalle.id] = {};
+                                    // En el lote origen queda lo que no se movió (como mínimo, lo reservado)
                                     updated[detalle.id][stock.id] = {
-                                      ...updated[detalle.id][stock.id],
-                                      cantidad: parseFloat(e.target.value) || 0,
+                                        ...updated[detalle.id][stock.id],
+                                        cantidad: cantidadDe(stock) - cantidadATransferir,
                                     };
                                     return updated;
-                                  })
-                                }
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                              />
-                            </div>
-                            {/* Dropdown Transferir */}
-                            <div className="relative">
-                              <button
-                                type="button"
-                                title="Transferir cantidad a otro lote"
-                                onClick={() => {
-                                  const key = `${detalle.id}-${stock.id}`;
-                                  setDropdownTransferencia(dropdownTransferencia === key ? null : key);
-                                }}
-                                className="px-3 py-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 text-white text-sm font-medium rounded-md transition flex items-center gap-1"
-                              >
-                                ⇄ <span className="text-xs">▼</span>
-                              </button>
-                              {dropdownTransferencia === `${detalle.id}-${stock.id}` && (
-                                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10">
-                                {/* Opción: Crear nuevo lote */}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const cantidadATransferir = stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad;
-                                    if (cantidadATransferir > 0) {
-                                      setStockNuevo(prev => {
-                                        const nuevos = [...(prev[detalle.id] || [])];
-                                        if (nuevos.length === 0 || (nuevos.length === 1 && nuevos[0].cantidad === 0)) {
-                                          nuevos[0] = {
-                                            cantidad: cantidadATransferir,
-                                            lote: stock.lote || '',
-                                            fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
-                                          };
-                                        } else {
-                                          nuevos.push({
-                                            cantidad: cantidadATransferir,
-                                            lote: stock.lote || '',
-                                            fecha_vencimiento: stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '',
-                                          });
-                                        }
-                                        return { ...prev, [detalle.id]: nuevos };
-                                      });
-                                      setStockAnteriorActualizar(prev => {
-                                        const updated = { ...prev };
-                                        if (!updated[detalle.id]) updated[detalle.id] = {};
-                                        updated[detalle.id][stock.id] = {
-                                          ...updated[detalle.id][stock.id],
-                                          cantidad: 0,
-                                        };
-                                        return updated;
-                                      });
-                                      setDropdownTransferencia(null);
-                                    }
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-b border-gray-200 dark:border-gray-600"
-                                >
-                                  ✨ Crear nuevo lote
-                                </button>
-                                {/* Opciones: Transferir a lotes existentes */}
-                                {detalle.stock_registrados.filter(s => s.id !== stock.id).map(otroStock => (
-                                  <button
-                                    key={otroStock.id}
-                                    type="button"
-                                    onClick={() => {
-                                      const cantidadATransferir = stockAnteriorActualizar[detalle.id]?.[stock.id]?.cantidad ?? stock.cantidad;
-                                      if (cantidadATransferir > 0) {
-                                        agregarTransferencia(detalle.id, stock.id);
-                                        // Pre-establecer el destino
-                                        setTransferencias(prev => {
-                                          const nuevas = [...(prev[detalle.id] || [])];
-                                          const ultima = nuevas[nuevas.length - 1];
-                                          if (ultima) {
-                                            ultima.destino_stock_id = otroStock.id;
-                                            ultima.cantidad = cantidadATransferir;
-                                          }
-                                          return { ...prev, [detalle.id]: nuevas };
-                                        });
-                                        setDropdownTransferencia(null);
-                                      }
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30"
-                                  >
-                                    🔄 A: {otroStock.lote || 'Sin lote'} ({otroStock.cantidad} unidades)
-                                  </button>
-                                ))}
+                                });
+                            } else {
+                                setTransferencias((prev) => ({
+                                    ...prev,
+                                    [detalle.id]: [
+                                        ...(prev[detalle.id] || []),
+                                        { origen_stock_id: stock.id, destino_stock_id: Number(destino), cantidad: cantidadATransferir },
+                                    ],
+                                }));
+                            }
+                        };
+
+                        return (
+                            <section key={detalle.id} className="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                                {/* Encabezado del producto con los totales en una sola línea */}
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                                    <div>
+                                        <h3 className="text-base font-semibold text-cyan-700 dark:text-cyan-300">{detalle.producto_nombre}</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            SKU {detalle.producto_sku} ·{' '}
+                                            <a
+                                                href={`/productos/${detalle.producto_id}/edit`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="Editar producto en otra pestaña"
+                                                className="inline-flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400"
+                                            >
+                                                ID {detalle.producto_id}
+                                                <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                        </p>
+                                    </div>
+                                    <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
+                                        {[
+                                            { label: 'Comprado', valor: detalle.cantidad_original, clase: 'text-gray-900 dark:text-white' },
+                                            { label: 'Stock total', valor: detalle.stock_total, clase: 'text-blue-700 dark:text-blue-300' },
+                                            { label: 'Disponible', valor: detalle.stock_disponible, clase: 'text-green-700 dark:text-green-300' },
+                                            { label: 'Reservado', valor: detalle.stock_reservado, clase: 'text-orange-700 dark:text-orange-300' },
+                                        ].map(({ label, valor, clase }) => (
+                                            <div key={label} className="flex items-baseline gap-1">
+                                                <dt className="text-gray-500 dark:text-gray-400">{label}:</dt>
+                                                <dd className={`font-mono font-semibold tabular-nums ${clase}`}>{Number(valor).toFixed(2)}</dd>
+                                            </div>
+                                        ))}
+                                    </dl>
                                 </div>
-                              )}
-                            </div>
-                          </div>
 
-                          {/* Lote */}
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Lote
-                            </label>
-                            <input
-                              type="text"
-                              value={stockAnteriorActualizar[detalle.id]?.[stock.id]?.nuevo_lote || stock.lote || ''}
-                              onChange={(e) =>
-                                actualizarStockAnterior(detalle.id, stock.id, 'nuevo_lote', e.target.value)
-                              }
-                              placeholder="Ej: LOTE-001"
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                            />
-                          </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead className="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase dark:bg-gray-700 dark:text-gray-400">
+                                            <tr>
+                                                <th scope="col" className="px-3 py-2 text-left font-medium">
+                                                    Lote
+                                                </th>
+                                                <th scope="col" className="px-3 py-2 text-left font-medium">
+                                                    Vencimiento
+                                                </th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">
+                                                    Total
+                                                </th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">
+                                                    Disponible
+                                                </th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">
+                                                    Reservado
+                                                </th>
+                                                <th scope="col" className="px-3 py-2 text-right font-medium">
+                                                    Cantidad
+                                                </th>
+                                                <th scope="col" className="px-3 py-2 text-left font-medium">
+                                                    Acción
+                                                </th>
+                                            </tr>
+                                        </thead>
 
-                          {/* Fecha Vencimiento */}
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Fecha Vencimiento
-                            </label>
-                            <input
-                              type="date"
-                              value={
-                                stockAnteriorActualizar[detalle.id]?.[stock.id]?.nueva_fecha ||
-                                (stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '')
-                              }
-                              onChange={(e) =>
-                                actualizarStockAnterior(detalle.id, stock.id, 'nueva_fecha', e.target.value)
-                              }
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                                        {/* Lotes actuales */}
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            <tr className="bg-gray-50/60 dark:bg-gray-900/30">
+                                                <th
+                                                    colSpan={7}
+                                                    scope="rowgroup"
+                                                    className="px-3 py-1.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-300"
+                                                >
+                                                    Lotes actuales ({detalle.stock_registrados.length})
+                                                </th>
+                                            </tr>
+                                            {detalle.stock_registrados.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={7} className="px-3 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
+                                                        No hay lotes activos de este producto en el almacén.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {detalle.stock_registrados.map((stock) => {
+                                                const vencido = isLoteVencido(stock.fecha_vencimiento);
+                                                const otros = detalle.stock_registrados.filter((s) => s.id !== stock.id);
+                                                return (
+                                                    <tr
+                                                        key={stock.id}
+                                                        className={
+                                                            vencido ? 'bg-red-50/70 dark:bg-red-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/40'
+                                                        }
+                                                    >
+                                                        <td className="px-3 py-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span
+                                                                    title={`Registro de stock #${stock.id}`}
+                                                                    className="w-12 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-center font-mono text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                                                >
+                                                                    #{stock.id}
+                                                                </span>
+                                                                <input
+                                                                    type="text"
+                                                                    aria-label={`Lote del registro #${stock.id}`}
+                                                                    value={
+                                                                        stockAnteriorActualizar[detalle.id]?.[stock.id]?.nuevo_lote ||
+                                                                        stock.lote ||
+                                                                        ''
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        actualizarStockAnterior(detalle.id, stock.id, 'nuevo_lote', e.target.value)
+                                                                    }
+                                                                    placeholder="Sin lote"
+                                                                    className={`${claseInput} w-36 font-mono`}
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="date"
+                                                                    aria-label={`Vencimiento del registro #${stock.id}`}
+                                                                    value={
+                                                                        stockAnteriorActualizar[detalle.id]?.[stock.id]?.nueva_fecha ||
+                                                                        (stock.fecha_vencimiento ? stock.fecha_vencimiento.split('T')[0] : '')
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        actualizarStockAnterior(detalle.id, stock.id, 'nueva_fecha', e.target.value)
+                                                                    }
+                                                                    className={`${claseInput} w-40`}
+                                                                />
+                                                                {vencido && (
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <a
+                                                                                href={`/compras/lotes-vencimientos?producto_id=${detalle.producto_id}&estado_vencimiento=VENCIDO&vista=tabla`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                aria-label={`Lote vencido. Abrir Lotes y vencimientos de ${detalle.producto_nombre} para darlo de baja`}
+                                                                                className="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
+                                                                            >
+                                                                                <AlertTriangle className="h-3 w-3" />
+                                                                                Vencido
+                                                                                <ExternalLink className="h-3 w-3 opacity-70" />
+                                                                            </a>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent side="top" className="max-w-xs text-left">
+                                                                            <p className="font-semibold">Lote vencido</p>
+                                                                            <p>
+                                                                                Para darlo de baja, ve a{' '}
+                                                                                <strong>Compras → Lotes y vencimientos</strong>. Haz clic para abrirlo
+                                                                                en otra pestaña, ya filtrado por este producto.
+                                                                            </p>
+                                                                            {stock.cantidad_reservada > 0 && (
+                                                                                <p className="mt-1">
+                                                                                    Tiene {stock.cantidad_reservada} unidad(es) reservada(s) en
+                                                                                    proformas: revisa esas proformas antes de darlo de baja.
+                                                                                </p>
+                                                                            )}
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right font-mono text-gray-900 tabular-nums dark:text-white">
+                                                            {stock.cantidad}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right font-mono text-green-700 tabular-nums dark:text-green-300">
+                                                            {stock.cantidad_disponible}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right font-mono text-orange-700 tabular-nums dark:text-orange-300">
+                                                            {stock.cantidad_reservada}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right">
+                                                            <CantidadInput
+                                                                aria-label={`Cantidad del registro #${stock.id}`}
+                                                                title={
+                                                                    stock.cantidad_reservada > 0
+                                                                        ? `Mínimo ${stock.cantidad_reservada}: reservadas en proformas`
+                                                                        : undefined
+                                                                }
+                                                                min={stock.cantidad_reservada}
+                                                                max={stock.cantidad}
+                                                                value={cantidadDe(stock)}
+                                                                onValor={(cantidad) =>
+                                                                    setStockAnteriorActualizar((prev) => {
+                                                                        const updated = { ...prev };
+                                                                        if (!updated[detalle.id]) updated[detalle.id] = {};
+                                                                        updated[detalle.id][stock.id] = {
+                                                                            ...updated[detalle.id][stock.id],
+                                                                            cantidad,
+                                                                        };
+                                                                        return updated;
+                                                                    })
+                                                                }
+                                                            />
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            <select
+                                                                value=""
+                                                                aria-label={`Mover la cantidad del registro #${stock.id}`}
+                                                                title="Mover la cantidad indicada a un lote nuevo o a otro lote"
+                                                                disabled={movibleDe(stock) <= 0}
+                                                                onChange={(e) => moverCantidad(stock, e.target.value)}
+                                                                className={`${claseInput} w-40 disabled:opacity-50`}
+                                                            >
+                                                                <option value="">⇄ Mover a…</option>
+                                                                <option value="nuevo">✨ Lote nuevo</option>
+                                                                {otros.map((o) => (
+                                                                    <option key={o.id} value={o.id}>
+                                                                        #{o.id} · {o.lote || 'Sin lote'} ({o.cantidad} u.)
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
 
-              {/* Transferencias entre Lotes */}
-              {(transferencias[detalle.id] || []).length > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">🔄 TRANSFERENCIAS ENTRE LOTES</h4>
-                  <div className="space-y-3">
-                    {(transferencias[detalle.id] || []).map((trans, index) => {
-                      const origenStock = detalle.stock_registrados.find(s => s.id === trans.origen_stock_id);
-                      const destinoStock = trans.destino_stock_id > 0 ? detalle.stock_registrados.find(s => s.id === trans.destino_stock_id) : null;
-                      return (
-                        <div key={index} className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 p-4 rounded-lg">
-                          <div className="grid grid-cols-4 gap-3 items-end">
-                            {/* Stock Origen */}
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                De (Origen)
-                              </label>
-                              <div className="px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-md text-sm text-gray-900 dark:text-white font-medium">
-                                {origenStock?.lote || 'Sin lote'} ({origenStock?.cantidad} unidades)
-                              </div>
-                            </div>
+                                        {/* Transferencias entre lotes */}
+                                        {transDetalle.length > 0 && (
+                                            <tbody className="divide-y divide-purple-100 dark:divide-purple-900/40">
+                                                <tr className="bg-purple-50 dark:bg-purple-900/20">
+                                                    <th
+                                                        colSpan={7}
+                                                        scope="rowgroup"
+                                                        className="px-3 py-1.5 text-left text-xs font-semibold text-purple-800 dark:text-purple-200"
+                                                    >
+                                                        Transferencias entre lotes ({transDetalle.length})
+                                                    </th>
+                                                </tr>
+                                                {transDetalle.map((trans, index) => {
+                                                    const origen = detalle.stock_registrados.find((s) => s.id === trans.origen_stock_id);
+                                                    return (
+                                                        <tr key={index} className="bg-purple-50/40 dark:bg-purple-900/10">
+                                                            <td colSpan={5} className="px-3 py-2">
+                                                                <div className="flex flex-wrap items-center gap-2 text-sm">
+                                                                    <span className="font-mono font-medium text-gray-900 dark:text-white">
+                                                                        <span className="text-xs text-gray-500">#{origen?.id}</span>{' '}
+                                                                        {origen?.lote || 'Sin lote'}{' '}
+                                                                        <span className="text-xs text-gray-500">
+                                                                            ({origen?.cantidad_disponible} disp.)
+                                                                        </span>
+                                                                    </span>
+                                                                    <span className="text-purple-600 dark:text-purple-300">→</span>
+                                                                    <select
+                                                                        value={trans.destino_stock_id}
+                                                                        aria-label="Lote destino"
+                                                                        onChange={(e) =>
+                                                                            actualizarTransferencia(
+                                                                                detalle.id,
+                                                                                index,
+                                                                                'destino_stock_id',
+                                                                                parseInt(e.target.value),
+                                                                            )
+                                                                        }
+                                                                        className={`${claseInput} w-48`}
+                                                                    >
+                                                                        <option value={0}>-- Selecciona destino --</option>
+                                                                        {detalle.stock_registrados
+                                                                            .filter((s) => s.id !== trans.origen_stock_id)
+                                                                            .map((s) => (
+                                                                                <option key={s.id} value={s.id}>
+                                                                                    #{s.id} · {s.lote || 'Sin lote'} ({s.cantidad} u.)
+                                                                                </option>
+                                                                            ))}
+                                                                    </select>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right">
+                                                                <CantidadInput
+                                                                    max={origen?.cantidad_disponible || 0}
+                                                                    title={`Máximo ${origen?.cantidad_disponible ?? 0} disponibles${origen && origen.cantidad_reservada > 0 ? ` (${origen.cantidad_reservada} reservadas no se mueven)` : ''}`}
+                                                                    aria-label="Cantidad a transferir"
+                                                                    value={trans.cantidad}
+                                                                    onValor={(cantidad) =>
+                                                                        actualizarTransferencia(detalle.id, index, 'cantidad', cantidad)
+                                                                    }
+                                                                />
+                                                            </td>
+                                                            <td className="px-3 py-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => eliminarTransferencia(detalle.id, index)}
+                                                                    title="Quitar transferencia"
+                                                                    className="rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        )}
 
-                            {/* Cantidad a Transferir */}
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Cantidad
-                              </label>
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max={origenStock?.cantidad || 0}
-                                value={trans.cantidad}
-                                onChange={(e) =>
-                                  actualizarTransferencia(detalle.id, index, 'cantidad', parseFloat(e.target.value) || 0)
-                                }
-                                placeholder="0.00"
-                                className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                              />
-                            </div>
+                                        {/* Lotes nuevos: solo se muestran si se agregó alguno */}
+                                        {nuevos.length > 0 && (
+                                            <tbody className="divide-y divide-blue-100 dark:divide-blue-900/40">
+                                                <tr className="bg-blue-50 dark:bg-blue-900/20">
+                                                    <th
+                                                        colSpan={7}
+                                                        scope="rowgroup"
+                                                        className="px-3 py-1.5 text-left text-xs font-semibold text-blue-800 dark:text-blue-200"
+                                                    >
+                                                        Lotes nuevos ({nuevos.length})
+                                                    </th>
+                                                </tr>
+                                                {nuevos.map((nuevoStock, index) => (
+                                                    <tr key={index} className="bg-blue-50/30 dark:bg-blue-900/5">
+                                                        <td className="px-3 py-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span
+                                                                    title="Lote que se creará al guardar"
+                                                                    className="w-12 shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-center text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                                                >
+                                                                    Nuevo
+                                                                </span>
+                                                                <input
+                                                                    type="text"
+                                                                    aria-label={`Lote nuevo ${index + 1}`}
+                                                                    value={nuevoStock.lote}
+                                                                    onChange={(e) => actualizarStockNuevo(detalle.id, index, 'lote', e.target.value)}
+                                                                    placeholder="Ej: LOTE-001"
+                                                                    className={`${claseInput} w-36 font-mono`}
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            <input
+                                                                type="date"
+                                                                aria-label={`Vencimiento del lote nuevo ${index + 1}`}
+                                                                value={nuevoStock.fecha_vencimiento}
+                                                                onChange={(e) =>
+                                                                    actualizarStockNuevo(detalle.id, index, 'fecha_vencimiento', e.target.value)
+                                                                }
+                                                                className={`${claseInput} w-40`}
+                                                            />
+                                                        </td>
+                                                        <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-400">
+                                                            —
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right">
+                                                            <CantidadInput
+                                                                aria-label={`Cantidad del lote nuevo ${index + 1}`}
+                                                                value={nuevoStock.cantidad}
+                                                                onValor={(cantidad) => actualizarStockNuevo(detalle.id, index, 'cantidad', cantidad)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => eliminarStockNuevo(detalle.id, index)}
+                                                                title="Quitar lote nuevo"
+                                                                className="rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        )}
 
-                            {/* Stock Destino */}
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                A (Destino)
-                              </label>
-                              <select
-                                value={trans.destino_stock_id}
-                                onChange={(e) =>
-                                  actualizarTransferencia(detalle.id, index, 'destino_stock_id', parseInt(e.target.value))
-                                }
-                                className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              >
-                                <option value={0}>-- Selecciona destino --</option>
-                                {detalle.stock_registrados
-                                  .filter(s => s.id !== trans.origen_stock_id)
-                                  .map(stock => (
-                                    <option key={stock.id} value={stock.id}>
-                                      {stock.lote || 'Sin lote'} ({stock.cantidad} unidades)
-                                    </option>
-                                  ))}
-                              </select>
-                            </div>
+                                        <tbody>
+                                            <tr className="border-t border-gray-100 dark:border-gray-700">
+                                                <td colSpan={7} className="px-3 py-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => agregarStockNuevo(detalle.id)}
+                                                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                        Agregar lote nuevo
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                            {/* Eliminar */}
-                            <button
-                              type="button"
-                              onClick={() => eliminarTransferencia(detalle.id, index)}
-                              className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition h-10"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </div>
-                      );
+                                {/* Historial de movimientos (desplegable) */}
+                                {detalle.movimientos && detalle.movimientos.length > 0 && (
+                                    <div className="border-t border-gray-200 dark:border-gray-700">
+                                        <button
+                                            type="button"
+                                            onClick={() => setMovimientosExpandidos((prev) => ({ ...prev, [detalle.id]: !prev[detalle.id] }))}
+                                            aria-expanded={historialAbierto}
+                                            className="flex w-full items-center justify-between px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/40"
+                                        >
+                                            <span>Historial de movimientos ({detalle.movimientos.length})</span>
+                                            {historialAbierto ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                        </button>
+                                        {historialAbierto && (
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full text-xs">
+                                                    <thead className="bg-gray-50 tracking-wide text-gray-500 uppercase dark:bg-gray-700 dark:text-gray-400">
+                                                        <tr>
+                                                            <th scope="col" className="px-3 py-1.5 text-left font-medium">
+                                                                Fecha
+                                                            </th>
+                                                            <th scope="col" className="px-3 py-1.5 text-left font-medium">
+                                                                Tipo
+                                                            </th>
+                                                            <th scope="col" className="px-3 py-1.5 text-left font-medium">
+                                                                Lote
+                                                            </th>
+                                                            <th scope="col" className="px-3 py-1.5 text-right font-medium">
+                                                                Anterior
+                                                            </th>
+                                                            <th scope="col" className="px-3 py-1.5 text-right font-medium">
+                                                                Cantidad
+                                                            </th>
+                                                            <th scope="col" className="px-3 py-1.5 text-right font-medium">
+                                                                Posterior
+                                                            </th>
+                                                            <th scope="col" className="px-3 py-1.5 text-left font-medium">
+                                                                Referencia
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                                        {detalle.movimientos.map((mov) => (
+                                                            <tr key={mov.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                                                                <td className="px-3 py-1.5 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                                                                    {new Date(mov.fecha).toLocaleDateString()}
+                                                                </td>
+                                                                <td className="px-3 py-1.5">
+                                                                    <span
+                                                                        className={`rounded px-1.5 py-0.5 font-medium ${
+                                                                            mov.tipo.includes('ENTRADA')
+                                                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                                                                                : mov.tipo.includes('SALIDA')
+                                                                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                                                                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                                        }`}
+                                                                    >
+                                                                        {mov.tipo}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{mov.lote}</td>
+                                                                <td className="px-3 py-1.5 text-right font-mono text-gray-500 tabular-nums">
+                                                                    {mov.cantidad_anterior.toFixed(2)}
+                                                                </td>
+                                                                <td
+                                                                    className={`px-3 py-1.5 text-right font-mono font-semibold tabular-nums ${mov.cantidad < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}
+                                                                >
+                                                                    {mov.cantidad > 0 ? '+' : ''}
+                                                                    {mov.cantidad.toFixed(2)}
+                                                                </td>
+                                                                <td className="px-3 py-1.5 text-right font-mono text-gray-900 tabular-nums dark:text-white">
+                                                                    {mov.cantidad_posterior.toFixed(2)}
+                                                                </td>
+                                                                <td className="px-3 py-1.5 font-mono text-gray-500">{mov.referencia}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </section>
+                        );
                     })}
-                  </div>
-                </div>
-              )}
 
-              {/* Stock Nuevo - Crear */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">✨ STOCK NUEVO (CREAR)</h4>
-                <div className="space-y-3">
-                  {(stockNuevo[detalle.id] || []).map((nuevoStock, index) => (
-                    <div key={index} className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-                      <div className="flex gap-4 items-end">
-                        {/* Cantidad */}
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Cantidad
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={nuevoStock.cantidad}
-                            onChange={(e) =>
-                              actualizarStockNuevo(detalle.id, index, 'cantidad', parseFloat(e.target.value) || 0)
-                            }
-                            placeholder="0.00"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                          />
-                        </div>
-
-                        {/* Lote */}
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Lote {index > 0 && `(${index + 1})`}
-                          </label>
-                          <input
-                            type="text"
-                            value={nuevoStock.lote}
-                            onChange={(e) =>
-                              actualizarStockNuevo(detalle.id, index, 'lote', e.target.value)
-                            }
-                            placeholder="Ej: LOTE-001"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                          />
-                        </div>
-
-                        {/* Fecha de Vencimiento */}
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Fecha Vencimiento
-                          </label>
-                          <input
-                            type="date"
-                            value={nuevoStock.fecha_vencimiento}
-                            onChange={(e) =>
-                              actualizarStockNuevo(detalle.id, index, 'fecha_vencimiento', e.target.value)
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                          />
-                        </div>
-
-                        {/* Eliminar */}
-                        {(stockNuevo[detalle.id] || []).length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => eliminarStockNuevo(detalle.id, index)}
-                            className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        )}
-                      </div>
+                    {/* Botones de acción */}
+                    <div className="flex justify-end gap-3">
+                        <Link
+                            href={`/compras/${compra.id}`}
+                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                            Cancelar
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none active:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
+                        >
+                            {processing ? 'Guardando...' : 'Guardar Asignaciones'}
+                        </button>
                     </div>
-                  ))}
-
-                  {/* Botón Agregar Stock Nuevo */}
-                  <button
-                    type="button"
-                    onClick={() => agregarStockNuevo(detalle.id)}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 transition"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar otro stock
-                  </button>
-                </div>
-              </div>
+                </form>
             </div>
-          ))}
-
-          {/* Botones de acción */}
-          <div className="flex gap-3 justify-end">
-            <Link
-              href={`/compras/${compra.id}`}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-            >
-              Cancelar
-            </Link>
-            <button
-              type="submit"
-              disabled={processing}
-              className="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {processing ? 'Guardando...' : 'Guardar Asignaciones'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </AppLayout>
-  );
+        </AppLayout>
+    );
 }

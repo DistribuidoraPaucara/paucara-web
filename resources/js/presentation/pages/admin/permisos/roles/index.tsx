@@ -92,9 +92,9 @@ export default function Index() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Roles" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="mb-6 flex items-center justify-between">
+            <div className="py-2">
+                <div className="sm:px-2">
+                    <div className="mb-1 flex items-center justify-between">
                         <div>
                             <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                                 Gestión de Roles
@@ -113,16 +113,10 @@ export default function Index() {
                         </Can>
                     </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Roles</CardTitle>
-                            <CardDescription>
-                                Lista de todos los roles del sistema
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                    <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                        <div>
                             {/* Filtros */}
-                            <form onSubmit={handleSearch} className="mb-6 space-y-4 lg:flex lg:space-x-4 lg:space-y-0">
+                            <form onSubmit={handleSearch} className="mb-2 space-y-4 lg:flex lg:space-x-4 lg:space-y-0">
                                 <div className="flex-1">
                                     <Label htmlFor="search">Buscar</Label>
                                     <div className="relative">
@@ -149,23 +143,23 @@ export default function Index() {
 
                             {/* Tabla de roles */}
                             <div className="overflow-x-auto">
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                                            <th className="py-3 text-left font-medium text-gray-900 dark:text-gray-100">
+                                <table className="w-full border-collapse border border-gray-200 dark:border-gray-700 border-spacing-0 text-sm text-gray-500 dark:text-gray-400 rounded-lg p-2">
+                                    <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                                        <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                                            <th className="p-2 text-left font-medium text-gray-900 dark:text-gray-100">
                                                 Rol
                                             </th>
-                                            <th className="py-3 text-left font-medium text-gray-900 dark:text-gray-100">
+                                            <th className="p-2 text-left font-medium text-gray-900 dark:text-gray-100">
                                                 Usuarios
                                             </th>
-                                            <th className="py-3 text-left font-medium text-gray-900 dark:text-gray-100">
+                                            <th className="p-2 text-left font-medium text-gray-900 dark:text-gray-100">
                                                 Permisos
                                             </th>
-                                            <th className="py-3 text-left font-medium text-gray-900 dark:text-gray-100">
+                                            <th className="p-2 text-left font-medium text-gray-900 dark:text-gray-100">
                                                 Fecha Creación
                                             </th>
-                                            <th className="py-3 text-right font-medium text-gray-900 dark:text-gray-100">
-                                                Acciones
+                                            <th className="p-2 text-right font-medium text-gray-900 dark:text-gray-100">
+                                                -
                                             </th>
                                         </tr>
                                     </thead>
@@ -175,7 +169,7 @@ export default function Index() {
                                                 key={role.id}
                                                 className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
                                             >
-                                                <td className="py-4">
+                                                <td className="p-2">
                                                     <div className="flex items-center space-x-3">
                                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                                                             <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -190,7 +184,7 @@ export default function Index() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-4">
+                                                <td className="p-2">
                                                     <div className="flex items-center space-x-2">
                                                         <Users className="h-4 w-4 text-gray-400" />
                                                         <span className="text-gray-600 dark:text-gray-300">
@@ -198,17 +192,17 @@ export default function Index() {
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td className="py-4">
+                                                <td className="p-2">
                                                     <div className="flex items-center space-x-2">
                                                         <Badge variant="outline">
                                                             {role.permissions_count} permiso{role.permissions_count !== 1 ? 's' : ''}
                                                         </Badge>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 text-sm text-gray-500 dark:text-gray-400">
+                                                <td className="p-2 text-sm text-gray-500 dark:text-gray-400">
                                                     {new Date(role.created_at).toLocaleDateString('es-ES')}
                                                 </td>
-                                                <td className="py-4">
+                                                <td className="p-2">
                                                     <div className="flex justify-end space-x-2">
                                                         <Can permission="roles.show">
                                                             <Link href={rolesService.showUrl(role.id)}>
@@ -253,7 +247,7 @@ export default function Index() {
 
                             {/* Paginación */}
                             {roles.links && roles.links.length > 3 && (
-                                <div className="mt-6 flex justify-center">
+                                <div className="mt-2 flex justify-center">
                                     <div className="flex space-x-1">
                                         {roles.links.map((link, index) => (
                                             <button
@@ -274,8 +268,8 @@ export default function Index() {
                                     </div>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
         </AppLayout>

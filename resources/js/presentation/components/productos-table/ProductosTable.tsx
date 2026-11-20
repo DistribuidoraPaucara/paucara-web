@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ModalComprasDiferenciaCostoComponent } from '@/presentation/components/precios/modal-compras-diferencia-costo';
+import { TOLERANCIA_COSTO, formatearCosto } from '@/lib/precios.utils';
 import { preciosService } from '@/application/services/precios.service';
 import type { Producto } from '@/domain/entities/ventas';
 import { DetalleProducto, ProductosTableProps } from './types';
@@ -15,7 +16,7 @@ const normalizeDateForInput = (date: string | null | undefined): string => {
 };
 
 // ✅ HELPER FUNCTION: Validar si un precio corresponde a algún tipo de precio registrado
-const validarTipoPrecio = (producto: any, precioUnitario: number): { tipo_precio_id: number | null; tipo_precio_nombre: string | null } => {
+const validarTipoPrecio = (producto: any, precioUnitario: number, tipoActualId?: number | string | null): { tipo_precio_id: number | null; tipo_precio_nombre: string | null } => {
     if (!producto || !precioUnitario) {
         return { tipo_precio_id: null, tipo_precio_nombre: null };
     }
@@ -23,9 +24,12 @@ const validarTipoPrecio = (producto: any, precioUnitario: number): { tipo_precio
     // Si el producto tiene precios disponibles, buscar coincidencia exacta
     const precios = producto.precios || producto.precios_venta || [];
     if (Array.isArray(precios)) {
-        const precioCoincidet = precios.find((p: any) =>
-            Math.abs(p.precio - precioUnitario) < 0.01 // Permitir pequeña tolerancia por decimales
+        // El costo no es un precio de venta
+        const coincidencias = precios.filter((p: any) =>
+            !/cost/i.test(p.nombre || '') && Math.abs(p.precio - precioUnitario) < 0.01 // Permitir pequeña tolerancia por decimales
         );
+        // Si varios tipos valen lo mismo, se conserva el que ya tenía la fila
+        const precioCoincidet = coincidencias.find((p: any) => String(p.tipo_precio_id) === String(tipoActualId)) ?? coincidencias[0];
 
         if (precioCoincidet) {
             return {
@@ -322,6 +326,22 @@ export default function ProductosTable({
         return await preciosService.actualizarLote(preciosCambiados);
     }, []);
 
+    // Costo guardado desde el modal, por producto: se aplica a todas las filas de ese producto
+    const [costosActualizados, setCostosActualizados] = useState<Record<string, number>>({});
+
+    // Precios guardados desde el modal, por id: mantienen al día el aviso de venta a pérdida
+    const [preciosGuardados, setPreciosGuardados] = useState<Record<string, number>>({});
+    const handlePreciosGuardados = useCallback((cambios: Array<{ id: number; precio: number }>) => {
+        setPreciosGuardados(prev => ({ ...prev, ...Object.fromEntries(cambios.map(c => [String(c.id), c.precio])) }));
+    }, []);
+
+    const handleCostoActualizado = useCallback((costo: number) => {
+        setCostosActualizados(prev => {
+            const productoId = modalCascadaState.productoId;
+            return productoId == null ? prev : { ...prev, [String(productoId)]: costo };
+        });
+    }, [modalCascadaState.productoId]);
+
     const handlePreciosActualizados = useCallback(() => {
         setModalCascadaState(prev => ({ ...prev, isOpen: false }));
     }, []);
@@ -373,7 +393,7 @@ export default function ProductosTable({
             const producto = detalle?.producto;
 
             // Validar si el precio corresponde a un tipo de precio registrado
-            const { tipo_precio_id, tipo_precio_nombre } = validarTipoPrecio(producto, precioUnitario);
+            const { tipo_precio_id, tipo_precio_nombre } = validarTipoPrecio(producto, precioUnitario, detalle?.tipo_precio_id);
 
             // Si no hay coincidencia de tipo de precio, limpiar estos campos (marcará como "OTROS")
             if (tipo_precio_id === null) {
@@ -394,14 +414,14 @@ export default function ProductosTable({
                     onUpdateDetail(index, 'tipo_precio_nombre', null);
                 }
                 return;
-            } else {
-                /* console.log('✅ [handleUpdateDetail] Precio coincide con tipo de precio registrado', {
-                    detalle_index: index,
-                    producto: producto?.nombre,
-                    precio_nuevo: precioUnitario,
-                    tipo_precio_id: tipo_precio_id,
-                    tipo_precio_nombre: tipo_precio_nombre
-                }); */
+            } else if (onUpdateDetailMultiple && String(tipo_precio_id) !== String(detalle?.tipo_precio_id)) {
+                // El precio escrito es el de otro tipo: la fila pasa a ese tipo
+                onUpdateDetailMultiple(index, {
+                    precio_unitario: value,
+                    tipo_precio_id,
+                    tipo_precio_nombre,
+                });
+                return;
             }
         }
 
@@ -484,9 +504,11 @@ export default function ProductosTable({
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Producto
                                 </th>
+                                {tipo !== 'compra' && (
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     SKU
                                 </th>
+                                )}
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Disp.
                                 </th>
@@ -514,6 +536,8 @@ export default function ProductosTable({
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Subtotal
                                 </th>
+                                {tipo !== 'compra' && (
+                                    <>
                                  <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Categoría
                                 </th>
@@ -523,16 +547,34 @@ export default function ProductosTable({
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Marca
                                 </th>
+                                    </>
+                                )}
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
-                                    -
+                                    {tipo === 'compra' ? 'Acciones' : '-'}
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-700 font-small text-xs">
-                            {detalles.map((detalle, index) => {
+                            {detalles.map((detalleOriginal, index) => {
+                                const costoGuardado = costosActualizados[String(detalleOriginal.producto_id)];
+                                const preciosFila = (detalleOriginal.producto as any)?.precios as Array<{ id: number }> | undefined;
+                                const detalle = {
+                                    ...detalleOriginal,
+                                    ...(costoGuardado !== undefined ? { precio_costo: costoGuardado } : {}),
+                                    ...(detalleOriginal.producto && preciosFila
+                                        ? {
+                                              producto: {
+                                                  ...detalleOriginal.producto,
+                                                  precios: preciosFila.map(p =>
+                                                      preciosGuardados[String(p.id)] !== undefined ? { ...p, precio: preciosGuardados[String(p.id)] } : p,
+                                                  ),
+                                              },
+                                          }
+                                        : {}),
+                                };
                                 const productoInfo = detalle.producto || productos.find(p => p.id === detalle.producto_id);
                                 const precioCosto = detalle.precio_costo || productoInfo?.precio_costo || 0;
-                                const tieneDiferencia = tipo === 'compra' && precioCosto > 0 && Math.abs(detalle.precio_unitario - precioCosto) > 0.01;
+                                const tieneDiferencia = tipo === 'compra' && precioCosto > 0 && Math.abs(detalle.precio_unitario - precioCosto) > TOLERANCIA_COSTO;
                                 const esAumento = precioCosto > 0 && detalle.precio_unitario > precioCosto;
 
                                 return (
@@ -556,6 +598,7 @@ export default function ProductosTable({
                                         comboItemsMap={comboItemsMap}
                                         setComboItemsMap={setComboItemsMap}
                                         onUpdateDetail={handleUpdateDetail}
+                                        onUpdateDetailMultiple={onUpdateDetailMultiple}
                                         onRemoveDetail={onRemoveDetail}
                                         onManualTipoPrecioChange={onManualTipoPrecioChange}
                                         onAbrirModalCascada={handleAbrirModalCascada}
@@ -570,6 +613,28 @@ export default function ProductosTable({
                                 );
                             })}
                         </tbody>
+                        {tipo === 'compra' && (() => {
+                            const unidades = detalles.reduce((suma, d) => suma + Number(d.cantidad || 0), 0);
+                            const subtotal = detalles.reduce((suma, d) => suma + Number(d.subtotal || 0), 0);
+                            const conCambio = detalles.filter(d => {
+                                const costo = costosActualizados[String(d.producto_id)] ?? (d.precio_costo || d.producto?.precio_costo || 0);
+                                return costo > 0 && Math.abs(d.precio_unitario - costo) > TOLERANCIA_COSTO;
+                            }).length;
+                            return (
+                                <tfoot className="border-t-2 border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-200">
+                                    <tr>
+                                        <td colSpan={2} className="px-2 py-2">{detalles.length} {detalles.length === 1 ? 'producto' : 'productos'}</td>
+                                        <td className="px-2 py-2 text-center">{unidades} {unidades === 1 ? 'unidad' : 'unidades'}</td>
+                                        <td className={`px-2 py-2 ${conCambio > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                                            {conCambio === 0 ? 'Sin cambios de costo' : `${conCambio} con cambio de costo`}
+                                        </td>
+                                        <td colSpan={2}></td>
+                                        <td className="px-2 py-2 text-center whitespace-nowrap">{formatearCosto(subtotal)}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            );
+                        })()}
                     </table>
                 </div>
             ) : (
@@ -594,6 +659,8 @@ export default function ProductosTable({
                 precioActual={modalCascadaState.precioActual}
                 precioCostoNuevo={modalCascadaState.precioCostoNuevo}
                 onActualizarPrecios={handleGuardarPreciosModal}
+                onCostoActualizado={handleCostoActualizado}
+                onPreciosGuardados={handlePreciosGuardados}
                 onSuccess={handlePreciosActualizados}
             />
 

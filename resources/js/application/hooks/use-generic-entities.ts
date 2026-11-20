@@ -5,25 +5,26 @@ import type { BaseEntity, BaseService, Filters, BaseFormData } from '@/domain/en
 import NotificationService from '@/infrastructure/services/notification.service';
 
 export function useGenericEntities<T extends BaseEntity, F extends BaseFormData>(
-  service: BaseService<T, F>
+  service: BaseService<T, F>,
+  reloadProps?: string[]
 ) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Búsqueda de entidades con notificación (opcional)
+  // Búsqueda en segundo plano: solo recarga las props indicadas y el loading
+  // refleja la petición real (Inertia cancela la anterior si llega otra)
   const searchEntities = useCallback((filters: Filters, showNotification: boolean = false) => {
-    setIsLoading(true);
-
     // Solo mostrar notificación si se especifica y hay query
     if (showNotification && filters.q && filters.q.trim()) {
       NotificationService.info(`Buscando: "${filters.q}"`);
     }
 
-    service.search(filters);
-
-    // Resetear loading después de un breve delay
-    setTimeout(() => setIsLoading(false), 500);
-  }, [service]);
+    service.search(filters, {
+      only: reloadProps,
+      onStart: () => setIsLoading(true),
+      onFinish: () => setIsLoading(false),
+    });
+  }, [service, reloadProps]);
 
   // Eliminar entidad con confirmación elegante
   const deleteEntity = useCallback(async (entity: T, entityName: string) => {

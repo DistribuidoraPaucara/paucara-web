@@ -115,6 +115,9 @@ class Proforma extends Model
 
     const VENCIDA = 'VENCIDA';
 
+    /** Unidades mínimas por pedido. Un combo cuenta las unidades de su composición. */
+    const MINIMO_UNIDADES = 5;
+
     // Canales de origen
     const CANAL_APP_EXTERNA = 'APP_EXTERNA';
 
@@ -181,6 +184,37 @@ class Proforma extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(DetalleProforma::class);
+    }
+
+    /**
+     * Unidades que cuentan para el mínimo del pedido (misma regla que la app):
+     * - Producto simple: su cantidad.
+     * - Combo: suma de las cantidades de sus componentes incluidos × cantidad de combos.
+     *   Usa la selección guardada (combo_items_seleccionados); si no la hay, la
+     *   composición obligatoria del combo.
+     */
+    public function unidadesParaMinimo(): int
+    {
+        $this->loadMissing('detalles.producto.comboItems');
+
+        return (int) $this->detalles->sum(function ($detalle) {
+            $cantidad = (int) $detalle->cantidad;
+            $producto = $detalle->producto;
+
+            if (! $producto?->es_combo) {
+                return $cantidad;
+            }
+
+            $seleccion = collect($detalle->combo_items_seleccionados ?? [])
+                ->filter(fn ($i) => ($i['incluido'] ?? true) !== false);
+
+            $porCombo = $seleccion->isNotEmpty()
+                ? $seleccion->sum(fn ($i) => (float) ($i['cantidad'] ?? 1))
+                : $producto->comboItems->where('es_obligatorio', true)->sum('cantidad');
+
+            // Un combo sin composición conocida cuenta como 1 unidad
+            return (int) round(max(1, $porCombo) * $cantidad);
+        });
     }
 
     public function venta(): HasOne

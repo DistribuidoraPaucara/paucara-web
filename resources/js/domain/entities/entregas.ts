@@ -71,7 +71,15 @@ export interface EstadoLogistico {
     descripcion?: string;
 }
 
+export type EstadoEntregaVenta = 'ENTREGADO' | 'PARCIAL' | 'NO_ENTREGADO' | 'PENDIENTE' | 'POR_REVISAR';
+
 export interface VentaEntrega {
+    es_vigente?: boolean;
+    /** Dinero recibido en la última confirmación, agrupado por tipo de pago */
+    cobro?: Array<{ tipo_pago_id: number | null; tipo_pago: string; monto: number }>;
+    unidades?: { vendidas: number; entregadas: number; estado: EstadoEntregaVenta };
+    /** Dinero que falta cobrar: total menos lo devuelto menos lo cobrado (0 si es crédito o no se entregó) */
+    faltante_cobro?: number;
     id: Id;
     numero: string;
     cliente: ClienteEntrega;
@@ -202,7 +210,17 @@ export interface EntregaVentaConfirmacion {
     updated_at?: string;
 }
 
+export interface TotalesVentasVigentes {
+    cantidad_ventas: number;
+    cantidad_excluidas: number;
+    subtotal: number;
+    total_sin_credito: number;
+}
+
 export interface Entrega extends BaseEntity {
+    totales?: TotalesVentasVigentes;
+    /** Usuario que creó la entrega (null en entregas antiguas sin registro) */
+    creado_por?: { id: number; name: string } | null;
     id: Id;
     numero_entrega?: string;
     numero_envio?: string; // Legacy field (alias)

@@ -1000,18 +1000,20 @@ class ApiProformaController extends Controller
                     // ✅ NUEVO (2026-02-16): Procesar combo_items_seleccionados
                     $comboItemsSeleccionados  = null;
                     if (isset($item['combo_items_seleccionados']) && is_array($item['combo_items_seleccionados'])) {
-                        // Filtrar solo items que están incluidos (incluido = true)
+                        // Descartar solo los marcados explícitamente como NO incluidos.
+                        // La app envía la selección sin la clave `incluido` (= incluido).
                         $comboItemsSeleccionados = array_filter($item['combo_items_seleccionados'], function ($itemCombo) {
-                            return ($itemCombo['incluido'] ?? false) === true;
+                            return ($itemCombo['incluido'] ?? true) !== false;
                         });
                         // Reindexar array después de filter
                         $comboItemsSeleccionados = array_values($comboItemsSeleccionados);
-                        // Mapear a formato estándar
+                        // Mapear a formato estándar (conservando la cantidad del componente)
                         $comboItemsSeleccionados = array_map(function ($itemCombo) {
                             return [
                                 'combo_item_id' => $itemCombo['combo_item_id'] ?? null,
                                 'producto_id'   => $itemCombo['producto_id'] ?? null,
-                                'incluido'      => $itemCombo['incluido'] ?? false,
+                                'cantidad'      => $itemCombo['cantidad'] ?? 1,
+                                'incluido'      => true,
                             ];
                         }, $comboItemsSeleccionados);
                     }
@@ -2909,14 +2911,14 @@ class ApiProformaController extends Controller
                     ], 422);
                 }
 
-                // Validación 2: Debe tener mínimo 5 productos diferentes
-                $cantidadProductos = $proforma->detalles()->count();
-                if ($cantidadProductos < 5) {
+                // Validación 2: mínimo de unidades (los combos cuentan su composición)
+                $unidades = $proforma->unidadesParaMinimo();
+                if ($unidades < Proforma::MINIMO_UNIDADES) {
                     return response()->json([
                         'success'               => false,
-                        'message'               => 'Debe solicitar mínimo 5 productos diferentes',
-                        'productos_solicitados' => $cantidadProductos,
-                        'productos_requeridos'  => 5,
+                        'message'               => 'Debe solicitar mínimo ' . Proforma::MINIMO_UNIDADES . ' productos (los combos cuentan los productos que incluyen)',
+                        'productos_solicitados' => $unidades,
+                        'productos_requeridos'  => Proforma::MINIMO_UNIDADES,
                     ], 422);
                 }
 
@@ -3547,7 +3549,7 @@ class ApiProformaController extends Controller
                                 'combo_item_id' => $item['combo_item_id'] ?? null,
                                 'producto_id'   => $item['producto_id'] ?? null,
                                 'cantidad'      => $item['cantidad'] ?? 0, // ✅ NUEVO (2026-03-28): Incluir cantidad para impresión
-                                'incluido'      => $item['incluido'] ?? false,
+                                'incluido'      => $item['incluido'] ?? true, // guardado sin la clave = incluido
                             ];
                         }, $detalleProforma->combo_items_seleccionados);
                     }
@@ -4722,8 +4724,9 @@ class ApiProformaController extends Controller
                 $comboItemsSeleccionados = null;
                 if (isset($detalle['combo_items_seleccionados']) && is_array($detalle['combo_items_seleccionados'])) {
                     // Filtrar solo items que están incluidos (incluido = true)
+                    // (sin la clave `incluido` = incluido; solo se descartan los false explícitos)
                     $comboItemsSeleccionados = array_filter($detalle['combo_items_seleccionados'], function ($item) {
-                        return ($item['incluido'] ?? false) === true;
+                        return ($item['incluido'] ?? true) !== false;
                     });
                     // Reindexar array después de filter
                     $comboItemsSeleccionados = array_values($comboItemsSeleccionados);
@@ -4735,7 +4738,8 @@ class ApiProformaController extends Controller
                     return [
                         'combo_item_id' => $item['combo_item_id'] ?? null,
                         'producto_id'   => $item['producto_id'] ?? null,
-                        'incluido'      => $item['incluido'] ?? false,
+                        'cantidad'      => $item['cantidad'] ?? 1, // conservar la cantidad del componente
+                        'incluido'      => true,
                     ];
                 }, $comboItemsSeleccionados) : null;
 

@@ -8,7 +8,7 @@
 //
 import { router } from '@inertiajs/react';
 import type { Filters, Id } from '@/domain/entities/shared';
-import type { BaseEntity, BaseFormData, BaseService } from '@/domain/entities/generic';
+import type { BaseEntity, BaseFormData, BaseService, SearchOptions } from '@/domain/entities/generic';
 import NotificationService from '@/infrastructure/services/notification.service';
 
 /**
@@ -57,10 +57,15 @@ export abstract class GenericService<T extends BaseEntity, F extends BaseFormDat
    * Realiza una búsqueda/filtrado navegando a la página index con los filtros aplicados
    * Usa Inertia.js para mantener el estado y scroll
    */
-  search(filters: Filters) {
+  search(filters: Filters, options: SearchOptions = {}) {
     router.get(this.indexUrl({ query: filters }), {}, {
       preserveState: true,
       preserveScroll: true,
+      // Reemplaza la entrada del historial: escribir no debe llenar el botón "atrás"
+      replace: true,
+      ...(options.only ? { only: options.only } : {}),
+      onStart: options.onStart,
+      onFinish: options.onFinish,
       onError: (errors) => {
         NotificationService.error('Error al realizar la búsqueda');
         console.error('Search errors:', errors);

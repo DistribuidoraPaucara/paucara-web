@@ -1411,6 +1411,7 @@ export default function CompraForm() {
                   capacidad: (producto as any).capacidad || null,
                   // ✅ NUEVO: Agregar marca, unidad y precios para mostrar en tabla
                   marca: (producto as any).marca || null,
+                  categoria: (producto as any).categoria || null,
                   unidad: (producto as any).unidad || null,
                   precios: (producto as any).precios || []
                 }

@@ -62,7 +62,7 @@ class Producto extends Model
             'visible_app' => 'boolean',
             'requiere_receta' => 'boolean', // 🏭 NUEVO
             'fecha_creacion' => 'datetime',
-            'precio_compra' => 'decimal:2',
+            'precio_compra' => \App\Casts\PrecioHastaCuatroDecimales::class,
             'precio_venta' => 'decimal:2',
         ];
     }

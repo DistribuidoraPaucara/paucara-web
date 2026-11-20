@@ -114,6 +114,7 @@ class EntregaController extends Controller
                 'ventas.cliente',
                 'ventas.direccionCliente',
                 'ventas.tipoPago',
+                'ventas.estadoDocumento',
                 'ventas.confirmaciones' => function ($q) {
                     // Ordenar DESC para que first() retorne la más reciente
                     $q->orderByDesc('id');
@@ -122,7 +123,8 @@ class EntregaController extends Controller
                 'chofer',
                 'entregador',
                 'localidad',
-                'estadoEntrega'
+                'estadoEntrega',
+                'creador:id,name',
             ])
             // ✅ CORRECCIÓN: Si hay rango de fechas O búsqueda O filtro específico, no filtrar por "hoy"
             ->when(
@@ -379,6 +381,7 @@ class EntregaController extends Controller
                             'telefono' => $venta->cliente->telefono,
                             'foto_perfil' => $venta->cliente->foto_perfil,
                         ] : null,
+                        'es_vigente' => $venta->estaVigente(),
                         'total' => (float) $venta->total,
                         'subtotal' => (float) $venta->subtotal,
                         'impuesto' => (float) $venta->impuesto,
@@ -447,6 +450,8 @@ class EntregaController extends Controller
                 'fecha_entrega' => $entrega->fecha_entrega,
                 'created_at' => $entrega->created_at,
                 'peso_kg' => $entrega->peso_kg,
+                'totales' => $entrega->totalesVentasVigentes(),
+                'creado_por' => $entrega->creador ? ['id' => $entrega->creador->id, 'name' => $entrega->creador->name] : null,
             ];
         });
 
@@ -1514,6 +1519,7 @@ class EntregaController extends Controller
             },
             'chofer',
             'entregador',      // ✅ NUEVO (2026-02-12): Mostrar entregador en show
+            'creador:id,name',
             'vehiculo',
             'localidad',
             'reportes',        // Reportes asociados (Many-to-Many)
@@ -1541,8 +1547,9 @@ class EntregaController extends Controller
         // ✅ NUEVO: También filtrar confirmaciones de cada venta para que solo tengan la última
         foreach ($entrega->ventas as $venta) {
             if ($venta->relationLoaded('confirmaciones') && $venta->confirmaciones->count() > 1) {
-                // Si hay múltiples confirmaciones, mantener solo la última
-                $ultimaConfirmacion = $venta->confirmaciones->sortByDesc('id')->first();
+                // Si hay múltiples confirmaciones, mantener solo la última (de esta entrega, si la hay)
+                $ultimaConfirmacion = $venta->ultimaConfirmacionEnEntrega()
+                    ?? $venta->confirmaciones->sortByDesc('id')->first();
                 $venta->setRelation('confirmaciones', collect([$ultimaConfirmacion]));
             }
         }
@@ -1626,6 +1633,10 @@ class EntregaController extends Controller
                             'telefono' => $venta->cliente->telefono,
                             'foto_perfil' => $venta->cliente->foto_perfil,
                         ] : null,
+                        'es_vigente' => $venta->estaVigente(),
+                        'cobro' => $venta->ultimaConfirmacionEnEntrega()?->montosPorTipoPago() ?? [],
+                        'unidades' => $venta->unidadesEntregadas(),
+                        'faltante_cobro' => $venta->faltanteCobro(),
                         'total' => (float) $venta->total,
                         'subtotal' => (float) $venta->subtotal,
                         'impuesto' => (float) $venta->impuesto,
@@ -1692,6 +1703,8 @@ class EntregaController extends Controller
                 'fecha_programada' => $entrega->fecha_programada,
                 'created_at' => $entrega->created_at,
                 'peso_kg' => $entrega->peso_kg,
+                'totales' => $entrega->totalesVentasVigentes(),
+                'creado_por' => $entrega->creador ? ['id' => $entrega->creador->id, 'name' => $entrega->creador->name] : null,
                 // ✅ NUEVO: Transformar confirmacionesVentas para incluir tipo_pago completo
                 'confirmacionesVentas' => $entrega->confirmacionesVentas->map(function ($confirmacion) {
                     return [
@@ -1809,6 +1822,10 @@ class EntregaController extends Controller
                         'telefono' => $venta->cliente->telefono,
                         'foto_perfil' => $venta->cliente->foto_perfil,
                     ] : null,
+                    'es_vigente' => $venta->estaVigente(),
+                    'cobro' => $venta->ultimaConfirmacionEnEntrega()?->montosPorTipoPago() ?? [],
+                    'unidades' => $venta->unidadesEntregadas(),
+                    'faltante_cobro' => $venta->faltanteCobro(),
                     'total' => (float) $venta->total,
                     'subtotal' => (float) $venta->subtotal,
                     'impuesto' => (float) $venta->impuesto,
@@ -1877,6 +1894,8 @@ class EntregaController extends Controller
             'fecha_programada' => $entrega->fecha_programada,
             'created_at' => $entrega->created_at,
             'peso_kg' => $entrega->peso_kg,
+            'totales' => $entrega->totalesVentasVigentes(),
+            'creado_por' => $entrega->creador ? ['id' => $entrega->creador->id, 'name' => $entrega->creador->name] : null,
             // ✅ Agregar confirmacionesVentas para los reportes
             'confirmacionesVentas' => $entrega->confirmacionesVentas->toArray(),
         ];

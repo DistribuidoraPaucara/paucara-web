@@ -62,6 +62,12 @@ class ProformaController extends Controller
             // ✅ REMOVIDO 2026-03-11: Filtros por rol (Admin debe ver TODAS las proformas)
             // El acceso está controlado por middleware 'permission:proformas.index'
 
+            // Al entrar sin filtros se muestran solo las de hoy; buscar o filtrar consulta todo el historial
+            $soloHoy = ! $request->wantsJson() && empty($request->except(['page', 'per_page']));
+            if ($soloHoy) {
+                $query->whereDate('created_at', today());
+            }
+
             // Búsqueda general (ID, número, cliente)
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -187,7 +193,8 @@ class ProformaController extends Controller
                 },
             ])
                 ->orderBy('created_at', 'desc')
-                ->paginate($request->input('per_page', 15));
+                ->paginate($request->input('per_page', 15))
+                ->withQueryString();
 
             $filtros = [
                 'search' => $request->input('search'),
@@ -210,7 +217,8 @@ class ProformaController extends Controller
             ];
 
             // ✅ NUEVO 2026-02-21: Traer clientes y usuarios fijos para los filtros
-            $clientes = Cliente::activos()->select('id', 'nombre', 'email')->get();
+            // toBase(): sin modelos, para no calcular crédito y cuentas por cobrar de cada cliente (una lista de 414 costaba ~2900 consultas)
+            $clientes = Cliente::activos()->select('id', 'nombre', 'email')->toBase()->get();
             $usuarios = User::whereHas('roles', function ($query) {
                 $query->where('name', 'preventista');
             })->select('id', 'name', 'email')->get();
@@ -223,6 +231,7 @@ class ProformaController extends Controller
                     'filtros' => $filtros,
                     'clientes' => $clientes,
                     'usuarios' => $usuarios,
+                    'solo_hoy' => $soloHoy,
                 ]
             );
 

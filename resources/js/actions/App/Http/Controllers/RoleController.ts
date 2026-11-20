@@ -74,6 +74,84 @@ crearFuncionalidad.post = (args: { role: string | number } | [role: string | num
     
     crearFuncionalidad.form = crearFuncionalidadForm
 /**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+export const getPermissionsGrouped = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: getPermissionsGrouped.url(options),
+    method: 'get',
+})
+
+getPermissionsGrouped.definition = {
+    methods: ["get","head"],
+    url: '/roles-data/permissions-grouped',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+getPermissionsGrouped.url = (options?: RouteQueryOptions) => {
+    return getPermissionsGrouped.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+getPermissionsGrouped.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: getPermissionsGrouped.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+getPermissionsGrouped.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: getPermissionsGrouped.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+    const getPermissionsGroupedForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: getPermissionsGrouped.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+        getPermissionsGroupedForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getPermissionsGrouped.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\RoleController::getPermissionsGrouped
+ * @see app/Http/Controllers/RoleController.php:323
+ * @route '/roles-data/permissions-grouped'
+ */
+        getPermissionsGroupedForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: getPermissionsGrouped.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    getPermissionsGrouped.form = getPermissionsGroupedForm
+/**
 * @see \App\Http\Controllers\RoleController::index
  * @see app/Http/Controllers/RoleController.php:21
  * @route '/admin/permisos/roles'
@@ -689,6 +767,6 @@ destroy.delete = (args: { role: number | { id: number } } | [role: number | { id
         })
     
     destroy.form = destroyForm
-const RoleController = { crearFuncionalidad, index, create, store, show, edit, update, destroy }
+const RoleController = { crearFuncionalidad, getPermissionsGrouped, index, create, store, show, edit, update, destroy }
 
 export default RoleController

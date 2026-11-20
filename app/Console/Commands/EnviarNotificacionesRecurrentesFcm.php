@@ -133,49 +133,7 @@ class EnviarNotificacionesRecurrentesFcm extends Command
             return false;
         }
 
-        // Verificar vigencia (fecha inicio/fin)
-        $ahora = now();
-        if ($notificacion->fecha_inicio && $ahora->isBefore($notificacion->fecha_inicio)) {
-            return false;
-        }
-
-        if ($notificacion->fecha_fin && $ahora->isAfter($notificacion->fecha_fin)) {
-            return false;
-        }
-
-        // Verificar según frecuencia
-        return match ($notificacion->frecuencia) {
-            'una_vez' => true, // Siempre enviar (solo una vez por la fecha inicio/fin)
-            'diario' => true, // Todos los días
-            'semanal' => $this->esDialSemanal($notificacion),
-            'mensual' => $this->esDiaDelMes($notificacion),
-            default => false,
-        };
-    }
-
-    /**
-     * Verificar si hoy es uno de los días semanales programados
-     */
-    private function esDialSemanal(NotificacionRecurrente $notificacion): bool
-    {
-        $diasSemanales = $notificacion->dias_semana ?? [];
-        if (empty($diasSemanales)) {
-            return false;
-        }
-
-        $diaHoy = now()->dayOfWeek; // 0=domingo, 1=lunes, ..., 6=sábado
-        return in_array($diaHoy, $diasSemanales);
-    }
-
-    /**
-     * Verificar si hoy es el día del mes programado
-     */
-    private function esDiaDelMes(NotificacionRecurrente $notificacion): bool
-    {
-        if (!$notificacion->dia_mes) {
-            return false;
-        }
-
-        return now()->day === $notificacion->dia_mes;
+        // Vigencia por fecha (incluye el día de fin completo) y frecuencia
+        return $notificacion->estaVigente() && $notificacion->debeEnviarsePorFrecuencia();
     }
 }

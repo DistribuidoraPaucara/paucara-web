@@ -25,21 +25,26 @@ class AlertasController extends Controller
         // Obtener IDs de todos los usuarios de la empresa
         $userIds = User::where('empresa_id', $empresaId)->pluck('id');
 
-        $cuentas = CuentaPorCobrar::with(['cliente:id,nombre'])
-            ->vencidas()          // fecha_vencimiento < now()
+        $query = CuentaPorCobrar::vencidas() // fecha_vencimiento < now()
             ->pendientes()        // saldo_pendiente > 0
             ->where('estado', '!=', 'PAGADO')
             ->where(function($q) use ($userIds) {
                 $q->whereIn('usuario_id', $userIds)
                   ->orWhereNull('usuario_id'); // incluir cuentas sin usuario asignado (migradas)
-            })
+            });
+
+        // Totales reales (antes estaban limitados a las 50 cuentas devueltas)
+        $totalReal = (clone $query)->count();
+        $montoReal = (float) (clone $query)->sum('saldo_pendiente');
+
+        $cuentas = (clone $query)->with(['cliente:id,nombre'])
             ->orderByDesc('dias_vencido')
             ->limit(50)
             ->get();
 
         return response()->json([
-            'total'        => $cuentas->count(),
-            'monto_total'  => (float) $cuentas->sum('saldo_pendiente'),
+            'total'        => $totalReal,
+            'monto_total'  => $montoReal,
             'cuentas'      => $cuentas->map(fn($c) => [
                 'id'                   => $c->id,
                 'cliente_nombre'       => $c->cliente?->nombre ?? 'Sin cliente',

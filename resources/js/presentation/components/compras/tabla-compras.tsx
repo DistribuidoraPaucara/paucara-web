@@ -3,10 +3,10 @@ import { ComprasService } from '@/infrastructure/services/compras.service';
 import { formatCurrency } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Link } from '@inertiajs/react';
-import { AlertCircle, ChevronDown, ChevronUp, Edit, Eye, Printer } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, Edit, Eye, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import AnularCompraModal from './AnularCompraModal';
+import AnularCompraModal, { type ErrorAnulacion } from './AnularCompraModal';
 import EliminarCompraDialog from './eliminar-compra-dialog';
 
 // Importar tipos del domain
@@ -52,38 +52,93 @@ const getEstadoColor = (estado?: EstadoDocumento) => {
     }
 };
 
+// Columnas ordenables (deben coincidir con sort_by aceptado en CompraController@index).
+// Al hacer clic por primera vez: los textos ordenan A→Z; números y fechas, del más reciente/mayor al menor.
+type CampoOrden = 'id' | 'numero' | 'estado' | 'proveedor' | 'total' | 'created_at';
+const PRIMERA_DIRECCION: Record<CampoOrden, 'asc' | 'desc'> = {
+    id: 'desc',
+    numero: 'desc',
+    estado: 'asc',
+    proveedor: 'asc',
+    total: 'desc',
+    created_at: 'desc',
+};
+
+function EncabezadoOrdenable({
+    campo,
+    sortBy,
+    sortDir,
+    onSort,
+    children,
+}: {
+    campo: CampoOrden;
+    sortBy: string;
+    sortDir: string;
+    onSort: (campo: CampoOrden) => void;
+    children: React.ReactNode;
+}) {
+    const activo = sortBy === campo;
+    const Icono = !activo ? ArrowUpDown : sortDir === 'asc' ? ArrowUp : ArrowDown;
+
+    return (
+        <th
+            scope="col"
+            aria-sort={activo ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+            className="px-2 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+        >
+            <button
+                type="button"
+                onClick={() => onSort(campo)}
+                title={activo ? `Ordenado ${sortDir === 'asc' ? 'ascendente' : 'descendente'}. Clic para invertir` : 'Clic para ordenar'}
+                className={`inline-flex items-center gap-1 rounded px-2 py-1 uppercase transition-colors hover:bg-gray-200 dark:hover:bg-gray-600 ${
+                    activo ? 'font-semibold text-gray-900 dark:text-white' : ''
+                }`}
+            >
+                {children}
+                <Icono className={`h-3.5 w-3.5 ${activo ? 'text-blue-600 dark:text-blue-400' : 'opacity-40'}`} />
+            </button>
+        </th>
+    );
+}
+
 export default function TablaCompras({ compras, sortBy = 'created_at', sortDir = 'desc', className = '' }: Props) {
-    console.log('Renderizando TablaCompras con compras:', compras);
     const { can } = useAuth();
     const [anularModal, setAnularModal] = useState<{ isOpen: boolean; compra?: Compra }>({ isOpen: false });
+    const [errorAnulacion, setErrorAnulacion] = useState<ErrorAnulacion | null>(null);
     const [isAnulando, setIsAnulando] = useState(false);
     const [outputModal, setOutputModal] = useState<{ isOpen: boolean; compra?: Compra }>({ isOpen: false });
 
     // Valor por defecto para evitar errores de undefined
     const comprasSeguras = compras || [];
 
-    const handleSort = (field: string) => {
-        const newSortDir = sortBy === field && sortDir === 'desc' ? 'asc' : 'desc';
+    // Misma columna: invierte la dirección. Columna nueva: usa su dirección natural.
+    // Conserva los filtros de la URL y vuelve a la página 1.
+    const handleSort = (campo: CampoOrden) => {
+        const nuevaDireccion = sortBy === campo ? (sortDir === 'asc' ? 'desc' : 'asc') : PRIMERA_DIRECCION[campo];
 
         const currentParams = new URLSearchParams(window.location.search);
-        currentParams.set('sort_by', field);
-        currentParams.set('sort_dir', newSortDir);
+        currentParams.set('sort_by', campo);
+        currentParams.set('sort_dir', nuevaDireccion);
+        currentParams.delete('page');
 
         comprasService.search(Object.fromEntries(currentParams.entries()));
     };
 
     const openAnularModal = (compra: Compra) => {
+        setErrorAnulacion(null);
         setAnularModal({ isOpen: true, compra });
     };
 
     const closeAnularModal = () => {
         setAnularModal({ isOpen: false });
+        setErrorAnulacion(null);
     };
 
     const handleAnularCompra = async (motivo?: string) => {
         if (!anularModal.compra) return;
 
         setIsAnulando(true);
+        setErrorAnulacion(null);
         try {
             const response = await fetch(`/compras/${anularModal.compra.id}/anular`, {
                 method: 'POST',
@@ -97,7 +152,8 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
             const data = await response.json();
 
             if (!response.ok) {
-                toast.error(data.message || 'Error al anular la compra');
+                // Mostrar el motivo dentro del modal (sigue abierto)
+                setErrorAnulacion({ message: data.message || 'Error al anular la compra', motivos: data.motivos });
                 return;
             }
 
@@ -114,22 +170,7 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
         }
     };
 
-    const getSortIcon = (field: string) => {
-        if (sortBy !== field) return null;
-        return sortDir === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />;
-    };
-
-    const SortableHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
-        <th
-            className="cursor-pointer px-2 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600"
-            onClick={() => handleSort(field)}
-        >
-            <div className="flex items-center justify-center gap-1 text-center">
-                {children}
-                {getSortIcon(field)}
-            </div>
-        </th>
-    );
+    const orden = { sortBy, sortDir, onSort: handleSort };
 
     if (comprasSeguras.length === 0) {
         return (
@@ -171,12 +212,12 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <SortableHeader field="id">FOLIO</SortableHeader>
-                            <SortableHeader field="numero">Número</SortableHeader>
-                            <SortableHeader field="estadoDocumento">Estado</SortableHeader>
-                            <SortableHeader field="proveedor">Proveedor</SortableHeader>
-                            <SortableHeader field="total">Total</SortableHeader>
-                            <SortableHeader field="created_at">Fecha</SortableHeader>
+                            <EncabezadoOrdenable campo="id" {...orden}>Folio</EncabezadoOrdenable>
+                            <EncabezadoOrdenable campo="numero" {...orden}>Número</EncabezadoOrdenable>
+                            <EncabezadoOrdenable campo="estado" {...orden}>Estado</EncabezadoOrdenable>
+                            <EncabezadoOrdenable campo="proveedor" {...orden}>Proveedor</EncabezadoOrdenable>
+                            <EncabezadoOrdenable campo="total" {...orden}>Total</EncabezadoOrdenable>
+                            <EncabezadoOrdenable campo="created_at" {...orden}>Fecha</EncabezadoOrdenable>
                             <th className="px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">-</th>
                         </tr>
                     </thead>
@@ -311,6 +352,7 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                 compraNumero={anularModal.compra?.numero || ''}
                 onConfirm={handleAnularCompra}
                 isLoading={isAnulando}
+                error={errorAnulacion}
             />
 
             {/* Modal de exportación/impresión */}

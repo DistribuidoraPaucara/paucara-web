@@ -12,6 +12,24 @@ export const redondearDos = (valor: number): number => {
     return Math.round(valor * 100) / 100;
 };
 
+/** El costo admite hasta 4 decimales; los precios de venta, 2 */
+export const DECIMALES_COSTO = 4;
+export const DECIMALES_VENTA = 2;
+/** Dos costos son distintos si difieren en 4 decimales (la mitad de 0.0001 absorbe errores de punto flotante) */
+export const TOLERANCIA_COSTO = 0.00005;
+
+export const decimalesDePrecio = (tipoCodigo?: string): number =>
+    tipoCodigo === 'COSTO' ? DECIMALES_COSTO : DECIMALES_VENTA;
+
+/** Formato moneda de un costo: 2 decimales como mínimo, 4 como máximo */
+export const formatearCosto = (valor?: number | null): string =>
+    new Intl.NumberFormat('es-BO', {
+        style: 'currency',
+        currency: 'BOB',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: DECIMALES_COSTO,
+    }).format(Number(valor) || 0);
+
 /**
  * Redondea a N decimales
  * @param valor - Número a redondear

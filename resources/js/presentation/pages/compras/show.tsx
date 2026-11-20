@@ -10,7 +10,7 @@ import { ExportButtons } from '@/presentation/components/Export/ExportButtons';
 import { PrintableContent } from '@/presentation/components/Export/PrintableContent';
 import { ArrowLeft, Edit, Printer, Package, User, Calendar, FileText, Hash, CreditCard, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import AnularCompraModal from '@/presentation/components/compras/AnularCompraModal';
+import AnularCompraModal, { type ErrorAnulacion } from '@/presentation/components/compras/AnularCompraModal';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 
 // Importar tipos del domain
@@ -87,6 +87,7 @@ export default function CompraShow() {
     const compra = props.compra;
     const printableRef = useRef<HTMLDivElement>(null);
     const [mostrarModalAnular, setMostrarModalAnular] = useState(false);
+    const [errorAnulacion, setErrorAnulacion] = useState<ErrorAnulacion | null>(null);
     const [isAnulando, setIsAnulando] = useState(false);
     const [outputModal, setOutputModal] = useState(false);
 
@@ -95,6 +96,7 @@ export default function CompraShow() {
 
     const handleAnularCompra = async (motivo?: string) => {
         setIsAnulando(true);
+        setErrorAnulacion(null);
         try {
             const response = await fetch(`/compras/${compra.id}/anular`, {
                 method: 'POST',
@@ -108,7 +110,8 @@ export default function CompraShow() {
             const data = await response.json();
 
             if (!response.ok) {
-                toast.error(data.message || 'Error al anular la compra');
+                // Mostrar el motivo dentro del modal (sigue abierto)
+                setErrorAnulacion({ message: data.message || 'Error al anular la compra', motivos: data.motivos });
                 return;
             }
 
@@ -217,7 +220,10 @@ export default function CompraShow() {
                     {/* Botón Anular - Solo si está aprobada */}
                     {can('compras.update') && esAprobada && (
                         <button
-                            onClick={() => setMostrarModalAnular(true)}
+                            onClick={() => {
+                                setErrorAnulacion(null);
+                                setMostrarModalAnular(true);
+                            }}
                             disabled={isAnulando}
                             className="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 disabled:opacity-50"
                         >
@@ -600,10 +606,14 @@ export default function CompraShow() {
             {/* Modal de anulación */}
             <AnularCompraModal
                 isOpen={mostrarModalAnular}
-                onClose={() => setMostrarModalAnular(false)}
+                onClose={() => {
+                    setMostrarModalAnular(false);
+                    setErrorAnulacion(null);
+                }}
                 compraNumero={compra.numero}
                 onConfirm={handleAnularCompra}
                 isLoading={isAnulando}
+                error={errorAnulacion}
             />
 
             {/* Modal de exportación/impresión */}
