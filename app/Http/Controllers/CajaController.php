@@ -68,7 +68,7 @@ class CajaController extends Controller
             // Admin viendo caja de otro usuario vía apertura específica
             if ($aperturaCaja->user_id !== $usuarioAutenticado->id) {
                 abort_unless(
-                    $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+                    $usuarioAutenticado->can('cajas.ver-otros'),
                     403,
                     'No tienes permiso para ver las cajas de otros usuarios'
                 );
@@ -79,7 +79,7 @@ class CajaController extends Controller
             // Admin viendo caja de otro usuario vía user_id (sin importar apertura)
             if ($userId !== $usuarioAutenticado->id) {
                 abort_unless(
-                    $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+                    $usuarioAutenticado->can('cajas.ver-otros'),
                     403,
                     'No tienes permiso para ver las cajas de otros usuarios'
                 );
@@ -449,7 +449,7 @@ class CajaController extends Controller
         // ✅ VALIDACIÓN: Si es otro usuario, debe ser admin
         if ($userId && $usuarioDestino->id !== $usuarioAutenticado->id) {
             abort_unless(
-                $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+                $usuarioAutenticado->can('cajas.gestionar-otros'),
                 403,
                 'No tienes permiso para gestionar cajas de otros usuarios'
             );
@@ -598,7 +598,7 @@ class CajaController extends Controller
         // ✅ VALIDACIÓN: Si es otro usuario, debe ser admin
         if ($userId && $usuarioDestino->id !== $usuarioAutenticado->id) {
             abort_unless(
-                $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+                $usuarioAutenticado->can('cajas.gestionar-otros'),
                 403,
                 'No tienes permiso para gestionar cajas de otros usuarios'
             );
@@ -866,7 +866,7 @@ class CajaController extends Controller
         // ✅ VALIDACIÓN: Si es otro usuario, debe ser admin
         if ($userId && $usuarioDestino->id !== $usuarioAutenticado->id) {
             abort_unless(
-                $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+                $usuarioAutenticado->can('cajas.ver-otros'),
                 403,
                 'No tienes permiso para gestionar cajas de otros usuarios'
             );
@@ -914,7 +914,7 @@ class CajaController extends Controller
         $apertura = AperturaCaja::findOrFail($aperturaId);
 
         // ✅ VALIDACIÓN: El usuario debe ser el propietario o admin
-        if ($apertura->user_id !== $usuarioAutenticado->id && ! $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin'])) {
+        if ($apertura->user_id !== $usuarioAutenticado->id && ! $usuarioAutenticado->can('cajas.ver-otros')) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
@@ -1206,7 +1206,7 @@ class CajaController extends Controller
         // ✅ VALIDACIÓN: Si es otro usuario, debe ser admin
         if ($usuarioDestino->id !== $usuarioAutenticado->id) {
             abort_unless(
-                $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+                $usuarioAutenticado->can('cajas.ver-otros'),
                 403,
                 'No tienes permiso para ver cajas de otros usuarios'
             );
@@ -1366,7 +1366,7 @@ class CajaController extends Controller
 
         // ✅ VALIDACIÓN: Solo admin/super-admin puede consolidar cajas
         abort_unless(
-            $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+            $usuarioAutenticado->can('cajas.consolidar'),
             403,
             'No tienes permiso para consolidar cajas'
         );
@@ -1461,7 +1461,7 @@ class CajaController extends Controller
         $usuarioAutenticado = Auth::user();
 
         // ✅ VALIDACIÓN: Solo admin/super-admin puede hacer cierre general
-        if (! $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin'])) {
+        if (! $usuarioAutenticado->can('cajas.cierre-diario')) {
             return back()->withErrors([
                 'cierre' => 'No tienes permiso para realizar el cierre diario general',
             ]);
@@ -1642,7 +1642,7 @@ class CajaController extends Controller
 
         // ✅ VALIDACIÓN: Solo admin/super-admin puede hacer cierre general
         abort_unless(
-            $usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin']),
+            $usuarioAutenticado->can('cajas.cierre-diario'),
             403,
             'No tienes permiso para realizar el cierre diario general'
         );

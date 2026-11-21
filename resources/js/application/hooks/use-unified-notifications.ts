@@ -96,7 +96,15 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       },
       'entrega.asignada': {
         title: '🚗 Entrega Asignada',
-        message: (d) => `${d.choferNombre} - ${d.clienteNombre}`,
+        // El socket envía snake_case: numero_entrega, chofer_nombre, vehiculo{placa}
+        message: (d) =>
+          [
+            d.numero_entrega ?? d.entrega_numero ?? d.numero ?? (d.entrega_id ? `#${d.entrega_id}` : null),
+            d.chofer_nombre ?? d.choferNombre,
+            d.vehiculo?.placa ?? d.vehiculo_placa,
+          ]
+            .filter(Boolean)
+            .join(' · ') || 'Entrega asignada',
       },
       'entrega.en-camino': {
         title: '🚗 Entrega en Camino',
@@ -112,7 +120,20 @@ export const useUnifiedNotifications = (options: UseUnifiedNotificationsOptions 
       },
       'entrega.creada': {
         title: '📦 Nueva Entrega',
-        message: (d) => `${d.clienteNombre} - ${d.numero}`,
+        // El socket envía snake_case: entrega_numero, chofer_nombre, vehiculo_placa, ventas_count
+        message: (d) => {
+          const ventas = Number(d.ventas_count ?? 0);
+          return (
+            [
+              d.entrega_numero ?? d.numero_entrega ?? d.numero ?? (d.entrega_id ? `#${d.entrega_id}` : null),
+              d.chofer_nombre ?? d.choferNombre,
+              d.vehiculo_placa,
+              ventas > 0 ? `${ventas} venta${ventas > 1 ? 's' : ''}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || 'Nueva entrega creada'
+          );
+        },
       },
       'entrega.listo': {
         title: '📤 Entrega Lista para Salida',

@@ -31,13 +31,8 @@ class ClientePolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        // ✅ Super-Admin: acceso total
-        if ($user->hasRole('Super Admin')) {
-            return true;
-        }
-
-        // ✅ Admin (cualquier variante): acceso total a cualquier gestión de clientes
-        if ($user->hasRole(['Admin', 'admin'])) {
+        // ✅ Acceso total a la gestión de clientes (antes: rol Admin / Super Admin)
+        if ($user->can('clientes.gestionar-todos')) {
             return true;
         }
 
@@ -232,6 +227,6 @@ class ClientePolicy
     public function forceDelete(User $user, Cliente $cliente): bool
     {
         // ✅ Super-Admin y Admin (ambos tienen acceso por before())
-        return $user->hasRole(['Super Admin', 'Admin', 'admin']);
+        return $user->can('clientes.gestionar-todos');
     }
 }

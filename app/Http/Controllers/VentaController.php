@@ -1389,7 +1389,7 @@ class VentaController extends Controller
             ]);
 
             // Verificar permiso
-            if (! auth()->user()->hasRole(['admin', 'Admin'])) {
+            if (! auth()->user()->can('ventas.anular')) {
                 Log::warning('🔴 [ANULAR VENTA] PERMISO DENEGADO', [
                     'venta_id'   => $id,
                     'usuario_id' => auth()->id(),

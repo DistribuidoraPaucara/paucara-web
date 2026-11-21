@@ -310,16 +310,7 @@ class ApiVentaController extends Controller
             return true;
         }
 
-        // Verificar si tiene rol de almacén (si existe sistema de roles)
-        if (method_exists($user, 'hasRole')) {
-            return $user->hasRole(['Gestor de Almacén', 'Admin']);
-        }
-
-        // Verificar si tiene permisos explícitos
-        if (method_exists($user, 'hasPermission')) {
-            return $user->hasPermission('confirmar-pickup');
-        }
-
-        return false;
+        // Permiso para confirmar pickup (antes: rol 'Gestor de Almacén' o 'Admin')
+        return $user->can('ventas.confirmar-pickup');
     }
 }

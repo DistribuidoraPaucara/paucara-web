@@ -11,7 +11,7 @@ class ImportarCreditosHistoricosRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['Admin', 'admin']);
+        return $this->user()->can('creditos.importar-historicos');
     }
 
     /**

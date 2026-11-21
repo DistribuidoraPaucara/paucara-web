@@ -23,8 +23,8 @@ class ChoferRutaController extends Controller
         $this->rutaService = $rutaService;
         $this->middleware('auth:sanctum,web');
         $this->middleware(function ($request, $next) {
-            // Verificar que sea un chofer
-            if (!Auth::user()->hasRole('Chofer')) {
+            // Verificar permiso de acceso a rutas del chofer
+            if (!Auth::user()->can('rutas.chofer.acceso')) {
                 return response()->json([
                     'message' => 'No tienes permisos para acceder a este recurso.',
                     'status' => 'error',

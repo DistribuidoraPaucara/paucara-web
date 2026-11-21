@@ -654,7 +654,7 @@ class EntregaController extends Controller
             // Verificar autorización
             // Solo el chofer asignado o admin pueden ver la entrega
             // (En el futuro se pueden agregar más validaciones)
-            if ($entrega->chofer_id !== $user->id && ! auth()->user()->hasRole(['admin', 'Admin', 'ADMIN', 'manager', 'Manager', 'MANAGER'])) {
+            if ($entrega->chofer_id !== $user->id && ! auth()->user()->can('entregas.ver-todas')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No autorizado',
@@ -1888,11 +1888,11 @@ class EntregaController extends Controller
 
             $entrega = Entrega::findOrFail($id);
 
-            // Verificar que el usuario tiene rol de chofer (verifica ambas variantes: chofer y Chofer)
-            if (! Auth::user()->hasAnyRole(['chofer', 'Chofer'])) {
+            // Verificar permiso para registrar ubicación (chofer)
+            if (! Auth::user()->can('entregas.ubicacion.registrar')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Usuario no tiene rol de chofer',
+                    'message' => 'No tienes permiso para registrar la ubicación',
                 ], 403);
             }
 
@@ -1991,7 +1991,7 @@ class EntregaController extends Controller
             $proforma = Proforma::with('cliente')->findOrFail($proformaId);
 
             // Verificar que el usuario sea cliente de la proforma
-            if (Auth::user()->id !== $proforma->cliente->user_id && ! Auth::user()->hasRole(['Admin', 'Manager'])) {
+            if (Auth::user()->id !== $proforma->cliente->user_id && ! Auth::user()->can('entregas.tracking.ver-todos')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No autorizado',
@@ -2707,12 +2707,11 @@ class EntregaController extends Controller
      */
     public function confirmarVentaCargada(\Illuminate\Http\Request $request, int $id, int $venta_id)
     {
-        // Validar que el usuario tiene uno de los roles permitidos
-        $rolesPermitidos = ['admin', 'Admin', 'cajero', 'Cajero', 'chofer', 'Chofer'];
-        if (! Auth::user()->hasAnyRole($rolesPermitidos)) {
+        // Validar permiso para confirmar ventas cargadas
+        if (! Auth::user()->can('entregas.ventas.confirmar-carga')) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permisos para confirmar ventas cargadas. Roles permitidos: ' . implode(', ', $rolesPermitidos),
+                'message' => 'No tienes permiso para confirmar ventas cargadas',
             ], 403);
         }
 

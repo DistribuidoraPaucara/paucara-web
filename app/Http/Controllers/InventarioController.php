@@ -3893,8 +3893,8 @@ class InventarioController extends Controller
     public function anularAjuste(Request $request, AjusteInventario $ajuste): JsonResponse
     {
         try {
-            // 1. Validar que solo admin pueda anular
-            if (!auth()->user()->hasRole('admin')) {
+            // 1. Validar permiso para anular ajustes
+            if (!auth()->user()->can('inventario.ajuste.anular')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Sin permisos para anular ajustes',

@@ -20,7 +20,8 @@ class CompraPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->hasRole(['Super Admin', 'Admin'])) {
+        // Acceso total a compras (antes: rol Super Admin / Admin)
+        if ($user->can('compras.gestionar-todas')) {
             return true;
         }
         return null;

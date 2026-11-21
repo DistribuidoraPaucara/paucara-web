@@ -593,7 +593,7 @@ class CuentaPorCobrarController extends Controller
             ]);
 
             // Verificar permisos
-            if (!auth()->user()->hasRole(['admin', 'Admin'])) {
+            if (!auth()->user()->can('cuentas-por-cobrar.pagos.anular')) {
                 return response()->json(['message' => 'No tienes permiso'], 403);
             }
 
@@ -682,7 +682,7 @@ class CuentaPorCobrarController extends Controller
             ]);
 
             // Verificar permisos
-            if (!auth()->user()->hasRole(['admin', 'Admin'])) {
+            if (!auth()->user()->can('cuentas-por-cobrar.anular')) {
                 return response()->json(['message' => 'No tienes permiso para anular cuentas'], 403);
             }
 

@@ -23,8 +23,9 @@ class VisitaPreventistaPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Admin y Preventista pueden ver listados
-        return $user->hasAnyRole(['Admin', 'Preventista', 'admin', 'preventista']);
+        // Preventista ve sus listados; quien tenga el permiso del reporte ve todo
+        // (antes: rol Admin o Preventista)
+        return $user->can('reportes.visitas') || $user->hasRole('preventista');
     }
 
     /**

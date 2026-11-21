@@ -219,7 +219,7 @@ class CuentaPorPagarController extends Controller
             ]);
 
             // Verificar permisos
-            if (!auth()->user()->hasRole(['admin', 'Admin'])) {
+            if (!auth()->user()->can('compras.cuentas-por-pagar.pagos.anular')) {
                 return response()->json(['message' => 'No tienes permiso'], 403);
             }
 

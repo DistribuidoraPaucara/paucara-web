@@ -1432,7 +1432,7 @@ class CompraController extends Controller
             Log::info('🟠 [ANULAR COMPRA] INICIO', ['compra_id' => $id]);
 
             // 1. Verificar permisos
-            if (!auth()->user()->hasRole(['admin', 'Admin'])) {
+            if (!auth()->user()->can('compras.anular')) {
                 Log::warning('🟠 [ANULAR COMPRA] PERMISO DENEGADO', [
                     'compra_id' => $id,
                     'usuario_id' => auth()->id(),

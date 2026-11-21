@@ -475,7 +475,7 @@ class AdminCajaApiController extends Controller
         $usuarioAutenticado = auth()->user();
 
         // Validación: Solo admin
-        if (!$usuarioAutenticado->hasRole(['admin', 'Admin', 'Super Admin'])) {
+        if (!$usuarioAutenticado->can('cajas.cierre-diario')) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permiso para realizar el cierre diario general',

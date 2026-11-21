@@ -1153,8 +1153,8 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('credito/vencidos', [\App\Http\Controllers\ReporteCreditoController::class, 'obtenerClientesVencidosApi'])->name('credito.vencidos');
 
         // Reportes de visitas de preventistas
-        Route::get('visitas', [\App\Http\Controllers\ReporteVisitasController::class, 'index'])->middleware('role:Admin|Super Admin')->name('visitas');
-        Route::get('visitas/exportar-excel', [\App\Http\Controllers\ReporteVisitasController::class, 'exportarExcel'])->middleware('role:Admin|Super Admin')->name('visitas.exportar-excel');
+        Route::get('visitas', [\App\Http\Controllers\ReporteVisitasController::class, 'index'])->middleware('permission:reportes.visitas')->name('visitas');
+        Route::get('visitas/exportar-excel', [\App\Http\Controllers\ReporteVisitasController::class, 'exportarExcel'])->middleware('permission:reportes.visitas')->name('visitas.exportar-excel');
 
         // Reportes de inventario
         Route::prefix('inventario')->name('inventario.')->group(function () {

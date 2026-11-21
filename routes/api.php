@@ -1512,10 +1512,10 @@ Route::middleware(['auth:sanctum,web'])->prefix('debug')->group(function () {
             ], 401);
         }
 
-        if (!$user->hasRole('Super Admin')) {
+        if (!$user->can('sistema.logs')) {
             return response()->json([
                 'error' => 'Unauthorized',
-                'message' => 'Solo Super Admin puede acceder a los logs. Tu rol: ' . $user->roles->pluck('name')->join(', ')
+                'message' => 'No tienes permiso para ver los logs'
             ], 403);
         }
 
@@ -1561,10 +1561,10 @@ Route::middleware(['auth:sanctum,web'])->prefix('debug')->group(function () {
             ], 401);
         }
 
-        if (!$user->hasRole('Super Admin')) {
+        if (!$user->can('sistema.logs')) {
             return response()->json([
                 'error' => 'Unauthorized',
-                'message' => 'Solo Super Admin puede limpiar logs'
+                'message' => 'No tienes permiso para limpiar los logs'
             ], 403);
         }
 
