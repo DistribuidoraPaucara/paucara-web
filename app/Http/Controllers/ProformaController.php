@@ -246,6 +246,14 @@ class ProformaController extends Controller
      */
     public function create(): InertiaResponse
     {
+        return Inertia::render('proformas/Create', $this->propsCrearProforma());
+    }
+
+    /**
+     * Props del formulario de nueva proforma (compartidos por create() y duplicar())
+     */
+    private function propsCrearProforma(): array
+    {
         // ✅ NUEVO: Obtener ID del almacén de la empresa autenticada
         $almacen_id_empresa = auth()->user()->empresa->almacen_id ?? 1;
 
@@ -265,18 +273,18 @@ class ProformaController extends Controller
             ->select('id', 'codigo', 'nombre', 'icono', 'color')
             ->get();
 
-        return Inertia::render('proformas/Create', [
+        return [
             'clientes'              => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
             'productos'             => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
             'almacenes'             => Almacen::activos()->select('id', 'nombre')->get(),
-            // ✅ CORREGIDO (2026-07-18): Usar ID del empleado (no del usuario) para que coincida con preventista_id en proformas
+            // Usar ID de usuario: proformas.preventista_id es FK a users.id
             'preventistas'          => User::whereHas('roles', function ($query) {
                 $query->where('name', 'preventista');
             })->with('empleado')
                 ->get()
                 ->map(function ($user) {
                     return [
-                        'id' => $user->empleado?->id ?? $user->id,  // Usar ID del empleado si existe
+                        'id' => $user->id,  // ID de usuario (preventista_id es FK a users)
                         'name' => $user->name,
                         'email' => $user->email,
                     ];
@@ -286,41 +294,15 @@ class ProformaController extends Controller
             'default_tipo_precio_id' => $default_tipo_precio_id, // ✅ NUEVO: Tipo precio por defecto para ProductosTable
             'logistica_envios'      => (bool) $empresaPrincipal?->logistica_envios,  // ✅ CORREGIDO (2026-04-05): Mostrar panel envío si está habilitado
             'estadosProforma'       => $estadosProforma, // ✅ NUEVO (2026-07-18): Estados para select inicial
-        ]);
+        ];
     }
 
     /**
-     * ✅ NUEVO: Mostrar formulario de edición para proforma existente
+     * Mapear los detalles de una proforma al formato de ProductosTable (con stock actual).
      */
-    public function edit(Proforma $proforma): InertiaResponse
+    private function mapearDetallesProforma(Proforma $proforma, $almacen_id_empresa): array
     {
-        // Obtener ID del almacén de la empresa autenticada
-        $almacen_id_empresa = auth()->user()->empresa->almacen_id ?? 1;
-
-        // ✅ NUEVO: Obtener tipo_precio por defecto (VENTA)
-        $default_tipo_precio_id = $this->proformaService->obtenerIdTipoPrecioDefault();
-
-        // Cargar relaciones necesarias
-        $proforma->load([
-            'cliente',
-            'cliente.direcciones',
-            'cliente.localidad',
-            'direccionSolicitada', // ✅ NUEVO (2026-07-18): Cargar dirección solicitada completa
-            'detalles.producto.unidad',
-            'detalles.producto.categoria',
-            'detalles.producto.conversiones',
-            'detalles.producto.codigoPrincipal',
-            'detalles.producto.precios.tipoPrecio', // ✅ NUEVO: Cargar tipos de precios
-            // NUEVO: Cargar combo relations para combos en modo editar
-            'detalles.producto.comboItems.producto',       // ← NUEVO
-            'detalles.producto.comboItems.tipoPrecio',     // ← NUEVO
-            'preventista',
-            'usuarioCreador',
-            'estadoLogistica'
-        ]);
-
-        // Mapear detalles al formato esperado por el frontend
-        $detallesProforma = $proforma->detalles->map(function ($detalle) use ($almacen_id_empresa) {
+        return $proforma->detalles->map(function ($detalle) use ($almacen_id_empresa) {
             $producto = $detalle->producto;
             $esCombo = (bool) ($producto->es_combo ?? false);
 
@@ -472,6 +454,103 @@ class ProformaController extends Controller
                 'expanded'                  => $esCombo,
             ];
         })->toArray();
+    }
+
+
+    /**
+     * ✅ NUEVO: Mostrar formulario de edición para proforma existente
+     */
+
+    /**
+     * Duplicar una proforma: abre el formulario de nueva proforma prellenado con sus datos.
+     * No crea nada ni reserva stock: la proforma nueva se crea al guardar, con su propio número.
+     * Las notas de anulación no se copian.
+     *
+     * GET /proformas/{proforma}/duplicar
+     */
+    public function duplicar(Proforma $proforma): InertiaResponse
+    {
+        $almacen_id_empresa = auth()->user()->empresa->almacen_id ?? 1;
+
+        $proforma->load([
+            'cliente',
+            'detalles.producto.unidad',
+            'detalles.producto.categoria',
+            'detalles.producto.conversiones',
+            'detalles.producto.precios.tipoPrecio',
+            'detalles.producto.comboItems.producto',
+            'detalles.producto.comboItems.tipoPrecio',
+        ]);
+
+        // Detalles nuevos: sin id (el stock se consulta al momento de duplicar)
+        $detalles = array_map(
+            fn ($d) => array_merge($d, ['id' => null]),
+            $this->mapearDetallesProforma($proforma, $almacen_id_empresa)
+        );
+
+        $copia = [
+            'id'                 => null,
+            'numero'             => '',      // Se genera al guardar
+            'estado'             => null,
+            'estado_proforma_id' => null,
+            'cliente_id'         => $proforma->cliente_id,
+            'cliente_nombre'     => $proforma->cliente?->nombre,
+            'preventista_id'     => $proforma->preventista_id,
+            'usuario_creador_id' => null,
+            'canal'              => $proforma->canal,
+            'canal_origen'       => $proforma->canal_origen,
+            'politica_pago'      => $proforma->politica_pago,
+            'tipo_entrega'       => $proforma->tipo_entrega,
+            'requiere_envio'     => (bool) $proforma->fecha_entrega_solicitada,  // Mismo criterio que edit()
+            'observaciones'      => \App\Support\ObservacionesAnulacion::limpiar($proforma->observaciones),
+            'origen_numero'      => $proforma->numero,
+        ];
+
+        Log::info('📋 ProformaController::duplicar', [
+            'proforma_origen_id' => $proforma->id,
+            'proforma_origen_numero' => $proforma->numero,
+            'detalles' => count($detalles),
+        ]);
+
+        return Inertia::render('proformas/Create', array_merge(
+            $this->propsCrearProforma(),
+            [
+                'proforma_duplicar' => $copia,
+                'detallesProforma'  => $detalles,
+            ],
+        ));
+    }
+
+    public function edit(Proforma $proforma): InertiaResponse
+    {
+        // Obtener ID del almacén de la empresa autenticada
+        $almacen_id_empresa = auth()->user()->empresa->almacen_id ?? 1;
+
+        // ✅ NUEVO: Obtener tipo_precio por defecto (VENTA)
+        $default_tipo_precio_id = $this->proformaService->obtenerIdTipoPrecioDefault();
+
+        // Cargar relaciones necesarias
+        $proforma->load([
+            'cliente',
+            'cliente.direcciones',
+            'cliente.localidad',
+            'direccionSolicitada', // ✅ NUEVO (2026-07-18): Cargar dirección solicitada completa
+            'detalles.producto.unidad',
+            'detalles.producto.categoria',
+            'detalles.producto.conversiones',
+            'detalles.producto.codigoPrincipal',
+            'detalles.producto.precios.tipoPrecio', // ✅ NUEVO: Cargar tipos de precios
+            // NUEVO: Cargar combo relations para combos en modo editar
+            'detalles.producto.comboItems.producto',       // ← NUEVO
+            'detalles.producto.comboItems.tipoPrecio',     // ← NUEVO
+            'preventista',
+            'usuarioCreador',
+            'estadoLogistica'
+        ]);
+
+        // Mapear detalles al formato esperado por el frontend
+        $detallesProforma = $this->mapearDetallesProforma($proforma, $almacen_id_empresa);
+        $detallesProforma = $this->agregarReservasYRangos($detallesProforma, $proforma->id);
 
         return Inertia::render('proformas/Create', [
             'modo'                  => 'editar',
@@ -558,14 +637,14 @@ class ProformaController extends Controller
             ],
             'productos'             => [], // ✅ CORREGIDO (2026-04-06): Array vacío - Búsqueda en tiempo real via API
             'almacenes'             => Almacen::activos()->select('id', 'nombre')->get(),
-            // ✅ CORREGIDO (2026-07-18): Usar ID del empleado (no del usuario) para que coincida con preventista_id en proformas
+            // Usar ID de usuario: proformas.preventista_id es FK a users.id
             'preventistas'          => User::whereHas('roles', function ($query) {
                 $query->where('name', 'preventista');
             })->with('empleado')
                 ->get()
                 ->map(function ($user) {
                     return [
-                        'id' => $user->empleado?->id ?? $user->id,  // Usar ID del empleado si existe
+                        'id' => $user->id,  // ID de usuario (preventista_id es FK a users)
                         'name' => $user->name,
                         'email' => $user->email,
                     ];
@@ -663,6 +742,9 @@ class ProformaController extends Controller
             // ✅ NUEVO: Obtener tipo_precio por defecto (VENTA)
             $default_tipo_precio_id = $this->proformaService->obtenerIdTipoPrecioDefault();
 
+            // Cantidad reservada por esta proforma y rangos de precio de cada producto
+            $this->enriquecerDetallesProforma($proformaDTO, (int) $id);
+
             return $this->respondShow(
                 data: $proformaDTO,
                 inertiaComponent: 'proformas/Show',
@@ -675,6 +757,64 @@ class ProformaController extends Controller
         } catch (\Exception $e) {
             return $this->respondNotFound('Proforma no encontrada');
         }
+    }
+
+    /**
+     * Agrega a cada detalle del DTO: la cantidad reservada ACTIVA de esta proforma (reservado_proforma)
+     * y los rangos de precio vigentes del producto (producto.rangos).
+     */
+    private function enriquecerDetallesProforma($proformaDTO, int $proformaId): void
+    {
+        $proformaDTO->detalles = $this->agregarReservasYRangos($proformaDTO->detalles, $proformaId);
+    }
+
+    /**
+     * Agrega a cada detalle (arreglo): reservado_proforma (cantidad reservada ACTIVA de esta proforma)
+     * y producto.rangos (rangos de precio vigentes del producto).
+     */
+    private function agregarReservasYRangos(array $detalles, int $proformaId): array
+    {
+        $reservado = \App\Models\ReservaProforma::with('stockProducto:id,producto_id')
+            ->where('proforma_id', $proformaId)
+            ->where('estado', \App\Models\ReservaProforma::ACTIVA)
+            ->get()
+            ->groupBy(fn ($r) => $r->stockProducto?->producto_id)
+            ->map(fn ($grupo) => (int) $grupo->sum('cantidad_reservada'));
+
+        $empresaId = auth()->user()?->empresa_id;
+
+        return array_map(function (array $detalle) use ($reservado, $empresaId) {
+            $productoId = (int) ($detalle['producto_id'] ?? 0);
+            $detalle['reservado_proforma'] = (int) ($reservado[$productoId] ?? 0);
+
+            if (is_array($detalle['producto'] ?? null)) {
+                $detalle['producto']['rangos'] = \App\Models\PrecioRangoCantidadProducto::query()
+                    ->where('producto_id', $productoId)
+                    ->activos()
+                    ->vigentes()
+                    ->when($empresaId, fn ($q, $id) => $q->where('empresa_id', $id))
+                    ->with('tipoPrecio:id,nombre')
+                    ->orderBy('cantidad_minima')
+                    ->orderBy('orden')
+                    ->get()
+                    ->map(function ($rango) use ($detalle) {
+                        $precio = collect($detalle['producto']['precios'] ?? [])
+                            ->firstWhere('tipo_precio_id', $rango->tipo_precio_id);
+
+                        return [
+                            'cantidad_minima'    => (int) $rango->cantidad_minima,
+                            'cantidad_maxima'    => $rango->cantidad_maxima !== null ? (int) $rango->cantidad_maxima : null,
+                            'tipo_precio_id'     => $rango->tipo_precio_id,
+                            'tipo_precio_nombre' => $rango->tipoPrecio?->nombre,
+                            'precio'             => $precio['precio'] ?? null,
+                        ];
+                    })
+                    ->values()
+                    ->all();
+            }
+
+            return $detalle;
+        }, $detalles);
     }
 
     /**

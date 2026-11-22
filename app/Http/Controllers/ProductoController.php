@@ -2309,6 +2309,29 @@ class ProductoController extends Controller
     /**
      * ✅ NUEVO: Método auxiliar para mapear productos con todas sus relaciones
      */
+    /**
+     * Rangos de precio por cantidad del producto, con el precio que corresponde a cada uno
+     * (el precio del producto para el mismo tipo de precio del rango).
+     */
+    private function formatearRangosProducto($producto): array
+    {
+        if (! $producto->relationLoaded('rangosPrecios')) {
+            return [];
+        }
+
+        return $producto->rangosPrecios->map(function ($rango) use ($producto) {
+            $precio = $producto->precios?->firstWhere('tipo_precio_id', $rango->tipo_precio_id);
+
+            return [
+                'cantidad_minima'    => (int) $rango->cantidad_minima,
+                'cantidad_maxima'    => $rango->cantidad_maxima !== null ? (int) $rango->cantidad_maxima : null,
+                'tipo_precio_id'     => $rango->tipo_precio_id,
+                'tipo_precio_nombre' => $rango->tipoPrecio?->nombre,
+                'precio'             => $precio ? (float) $precio->precio : null,
+            ];
+        })->values()->all();
+    }
+
     private function mapearProductos($productos, $almacenId, $tipo, $clienteId = null, $clienteGeneral = false): JsonResponse
     {
         // Cargar relaciones necesarias
@@ -2330,6 +2353,16 @@ class ProductoController extends Controller
                     $q->where('activo', true)
                         ->select('id', 'producto_id', 'tipo_precio_id', 'nombre', 'precio', 'es_precio_base')
                         ->with('tipoPrecio:id,nombre,codigo');
+                },
+                // Rangos de precio por cantidad: activos, vigentes y de la empresa del usuario
+                'rangosPrecios' => function ($q) {
+                    $q->activos()
+                        ->vigentes()
+                        ->when(auth()->user()?->empresa_id, fn ($qq, $empresaId) => $qq->where('empresa_id', $empresaId))
+                        ->select('id', 'producto_id', 'tipo_precio_id', 'cantidad_minima', 'cantidad_maxima', 'orden')
+                        ->with('tipoPrecio:id,nombre,codigo')
+                        ->orderBy('cantidad_minima')
+                        ->orderBy('orden');
                 },
                 'stock'        => function ($q) {
                     $q->select('id', 'producto_id', 'almacen_id', 'cantidad', 'cantidad_disponible', 'cantidad_reservada')
@@ -2569,6 +2602,7 @@ class ProductoController extends Controller
                     'precio_base'                    => (float) $precioBase,
                     'precio_venta'                   => (float) $precioBase,
                     'precio_costo'                   => (float) $precioCosto,
+                    'rangos'                         => $this->formatearRangosProducto($producto),
                     'precios'                        => $producto->precios->map(function ($p) {
                         return [
                             'id'             => $p->id,

@@ -3,6 +3,15 @@ import { ImprimirProformasButton } from '@/presentation/components/impresion/Imp
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Button } from '@/presentation/components/ui/button';
 import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/presentation/components/ui/alert-dialog';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -14,7 +23,8 @@ import SearchSelect from '@/presentation/components/ui/search-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
 import { Head, Link, router } from '@inertiajs/react';
-import { CheckCircle, ChevronDown, Eye, FileText, Filter, MoreVertical, PencilIcon, Printer, Search, X, XCircle } from 'lucide-react';
+import { CheckCircle, ChevronDown, Copy, Eye, FileText, Filter, MoreVertical, PencilIcon, Printer, RotateCcw, Search, X, XCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useMemo, useState } from 'react';
 
 // DOMAIN LAYER: Importar tipos desde domain
@@ -220,6 +230,10 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
     };
 
     // ✅ NUEVO 2026-02-21: Estados expandidos para filtrado mejorado (inicializar desde URL)
+    // Anular proforma: confirmación con motivo (y opción de abrir la copia para rehacerla)
+    const [anularState, setAnularState] = useState<{ proforma: Proforma; duplicarDespues: boolean } | null>(null);
+    const [motivoAnulacion, setMotivoAnulacion] = useState('');
+    const [anulando, setAnulando] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [searchTerm, setSearchTerm] = useState(getQueryParam('search', ''));
     const [filtroEstado, setFiltroEstado] = useState<string>(getQueryParam('estado', 'TODOS'));
@@ -476,6 +490,48 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
         router.visit(`/proformas/${id}`);
     };
 
+    // Anular: la proforma pasa a RECHAZADA y se liberan sus reservas de stock.
+    // Con duplicarDespues se abre la copia para rehacer la proforma.
+    const confirmarAnulacion = async () => {
+        if (!anularState) return;
+        const { proforma, duplicarDespues } = anularState;
+
+        setAnulando(true);
+        try {
+            const response = await fetch(`/proformas/${proforma.id}/rechazar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ motivo: motivoAnulacion || undefined }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                toast.error(data.message || 'No se pudo anular la proforma');
+                return;
+            }
+
+            setAnularState(null);
+            setMotivoAnulacion('');
+
+            if (duplicarDespues) {
+                toast.success('Proforma anulada. Abriendo copia para rehacerla...');
+                router.visit(`/proformas/${proforma.id}/duplicar`);
+            } else {
+                toast.success('Proforma anulada');
+                router.reload();
+            }
+        } catch (error) {
+            console.error('Error al anular proforma:', error);
+            toast.error('Error al anular la proforma');
+        } finally {
+            setAnulando(false);
+        }
+    };
+
     const handleAction = (action: string, id: Id) => {
         setIsLoading(true);
         router.post(
@@ -507,6 +563,58 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
     return (
         <AppLayout>
             <Head title="Proformas" />
+
+            {/* Confirmar anulación de proforma (se liberan las reservas de stock) */}
+            <AlertDialog
+                open={anularState !== null}
+                onOpenChange={(open) => {
+                    if (!open && !anulando) {
+                        setAnularState(null);
+                        setMotivoAnulacion('');
+                    }
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {anularState?.duplicarDespues ? 'Anular y duplicar proforma' : 'Anular proforma'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            ¿Anular la proforma <strong>{anularState?.proforma.numero}</strong>? Se liberarán sus reservas de stock.
+                            {anularState?.duplicarDespues && (
+                                <span className="mt-2 block">
+                                    Se abrirá una copia en "Nueva proforma" para que la rehagas con los cambios que necesites.
+                                </span>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2 px-6">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Motivo (opcional)</label>
+                        <textarea
+                            value={motivoAnulacion}
+                            onChange={(e) => setMotivoAnulacion(e.target.value)}
+                            disabled={anulando}
+                            rows={3}
+                            placeholder="Ej: El cliente desistió, error en precios, etc."
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        />
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={anulando}>Cancelar</AlertDialogCancel>
+                        {/* Botón normal (no AlertDialogAction) para que el diálogo siga abierto si el servidor rechaza la anulación */}
+                        <Button
+                            type="button"
+                            onClick={confirmarAnulacion}
+                            disabled={anulando}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                        >
+                            {anulando ? 'Anulando...' : anularState?.duplicarDespues ? 'Anular y duplicar' : 'Anular'}
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <div className="space-y-2 p-4">
                 {/* Header con integración de filtros y botones */}
@@ -1030,13 +1138,35 @@ export default function ProformasIndex({ proformas, usuarios = [], clientes = []
                                                                 <CheckCircle className="mr-2 h-4 w-4" />
                                                                 <span>Aprobar</span>
                                                             </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                                                                    {/* Duplicar: abre una proforma nueva prellenada (cualquier estado) */}
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/proformas/${proforma.id}/duplicar`}>
+                                                            <Copy className="mr-2 h-4 w-4" />
+                                                            <span>Duplicar</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+
+                                                    {/* Anular: solo pendientes o aprobadas (las convertidas ya tienen venta) */}
+                                                    {['PENDIENTE', 'APROBADA'].includes(proforma.estado) && (
+                                                        <>
                                                             <DropdownMenuItem
-                                                                onClick={() => handleAction('rechazar', proforma.id)}
-                                                                disabled={isLoading}
+                                                                onClick={() => setAnularState({ proforma, duplicarDespues: false })}
+                                                                disabled={isLoading || anulando}
                                                                 className="text-red-600"
                                                             >
                                                                 <XCircle className="mr-2 h-4 w-4" />
-                                                                <span>Rechazar</span>
+                                                                <span>Anular</span>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => setAnularState({ proforma, duplicarDespues: true })}
+                                                                disabled={isLoading || anulando}
+                                                                className="text-amber-600"
+                                                            >
+                                                                <RotateCcw className="mr-2 h-4 w-4" />
+                                                                <span>Anular y duplicar</span>
                                                             </DropdownMenuItem>
                                                         </>
                                                     )}

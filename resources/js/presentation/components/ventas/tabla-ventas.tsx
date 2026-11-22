@@ -1,11 +1,13 @@
 import type { Pagination } from '@/domain/entities/shared';
 import type { FiltrosVentas, Venta } from '@/domain/entities/ventas';
+import { useAuth } from '@/application/hooks/use-auth';
+import { useCajaWarning } from '@/application/hooks/use-caja-warning';
 import ventasService from '@/infrastructure/services/ventas.service';
 import { formatCurrencyWith2Decimals, formatDate } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table';
-import { Link } from '@inertiajs/react';
-import { Calendar, ChevronDown, ChevronUp, Eye, FileText, MapPin, Package, Printer, Trash2 } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Calendar, ChevronDown, ChevronUp, Copy, Eye, FileText, MapPin, Package, Printer, RotateCcw, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import AnularVentaModal from './AnularVentaModal';
@@ -22,8 +24,10 @@ interface TablaVentasProps {
 
 export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
     console.log('🚀 ~ file: tabla-ventas.tsx:22 ~ TablaVentas ~ ventas:', ventas);
+    const { can } = useAuth();
+    const { shouldShowBanner: sinCajaAbierta } = useCajaWarning();
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-    const [anularModal, setAnularModal] = useState<{ isOpen: boolean; venta?: Venta }>({ isOpen: false });
+    const [anularModal, setAnularModal] = useState<{ isOpen: boolean; venta?: Venta; duplicarDespues?: boolean }>({ isOpen: false });
     const [isAnulando, setIsAnulando] = useState(false);
     const [outputModal, setOutputModal] = useState<{ isOpen: boolean; venta?: Venta }>({ isOpen: false });
     const [registrandoEnCaja, setRegistrandoEnCaja] = useState<number | null>(null);
@@ -63,8 +67,8 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
         setExpandedRows(newExpanded);
     };
 
-    const openAnularModal = (venta: Venta) => {
-        setAnularModal({ isOpen: true, venta });
+    const openAnularModal = (venta: Venta, duplicarDespues = false) => {
+        setAnularModal({ isOpen: true, venta, duplicarDespues });
     };
 
     const closeAnularModal = () => {
@@ -113,6 +117,15 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
             }
 
             console.log('🟢 [ANULAR VENTA FRONTEND] Anulación exitosa, mostrando toast y recargando...');
+            // Anular y duplicar: abrir la copia para rehacer la venta (la original ya quedó ANULADA)
+            if (anularModal.duplicarDespues) {
+                const ventaId = anularModal.venta.id;
+                toast.success('Venta anulada. Abriendo copia para rehacerla...');
+                closeAnularModal();
+                router.visit(`/ventas/${ventaId}/duplicar`);
+                return;
+            }
+
             toast.success('Venta anulada exitosamente');
             closeAnularModal();
 
@@ -420,6 +433,29 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                                                 <Eye className="h-4 w-4" />
                                             </Link>
 
+                                            {/* Duplicar - Abre nueva venta prellenada con esta venta (se guarda con id nuevo al confirmar) */}
+                                            {can('ventas.create') && (
+                                                <Link
+                                                    href={`/ventas/${venta.id}/duplicar`}
+                                                    className="rounded p-1 text-green-600 transition-colors hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:hover:bg-green-900/20 dark:hover:text-green-300"
+                                                    title="Duplicar venta"
+                                                >
+                                                    <Copy className="h-4 w-4" />
+                                                </Link>
+                                            )}
+
+                                            {/* Anular y duplicar - Anula la venta y abre la copia para rehacerla (requiere caja abierta para la copia) */}
+                                            {venta.estado_documento?.codigo === 'APROBADO' && can('ventas.anular') && can('ventas.create') && (
+                                                <button
+                                                    onClick={() => openAnularModal(venta, true)}
+                                                    disabled={sinCajaAbierta}
+                                                    className="rounded p-1 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40 dark:text-amber-400 dark:hover:bg-amber-900/20 dark:hover:text-amber-300"
+                                                    title={sinCajaAbierta ? 'Abre la caja para anular y duplicar' : 'Anular y duplicar (para rehacer la venta)'}
+                                                >
+                                                    <RotateCcw className="h-4 w-4" />
+                                                </button>
+                                            )}
+
                                             {/* Anular - Solo si está APROBADO */}
                                             {venta.estado_documento?.codigo === 'APROBADO' && (
                                                 <button
@@ -700,6 +736,7 @@ export default function TablaVentas({ ventas, filtros }: TablaVentasProps) {
                 ventaNumero={anularModal.venta?.numero || ''}
                 onConfirm={handleAnularVenta}
                 isLoading={isAnulando}
+                duplicarDespues={anularModal.duplicarDespues}
             />
 
             {/* Modal de exportación/impresión */}

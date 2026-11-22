@@ -1,5 +1,5 @@
-import { formatCurrency, formatCurrencyMinimalDecimals, formatCurrencyWith2Decimals } from '@/lib/utils';
 import { formatearCosto } from '@/lib/precios.utils';
+import { formatCurrency, formatCurrencyMinimalDecimals, formatCurrencyWith2Decimals } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/presentation/components/ui/tooltip';
 import { ExternalLink, Tag } from 'lucide-react';
 import { Fragment } from 'react';
@@ -35,6 +35,11 @@ interface ProductoTableRowProps {
     formatearPrecioVenta?: (precio: number) => string;
     normalizeDateForInput?: (fecha: string | null) => string;
     onUpdateDetailUnidadConPrecio?: (index: number, unidadId: number, precio: number) => void;
+    mostrarPesoEnvio?: boolean;
+    resumirDatosProducto?: boolean;
+    ocultarRangos?: boolean;
+    enlaceEditarProducto?: boolean;
+    enlaceReservas?: boolean;
     proformaConvertida?: boolean;
 }
 
@@ -55,6 +60,9 @@ const mananaLocal = (): string => {
     d.setDate(d.getDate() + 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+
+// Peso en kilogramos con hasta 3 decimales
+const formatearPeso = (kg: number) => `${kg.toLocaleString('es-BO', { maximumFractionDigits: 3 })} kg`;
 
 export default function ProductoTableRow({
     detalle,
@@ -85,6 +93,11 @@ export default function ProductoTableRow({
     formatearPrecioVenta = (precio) => precio.toString(),
     normalizeDateForInput = (fecha) => fecha || '',
     onUpdateDetailUnidadConPrecio,
+    mostrarPesoEnvio = false,
+    resumirDatosProducto = false,
+    ocultarRangos = false,
+    enlaceEditarProducto = false,
+    enlaceReservas = false,
     proformaConvertida = false,
 }: ProductoTableRowProps) {
     const productoInfo = detalle.producto as any;
@@ -111,6 +124,8 @@ export default function ProductoTableRow({
     const vencimientoMinimo = mananaLocal();
     const fechaVencimiento = normalizeDateForInput(detalle.fecha_vencimiento);
     const vencimientoInvalido = tipo === 'compra' && !readOnly && !!fechaVencimiento && fechaVencimiento < vencimientoMinimo;
+    // Lote sin fecha de vencimiento: aviso (no bloquea el guardado)
+    const faltaVencimiento = tipo === 'compra' && !readOnly && !!detalle.lote && !fechaVencimiento;
 
     // Varios campos de una sola vez: con llamadas seguidas a onUpdateDetail solo sobreviviría la última
     const actualizarCampos = (campos: Record<string, number | string | null>) => {
@@ -135,11 +150,32 @@ export default function ProductoTableRow({
         >
             {/* Producto Info */}
             <td className={`items-start px-2 py-2 ${esCompra ? 'align-top' : ''}`}>
-                <div className="items-start text-xs font-bold text-gray-900 dark:text-white">{productoInfo?.nombre || 'Producto no encontrado'}</div>
+                <div
+                    className="items-start text-xs font-bold text-gray-900 dark:text-white"
+                    title={
+                        resumirDatosProducto ? [marcaProducto, categoriaProducto, unidadProducto].filter(Boolean).join(' · ') || undefined : undefined
+                    }
+                >
+                    {enlaceEditarProducto && productoInfo ? (
+                        <a
+                            href={`/productos/${detalle.producto_id}/edit`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Editar producto (se abre en otra pestaña)"
+                            className="text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                            {productoInfo?.nombre}
+                        </a>
+                    ) : (
+                        productoInfo?.nombre || 'Producto no encontrado'
+                    )}
+                </div>
                 {esCompra && (
                     <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
                         {skuProducto && (
-                            <span className="rounded bg-blue-100 px-1.5 py-0.5 font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{skuProducto}</span>
+                            <span className="rounded bg-blue-100 px-1.5 py-0.5 font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                {skuProducto}
+                            </span>
                         )}
                         <a
                             href={`/productos/${detalle.producto_id}/edit`}
@@ -175,18 +211,28 @@ export default function ProductoTableRow({
 
             {/* SKU */}
             {!esCompra && (
-                <td className="items-start px-2 py-2">
-                    {productoInfo?.sku || productoInfo?.codigo ? (
-                        <span className="items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                            {productoInfo.sku || productoInfo.codigo}
-                        </span>
-                    ) : (
-                        <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
+                <td className="items-start px-2 py-2 uppercase">
+                    {(productoInfo?.sku || productoInfo?.codigo) && (
+                        enlaceEditarProducto ? (
+                            <a
+                                href={`/productos/${detalle.producto_id}/edit`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Editar producto (se abre en otra pestaña)"
+                                className="items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700 hover:underline dark:bg-blue-900/40 dark:text-blue-300"
+                            >
+                                {productoInfo.sku || productoInfo.codigo}
+                            </a>
+                        ) : (
+                            <span className="items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                {productoInfo.sku || productoInfo.codigo}
+                            </span>
+                        )
                     )}
                 </td>
             )}
             {/* Disponibilidad */}
-            <td className={`items-start text-xs px-2 w-20 ${esCompra ? 'pt-3 pb-2 align-top' : 'py-2'}`}>
+            <td className={`w-20 items-center px-2 text-xs ${esCompra ? 'pt-3 pb-2 align-top' : 'py-2'}`}>
                 {!proformaConvertida &&
                     (() => {
                         const stockDisponible =
@@ -196,32 +242,97 @@ export default function ProductoTableRow({
                             0;
                         const stockReservado = (productoInfo as any)?.stock_reservado_calc ?? (productoInfo as any)?.stock_reservado ?? 0;
                         const stockTotal = (productoInfo as any)?.stock_total_calc ?? (productoInfo as any)?.stock_total ?? 0;
+                        // Ventas: el color depende de la cantidad pedida, no solo del stock
+                        // En proformas: lo ya reservado por ESTA proforma también cuenta como disponible para su línea
+                        const reservadoProforma = Number((detalle as any).reservado_proforma || 0);
+                        const disponibleParaEsta = Number(stockDisponible) + reservadoProforma;
+                        const cantidadPedida = Number(detalle.cantidad || 0);
+                        const faltante = Math.max(0, cantidadPedida - disponibleParaEsta);
+                        const sobrante = disponibleParaEsta - cantidadPedida;
+                        const colorVenta =
+                            faltante > 0
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200'
+                                : sobrante < 5
+                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
+                                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200';
+                        const colorCompra =
+                            stockDisponible === 0
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200'
+                                : stockDisponible < 5
+                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
+                                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200';
+
                         return (
                             <div
-                                className={`flex flex-col rounded p-1 text-xs ${esCompra ? 'whitespace-nowrap' : ''} ${
-                                    stockDisponible === 0
-                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200'
-                                        : stockDisponible < 5
-                                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
-                                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+                                title={`Reservado: ${stockReservado} · Total: ${stockTotal}`}
+                                className={`flex flex-col items-center rounded p-1 text-xs ${esCompra ? 'whitespace-nowrap' : ''} ${
+                                    esCompra ? colorCompra : colorVenta
                                 }`}
                             >
-                                {/* Disp. {stockDisponible} | Res. {stockReservado} | Total {stockTotal} */}
-                                {/* disponible */}
                                 {esCompra ? (
                                     <p>
                                         {stockDisponible} disp. · {stockReservado} res. · {stockTotal} total
                                     </p>
                                 ) : (
                                     <>
-                                        <p>Disp.: {stockDisponible}</p>
-                                        {/* Reservado */}
-                                        <p>Res.: {stockReservado}</p>
-                                        {/* Total */}
-                                        <p>T: {stockTotal}</p>
+                                        <span className="text-base leading-none font-bold">{stockDisponible}</span>
+                                        <span className="text-[10px] tracking-wide uppercase opacity-80">disponible</span>
+                                        {faltante > 0 && <span className="mt-0.5 text-[10px] font-bold">Faltan {faltante}</span>}
                                     </>
                                 )}
                             </div>
+                        );
+                    })()}
+
+                {!esCompra &&
+                    (detalle as any).reservado_proforma !== undefined &&
+                    (() => {
+                        const reservado = Number((detalle as any).reservado_proforma || 0);
+                        const pedido = Number(detalle.cantidad || 0);
+                        if (reservado <= 0) {
+                            return enlaceReservas ? (
+                                <a
+                                    href={`/reservas/producto/${detalle.producto_id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Ver reservas de este producto"
+                                    className="text-[10px] text-blue-600 hover:underline dark:text-blue-400"
+                                >
+                                    Sin reserva
+                                </a>
+                            ) : (
+                                <span className="text-[10px] text-gray-500 dark:text-gray-400">Sin reserva</span>
+                            );
+                        }
+                        const completa = reservado >= pedido;
+                        return (
+                            <span
+                                title={
+                                    enlaceReservas
+                                        ? 'Cantidad reservada para esta proforma · ver reservas del producto'
+                                        : 'Cantidad reservada para esta proforma'
+                                }
+                                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                                    completa
+                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200'
+                                }`}
+                            >
+                                {enlaceReservas ? (
+                                    <a
+                                        href={`/reservas/producto/${detalle.producto_id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:underline"
+                                    >
+                                        {completa ? 'Reservado' : `Reservado ${reservado} de ${pedido}`}
+                                    </a>
+                                ) : completa ? (
+                                    'Reservado'
+                                ) : (
+                                    `Reservado ${reservado} de ${pedido}`
+                                )}
+                            </span>
                         );
                     })()}
             </td>
@@ -259,6 +370,7 @@ export default function ProductoTableRow({
                         }}
                         className={`w-24 flex-col rounded-lg border border-gray-300 text-sm ${esCompra ? 'px-2 py-2 font-semibold' : 'px-1 py-1'} focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white`}
                     />
+
                     {esCompra && unidadProducto && <span className="text-xs text-gray-500 dark:text-gray-400">{unidadProducto}</span>}
                 </div>
             </td>
@@ -324,7 +436,7 @@ export default function ProductoTableRow({
                                                 ? `${esAumento ? '↑' : '↓'} ${textoPorcentaje.replace(/^[+−]/, '')}`
                                                 : precioCosto > 0
                                                   ? `Reg. ${formatearCosto(precioCosto)}`
-                                                  : 'Sin costo'}
+                                                  : 'No registrado'}
                                             {preciosSuperados.length > 0 && <span className="ml-1 text-red-600 dark:text-red-400">⚠</span>}
                                         </span>
                                     </TooltipTrigger>
@@ -332,7 +444,8 @@ export default function ProductoTableRow({
                                         <p>{precioCosto > 0 ? `Registrado: ${formatearCosto(precioCosto)}` : 'Sin costo registrado'}</p>
                                         {tieneDiferencia && (
                                             <p>
-                                                Diferencia: {esAumento ? '↑' : '↓'} {formatearCosto(Math.abs(detalle.precio_unitario - precioCosto))} ({textoPorcentaje})
+                                                Diferencia: {esAumento ? '↑' : '↓'} {formatearCosto(Math.abs(detalle.precio_unitario - precioCosto))}{' '}
+                                                ({textoPorcentaje})
                                             </p>
                                         )}
                                         {preciosSuperados.length > 0 && (
@@ -387,7 +500,7 @@ export default function ProductoTableRow({
                             disabled={readOnly}
                             value={detalle.lote || ''}
                             data-campo-fila
-                            placeholder="LOT-001"
+                            placeholder="Sin lote"
                             onChange={(e) => {
                                 onUpdateDetail(index, 'lote', e.target.value);
                             }}
@@ -408,179 +521,267 @@ export default function ProductoTableRow({
                                 onUpdateDetail(index, 'fecha_vencimiento', e.target.value);
                             }}
                             className={`w-40 rounded-lg border px-2 py-2 text-sm font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:text-white ${
-                                vencimientoInvalido ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-zinc-600'
+                                vencimientoInvalido
+                                    ? 'border-red-500 dark:border-red-500'
+                                    : faltaVencimiento
+                                      ? 'border-amber-400 bg-amber-50 dark:border-amber-600 dark:bg-amber-900/20'
+                                      : 'border-gray-300 dark:border-zinc-600'
                             }`}
                         />
-                        {vencimientoInvalido && <div className="mt-0.5 text-xs font-semibold text-red-600 dark:text-red-400">Debe ser posterior a hoy</div>}
+                        {vencimientoInvalido && (
+                            <div className="mt-0.5 text-xs font-semibold text-red-600 dark:text-red-400">Debe ser posterior a hoy</div>
+                        )}
+                        {faltaVencimiento && (
+                            <div className="mt-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">Indica el vencimiento del lote</div>
+                        )}
                     </td>
                 </>
             )}
 
             {/* Precio Venta + Tipo Precio */}
             {tipo === 'venta' && (
-                <td className="font-small px-2 py-2 text-xs">
+                <td className="items-center p-1 text-xs">
+                    <div className="flex flex-nowrap items-center gap-2">
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            disabled={readOnly}
+                            value={
+                                editingField?.index === index && editingField?.field === 'precio_venta'
+                                    ? editingField.value
+                                    : formatearPrecioVenta(detalle.precio_unitario)
+                            }
+                            placeholder="0"
+                            onFocus={() => {
+                                setEditingField({
+                                    index,
+                                    field: 'precio_venta',
+                                    value: formatearPrecioVenta(detalle.precio_unitario),
+                                });
+                            }}
+                            onChange={(e) => {
+                                const valor = e.target.value;
+                                setEditingField((prev) => (prev && prev.index === index ? { ...prev, value: valor } : prev));
+                                // ✅ MEJORADO: Permitir decimales y validación más flexible
+                                if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
+                                    const num = valor === '' ? 0 : parseFloat(valor);
+                                    if (num >= 0) {
+                                        // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
+                                        // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                        if (onManualTipoPrecioChange) {
+                                            onManualTipoPrecioChange(detalle.producto_id);
+                                        }
+                                        onUpdateDetail(index, 'precio_unitario', num);
+                                    }
+                                }
+                            }}
+                            onBlur={(e) => {
+                                const valor = e.target.value;
+                                // ✅ MEJORADO: Permitir decimales y validación más flexible
+                                if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
+                                    const num = valor === '' ? 0 : parseFloat(valor);
+                                    // Salir del campo sin cambiar el precio no cuenta como selección manual
+                                    if (num >= 0 && Math.abs(num - Number(detalle.precio_unitario)) >= 0.005) {
+                                        // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
+                                        // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                        if (onManualTipoPrecioChange) {
+                                            onManualTipoPrecioChange(detalle.producto_id);
+                                        }
+                                        onUpdateDetail(index, 'precio_unitario', num);
+                                    }
+                                }
+                                setEditingField(null);
+                            }}
+                            className="w-32 rounded-md border border-gray-300 px-1 py-1 text-xs focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        />
+
+                        {/* Tipo de Precio Selector */}
+                        {(() => {
+                            const precios = detalle.producto?.precios || [];
+                            const preciosVenta = precios.filter((p) => {
+                                const nombre = (p.nombre || '').toLowerCase();
+                                return !nombre.includes('costo') && !nombre.includes('cost');
+                            });
+
+                            if (preciosVenta.length <= 1) {
+                                return detalle.tipo_precio_nombre ? (
+                                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{detalle.tipo_precio_nombre}</div>
+                                ) : null;
+                            }
+
+                            // ✅ PRIORIDAD:
+                            // 1. Si usuario seleccionó algo explícitamente → mantenerlo
+                            // 2. Si tipo_precio_id === null → mostrar "OTROS"
+                            // 3. Si tiene tipo_precio_id → usarlo (del detalle del backend)
+                            // 4. Fallback: tipo_precio_id_recomendado o default
+                            // ✅ REFACTORIZADO (2026-07-03): Usar producto_id como clave en lugar de index
+                            const productoId = detalle.producto_id;
+                            const valorInicial =
+                                detalle.tipo_precio_id === null
+                                    ? 'otros' // Precio personalizado
+                                    : selectedTipoPrecio[productoId] !== undefined
+                                      ? String(selectedTipoPrecio[productoId]) // Usuario seleccionó algo
+                                      : detalle.tipo_precio_id
+                                        ? String(detalle.tipo_precio_id) // ✅ Usar siempre el del detalle si existe
+                                        : detalle.tipo_precio_id_recomendado
+                                          ? String(detalle.tipo_precio_id_recomendado)
+                                          : default_tipo_precio_id
+                                            ? String(default_tipo_precio_id)
+                                            : '';
+
+                            return (
+                                <select
+                                    disabled={readOnly}
+                                    value={valorInicial}
+                                    onChange={(e) => {
+                                        const tipoPrecioIdSeleccionado = e.target.value;
+
+                                        // ✅ NUEVO: Manejar opción "OTROS"
+                                        if (tipoPrecioIdSeleccionado === 'otros') {
+                                            if (onManualTipoPrecioChange) {
+                                                // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                                onManualTipoPrecioChange(detalle.producto_id);
+                                            }
+
+                                            setSelectedTipoPrecio((prev) => ({
+                                                ...prev,
+                                                [productoId]: 'otros',
+                                            }));
+
+                                            // Limpiar tipo_precio pero mantener el precio actual
+                                            actualizarCampos({ tipo_precio_id: null, tipo_precio_nombre: null });
+                                            return;
+                                        }
+
+                                        const precioSeleccionado = preciosVenta.find(
+                                            (p) => String(p.tipo_precio_id) === String(tipoPrecioIdSeleccionado),
+                                        );
+
+                                        if (precioSeleccionado) {
+                                            if (onManualTipoPrecioChange) {
+                                                // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
+                                                onManualTipoPrecioChange(detalle.producto_id);
+                                            }
+
+                                            setSelectedTipoPrecio((prev) => ({
+                                                ...prev,
+                                                [productoId]: tipoPrecioIdSeleccionado,
+                                            }));
+
+                                            actualizarCampos({
+                                                tipo_precio_id: precioSeleccionado.tipo_precio_id,
+                                                tipo_precio_nombre: precioSeleccionado.nombre || '',
+                                                precio_unitario: Number(precioSeleccionado.precio) || 0,
+                                            });
+                                        }
+                                    }}
+                                    title={(() => {
+                                        const sel = preciosVenta.find((p) => String(p.tipo_precio_id) === String(valorInicial));
+                                        return sel ? `${sel.nombre || 'Tipo'} - ${formatCurrencyWith2Decimals(sel.precio || 0)}` : 'Tipo de precio';
+                                    })()}
+                                    className="font-small mt-1 w-40 max-w-full truncate rounded-lg border border-gray-300 px-1 py-1 text-[11px] focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                                >
+                                    {!valorInicial && <option value="">Seleccionar tipo de precio</option>}
+                                    {preciosVenta.map((precio) => (
+                                        <option
+                                            className="font-small text-xs"
+                                            key={precio.id || precio.tipo_precio_id}
+                                            value={String(precio.tipo_precio_id)}
+                                        >
+                                            {precio.nombre || `Tipo ${precio.tipo_precio_id}`} · Bs{' '}
+                                            {Number(precio.precio || 0).toLocaleString('es-BO', { maximumFractionDigits: 2 })}
+                                        </option>
+                                    ))}
+                                    {/* ✅ NUEVO: Opción OTROS para precios personalizados */}
+                                    <option value="otros" className="font-small text-xs">
+                                        ➕ OTROS (Precio Personalizado)
+                                    </option>
+                                </select>
+                            );
+                        })()}
+                        {(() => {
+                            const rangos = (productoInfo as any)?.rangos as
+                                | Array<{
+                                      cantidad_minima: number;
+                                      cantidad_maxima: number | null;
+                                      tipo_precio_nombre?: string | null;
+                                      precio: number | null;
+                                  }>
+                                | undefined;
+                            if (ocultarRangos || !rangos || rangos.length === 0) return null;
+
+                            const lineas = rangos.map((r) => {
+                                const cantidad = `${r.cantidad_minima}${r.cantidad_maxima ? `–${r.cantidad_maxima}` : ' o más'} unid.`;
+                                const precio =
+                                    r.precio !== null ? `Bs ${Number(r.precio).toLocaleString('es-BO', { maximumFractionDigits: 4 })}` : 'sin precio';
+                                const tipo = r.tipo_precio_nombre ? ` (${r.tipo_precio_nombre})` : '';
+                                return `${cantidad}: ${precio}${tipo}`;
+                            });
+
+                            return (
+                                <span
+                                    title={`Precios por cantidad:\n${lineas.join('\n')}`}
+                                    className="inline-flex shrink-0 cursor-help items-center rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+                                >
+                                    📊
+                                </span>
+                            );
+                        })()}
+                    </div>
+                </td>
+            )}
+
+            {/* Subtotal: en compras es editable y despeja el precio (precio = subtotal ÷ cantidad) */}
+            <td className={`items-start px-2 text-center ${esCompra ? 'pt-4 pb-2 align-top' : 'py-4'}`}>
+                {tipo === 'compra' ? (
                     <input
                         type="text"
                         inputMode="decimal"
-                        disabled={readOnly}
-                        value={
-                            editingField?.index === index && editingField?.field === 'precio_venta'
-                                ? editingField.value
-                                : formatearPrecioVenta(detalle.precio_unitario)
-                        }
-                        placeholder="0"
+                        disabled={readOnly || !(detalle.cantidad > 0)}
+                        value={editingField?.index === index && editingField?.field === 'subtotal' ? editingField.value : String(detalle.subtotal)}
+                        data-campo-fila
+                        placeholder={detalle.cantidad > 0 ? '0.00' : 'Cantidad primero'}
+                        title="Al cambiar el subtotal se calcula el precio: subtotal ÷ cantidad"
                         onFocus={() => {
-                            setEditingField({
-                                index,
-                                field: 'precio_venta',
-                                value: formatearPrecioVenta(detalle.precio_unitario),
-                            });
+                            setEditingField({ index, field: 'subtotal', value: String(detalle.subtotal) });
                         }}
                         onChange={(e) => {
                             const valor = e.target.value;
                             setEditingField((prev) => (prev && prev.index === index ? { ...prev, value: valor } : prev));
-                            // ✅ MEJORADO: Permitir decimales y validación más flexible
                             if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
                                 const num = valor === '' ? 0 : parseFloat(valor);
                                 if (num >= 0) {
-                                    // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
-                                    // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
-                                    if (onManualTipoPrecioChange) {
-                                        onManualTipoPrecioChange(detalle.producto_id);
-                                    }
-                                    onUpdateDetail(index, 'precio_unitario', num);
+                                    onUpdateDetail(index, 'subtotal', num);
                                 }
                             }
                         }}
-                        onBlur={(e) => {
-                            const valor = e.target.value;
-                            // ✅ MEJORADO: Permitir decimales y validación más flexible
-                            if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
-                                const num = valor === '' ? 0 : parseFloat(valor);
-                                // Salir del campo sin cambiar el precio no cuenta como selección manual
-                                if (num >= 0 && Math.abs(num - Number(detalle.precio_unitario)) >= 0.005) {
-                                    // ✅ NUEVO: Marcar como selección manual cuando se edita el precio
-                                    // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
-                                    if (onManualTipoPrecioChange) {
-                                        onManualTipoPrecioChange(detalle.producto_id);
-                                    }
-                                    onUpdateDetail(index, 'precio_unitario', num);
-                                }
-                            }
+                        onBlur={() => {
                             setEditingField(null);
                         }}
-                        className="font-small w-32 rounded-md border border-gray-300 px-1 py-1 text-xs focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        className="w-28 rounded-lg border border-gray-300 px-2 py-2 text-right font-mono text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                     />
-                    <br />
-
-                    {/* Tipo de Precio Selector */}
-                    {(() => {
-                        const precios = detalle.producto?.precios || [];
-                        const preciosVenta = precios.filter((p) => {
-                            const nombre = (p.nombre || '').toLowerCase();
-                            return !nombre.includes('costo') && !nombre.includes('cost');
-                        });
-
-                        if (preciosVenta.length <= 1) {
-                            return detalle.tipo_precio_nombre ? (
-                                <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{detalle.tipo_precio_nombre}</div>
-                            ) : null;
-                        }
-
-                        // ✅ PRIORIDAD:
-                        // 1. Si usuario seleccionó algo explícitamente → mantenerlo
-                        // 2. Si tipo_precio_id === null → mostrar "OTROS"
-                        // 3. Si tiene tipo_precio_id → usarlo (del detalle del backend)
-                        // 4. Fallback: tipo_precio_id_recomendado o default
-                        // ✅ REFACTORIZADO (2026-07-03): Usar producto_id como clave en lugar de index
-                        const productoId = detalle.producto_id;
-                        const valorInicial =
-                            detalle.tipo_precio_id === null
-                                ? 'otros' // Precio personalizado
-                                : selectedTipoPrecio[productoId] !== undefined
-                                  ? String(selectedTipoPrecio[productoId]) // Usuario seleccionó algo
-                                  : detalle.tipo_precio_id
-                                    ? String(detalle.tipo_precio_id) // ✅ Usar siempre el del detalle si existe
-                                    : detalle.tipo_precio_id_recomendado
-                                      ? String(detalle.tipo_precio_id_recomendado)
-                                      : default_tipo_precio_id
-                                        ? String(default_tipo_precio_id)
-                                        : '';
-
-                        return (
-                            <select
-                                disabled={readOnly}
-                                value={valorInicial}
-                                onChange={(e) => {
-                                    const tipoPrecioIdSeleccionado = e.target.value;
-
-                                    // ✅ NUEVO: Manejar opción "OTROS"
-                                    if (tipoPrecioIdSeleccionado === 'otros') {
-                                        if (onManualTipoPrecioChange) {
-                                            // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
-                                            onManualTipoPrecioChange(detalle.producto_id);
-                                        }
-
-                                        setSelectedTipoPrecio((prev) => ({
-                                            ...prev,
-                                            [productoId]: 'otros',
-                                        }));
-
-                                        // Limpiar tipo_precio pero mantener el precio actual
-                                        actualizarCampos({ tipo_precio_id: null, tipo_precio_nombre: null });
-                                        return;
-                                    }
-
-                                    const precioSeleccionado = preciosVenta.find(
-                                        (p) => String(p.tipo_precio_id) === String(tipoPrecioIdSeleccionado),
-                                    );
-
-                                    if (precioSeleccionado) {
-                                        if (onManualTipoPrecioChange) {
-                                            // ✅ REFACTORIZADO (2026-07-03): Pasar producto_id en lugar de index
-                                            onManualTipoPrecioChange(detalle.producto_id);
-                                        }
-
-                                        setSelectedTipoPrecio((prev) => ({
-                                            ...prev,
-                                            [productoId]: tipoPrecioIdSeleccionado,
-                                        }));
-
-                                        actualizarCampos({
-                                            tipo_precio_id: precioSeleccionado.tipo_precio_id,
-                                            tipo_precio_nombre: precioSeleccionado.nombre || '',
-                                            precio_unitario: Number(precioSeleccionado.precio) || 0,
-                                        });
-                                    }
-                                }}
-                                className="font-small mt-1 rounded-lg border border-gray-300 px-1 py-1 text-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                            >
-                                {!valorInicial && <option value="">Seleccionar tipo de precio</option>}
-                                {preciosVenta.map((precio) => (
-                                    <option
-                                        className="font-small text-xs"
-                                        key={precio.id || precio.tipo_precio_id}
-                                        value={String(precio.tipo_precio_id)}
-                                    >
-                                        {precio.nombre || `Tipo ${precio.tipo_precio_id}`} - {formatCurrencyWith2Decimals(precio.precio || 0)}
-                                    </option>
-                                ))}
-                                {/* ✅ NUEVO: Opción OTROS para precios personalizados */}
-                                <option value="otros" className="font-small text-xs">
-                                    ➕ OTROS (Precio Personalizado)
-                                </option>
-                            </select>
-                        );
-                    })()}
-                </td>
-            )}
-
-            {/* Subtotal */}
-            <td className={`items-start px-2 text-center ${esCompra ? 'pt-4 pb-2 align-top' : 'py-4'}`}>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">{tipo === 'compra' ? formatearCosto(detalle.subtotal) : formatCurrencyMinimalDecimals(detalle.subtotal)}</span>
+                ) : (
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrencyMinimalDecimals(detalle.subtotal)}</span>
+                )}
             </td>
 
-            {!esCompra && (
+            {/* Peso unitario y peso total (ventas que requieren envío): después de Subtotal */}
+            {tipo === 'venta' && mostrarPesoEnvio && (
+                <>
+                    <td className="items-start px-2 py-2 text-center whitespace-nowrap">
+                        <span className="rounded-md bg-teal-50 px-2 py-0.5 font-mono font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                            {formatearPeso(Number(productoInfo?.peso || 0))}
+                        </span>
+                    </td>
+                    <td className="items-start px-2 py-2 text-center whitespace-nowrap">
+                        <span className="rounded-md bg-teal-100 px-2 py-0.5 font-mono font-bold text-teal-800 dark:bg-teal-800/40 dark:text-teal-200">
+                            {formatearPeso(Number(detalle.cantidad || 0) * Number(productoInfo?.peso || 0))}
+                        </span>
+                    </td>
+                </>
+            )}
+
+            {!esCompra && !resumirDatosProducto && (
                 <>
                     {/* Categoría */}
                     <td className="items-start px-2 py-2 text-center">

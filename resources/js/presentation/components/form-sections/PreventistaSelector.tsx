@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import { Label } from '@/presentation/components/ui/label';
 
 export interface Preventista {
@@ -31,9 +32,21 @@ export default function PreventistaSelector({
 }: PreventistaSelectorProps) {
   return (
     <div>
-      <Label htmlFor="preventista" className="text-sm font-medium">
-        {label}
-      </Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor="preventista" className="text-sm font-medium">
+          {label}
+        </Label>
+        {infoText && (
+          <span
+            className="inline-flex cursor-help text-green-700 dark:text-green-300"
+            title={infoText}
+            tabIndex={0}
+            aria-label={infoText}
+          >
+            <Info className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </div>
 
       {cargando ? (
         <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mt-2">
@@ -54,15 +67,10 @@ export default function PreventistaSelector({
             <option value="">{placeholder}</option>
             {preventistas.map((preventista) => (
               <option key={preventista.id} value={preventista.id}>
-                #{preventista.id} | {preventista.name}
+                {preventista.name}
               </option>
             ))}
           </select>
-          {infoText && (
-            <p className="text-xs text-green-700 dark:text-green-300 mt-2">
-              {infoText}
-            </p>
-          )}
         </>
       ) : (
         <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">

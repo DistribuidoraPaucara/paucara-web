@@ -1,5 +1,5 @@
+import { MapPin } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
-import { Label } from '@/presentation/components/ui/label';
 
 export interface Localidad {
     id: number;
@@ -45,18 +45,9 @@ export default function DireccionesClienteSelector({
     }
 
     return (
-        <div>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <Label className="mb-2 block text-sm font-medium">{label}</Label>
-                {/* ✅ NUEVO (2026-07-18): Botón para ver dirección seleccionada en mapa */}
-                {selectedId && onShowMap && (
-                    <div className="text-center">
-                        <Button type="button" onClick={onShowMap} variant="outline" className="gap-2">
-                            🗺️ Ver dirección en mapa
-                        </Button>
-                    </div>
-                )}
-            </div>
+        <div title={label}>
+            {/* El título se muestra como tooltip; se mantiene accesible para lectores de pantalla */}
+            <span className="sr-only">{label}</span>
 
             {cargando ? (
                 <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
@@ -66,11 +57,11 @@ export default function DireccionesClienteSelector({
             ) : direcciones.length > 0 ? (
                 <div className="space-y-2">
                     {direcciones.map((dir) => (
+                        <div key={dir.id} className="flex items-stretch gap-2">
                         <button
-                            key={dir.id}
                             type="button"
                             onClick={() => onSelect(dir.id)}
-                            className={`w-full rounded-lg border-2 px-3 py-2 text-left transition-all ${
+                            className={`min-w-0 flex-1 rounded-lg border-2 px-3 py-2 text-left transition-all ${
                                 selectedId === dir.id
                                     ? 'border-blue-600 bg-blue-50 shadow-sm dark:bg-blue-900/30'
                                     : 'border-gray-200 bg-white hover:border-blue-300 dark:border-gray-700 dark:bg-zinc-800 dark:hover:border-blue-700'
@@ -111,6 +102,19 @@ export default function DireccionesClienteSelector({
                                 </>
                             )}
                         </button>
+                        {/* Ver la dirección seleccionada en el mapa, al lado de su tarjeta */}
+                        {selectedId === dir.id && onShowMap && (
+                            <Button
+                                type="button"
+                                onClick={onShowMap}
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0 self-center gap-2 whitespace-nowrap"
+                            >
+                                <MapPin className="h-4 w-4 shrink-0" />
+                            </Button>
+                        )}
+                        </div>
                     ))}
                 </div>
             ) : (

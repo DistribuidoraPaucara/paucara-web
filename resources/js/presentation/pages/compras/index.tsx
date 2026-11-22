@@ -32,6 +32,10 @@ export default function ComprasIndex() {
   const filtros = props.filtros || {};
   const estadisticas = props.estadisticas;
   const datosParaFiltros = props.datosParaFiltros;
+  // El orden y la paginación no cuentan como filtros
+  const hayFiltros = Object.entries(filtros).some(
+    ([clave, valor]) => !['sort_by', 'sort_dir', 'page', 'per_page'].includes(clave) && valor !== '' && valor != null
+  );
 
   return (
     <AppLayout breadcrumbs={[{ title: 'Compras', href: '/compras' }]}>
@@ -47,6 +51,7 @@ export default function ComprasIndex() {
                 ? `${compras.from}-${compras.to} de ${compras.total} compras`
                 : 'No se encontraron compras'
               }
+              {hayFiltros && <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">· con filtros aplicados</span>}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -88,10 +93,7 @@ export default function ComprasIndex() {
 
         {/* Paginación */}
         {compras.last_page > 1 && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Mostrando {compras.from} a {compras.to} de {compras.total} resultados
-            </div>
+          <div className="flex items-center justify-end">
             <div className="flex space-x-1">
               {compras.links?.map((link, index) => (
                 <Link

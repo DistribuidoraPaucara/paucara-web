@@ -1,9 +1,16 @@
 import { useAuth } from '@/application/hooks/use-auth';
 import { ComprasService } from '@/infrastructure/services/compras.service';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyExacto } from '@/lib/utils';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
-import { Link } from '@inertiajs/react';
-import { AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, Edit, Eye, Printer } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import { Link, router } from '@inertiajs/react';
+import { AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, Copy, Edit, Eye, MoreVertical, Package, Printer, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import AnularCompraModal, { type ErrorAnulacion } from './AnularCompraModal';
@@ -50,6 +57,23 @@ const getEstadoColor = (estado?: EstadoDocumento) => {
         default:
             return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
+};
+
+// Estados en los que la compra ya no se puede editar (igual que en create.tsx)
+const ESTADOS_SOLO_LECTURA = ['FACTURADO', 'CANCELADO', 'ANULADO', 'ANULADA'];
+
+const estadoNombre = (compra: Compra) => compra.estado_documento?.nombre?.toUpperCase() ?? '';
+const estaAprobada = (compra: Compra) => compra.estado_documento?.codigo === 'APROBADO';
+
+// Fecha corta + hora en una línea aparte
+const formatearFecha = (valor?: string) => {
+    if (!valor) return { dia: '-', hora: '' };
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return { dia: '-', hora: '' };
+    return {
+        dia: fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+        hora: fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    };
 };
 
 // Columnas ordenables (deben coincidir con sort_by aceptado en CompraController@index).
@@ -103,7 +127,7 @@ function EncabezadoOrdenable({
 
 export default function TablaCompras({ compras, sortBy = 'created_at', sortDir = 'desc', className = '' }: Props) {
     const { can } = useAuth();
-    const [anularModal, setAnularModal] = useState<{ isOpen: boolean; compra?: Compra }>({ isOpen: false });
+    const [anularModal, setAnularModal] = useState<{ isOpen: boolean; compra?: Compra; duplicarDespues?: boolean }>({ isOpen: false });
     const [errorAnulacion, setErrorAnulacion] = useState<ErrorAnulacion | null>(null);
     const [isAnulando, setIsAnulando] = useState(false);
     const [outputModal, setOutputModal] = useState<{ isOpen: boolean; compra?: Compra }>({ isOpen: false });
@@ -124,9 +148,9 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
         comprasService.search(Object.fromEntries(currentParams.entries()));
     };
 
-    const openAnularModal = (compra: Compra) => {
+    const openAnularModal = (compra: Compra, duplicarDespues = false) => {
         setErrorAnulacion(null);
-        setAnularModal({ isOpen: true, compra });
+        setAnularModal({ isOpen: true, compra, duplicarDespues });
     };
 
     const closeAnularModal = () => {
@@ -154,6 +178,15 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
             if (!response.ok) {
                 // Mostrar el motivo dentro del modal (sigue abierto)
                 setErrorAnulacion({ message: data.message || 'Error al anular la compra', motivos: data.motivos });
+                return;
+            }
+
+            // Anular y duplicar: abrir la copia para rehacer la compra (la original ya quedó ANULADA)
+            if (anularModal.duplicarDespues) {
+                const compraId = anularModal.compra.id;
+                toast.success('Compra anulada. Abriendo copia para rehacerla...');
+                closeAnularModal();
+                router.visit(`/compras/${compraId}/duplicar`);
                 return;
             }
 
@@ -212,135 +245,170 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <EncabezadoOrdenable campo="id" {...orden}>Folio</EncabezadoOrdenable>
-                            <EncabezadoOrdenable campo="numero" {...orden}>Número</EncabezadoOrdenable>
+                            <EncabezadoOrdenable campo="id" {...orden}>Compra</EncabezadoOrdenable>
                             <EncabezadoOrdenable campo="estado" {...orden}>Estado</EncabezadoOrdenable>
                             <EncabezadoOrdenable campo="proveedor" {...orden}>Proveedor</EncabezadoOrdenable>
                             <EncabezadoOrdenable campo="total" {...orden}>Total</EncabezadoOrdenable>
+                            <th scope="col" className="px-2 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">Pago</th>
                             <EncabezadoOrdenable campo="created_at" {...orden}>Fecha</EncabezadoOrdenable>
-                            <th className="px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">-</th>
+                            <th scope="col" className="px-2 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                        {comprasSeguras.map((compra) => (
-                            <tr key={compra.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td className="px-2 py-4 text-center text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
-                                    #{compra.id}
-                                </td>
-                                <td className="px-2 py-4 text-xs font-mono whitespace-nowrap text-gray-900 dark:text-white">
-                                    {compra.numero}
+                        {comprasSeguras.map((compra) => {
+                            const fecha = formatearFecha(compra.created_at);
+                            const puedeEditar = can('compras.update') && !ESTADOS_SOLO_LECTURA.includes(estadoNombre(compra));
+                            const puedeAnular = can('compras.update') && estaAprobada(compra);
+                            const puedeAnularYDuplicar = can('compras.anular') && can('compras.create') && estaAprobada(compra);
 
-                                    <p>
+                            return (
+                                <tr key={compra.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    {/* Compra: folio, número y factura */}
+                                    <td className="px-3 py-3 text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                        <div className="text-sm font-semibold">#{compra.id}</div>
+                                        <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{compra.numero}</div>
                                         {compra.numero_factura && (
-                                            <span className="mt-2 rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+                                            <span className="mt-1 inline-flex rounded bg-violet-100 px-2 py-0.5 font-mono text-xs text-violet-800 dark:bg-violet-900 dark:text-violet-200">
                                                 Factura: #{compra.numero_factura}
                                             </span>
                                         )}
-                                    </p>
-                                </td>
-                                <td className="px-2 py-4 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
-                                    <span
-                                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getEstadoColor(compra.estado_documento)}`}
-                                    >
-                                        {compra.estado_documento?.nombre ?? 'Sin estado'}
-                                    </span>
-                                </td>
+                                    </td>
 
-                                <td className="px-2 py-4 text-xs whitespace-nowrap text-gray-900 dark:text-white">
-                                    <p className="text-xs font-medium">{compra.proveedor?.nombre ?? 'Sin proveedor'}</p>
-                                    <p className="text-xs text-gray-400">
-                                        <strong>Creador: </strong>
-                                        {compra.usuario?.name}
-                                    </p>
-                                </td>
+                                    {/* Estado */}
+                                    <td className="px-2 py-3 text-center text-xs whitespace-nowrap">
+                                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getEstadoColor(compra.estado_documento)}`}>
+                                            {compra.estado_documento?.nombre ?? 'Sin estado'}
+                                        </span>
+                                    </td>
 
-                                <td className="px-2 py-4 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
-                                    <div className="font-mono text-xs">
-                                        <div className="font-semibold">{formatCurrency(Number(compra.total), compra.moneda?.simbolo)}</div>
-                                        {compra.descuento > 0 && (
-                                            <div className="text-xs text-gray-500">
-                                                Desc: {formatCurrency(Number(compra.descuento), compra.moneda?.simbolo)}
+                                    {/* Proveedor */}
+                                    <td className="px-2 py-3 text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                        <p className="text-xs font-medium">{compra.proveedor?.nombre ?? 'Sin proveedor'}</p>
+                                        <p className="text-xs text-gray-400">
+                                            <strong>Creador: </strong>
+                                            {compra.usuario?.name}
+                                        </p>
+                                    </td>
+
+                                    {/* Total: todos los decimales registrados */}
+                                    <td className="px-2 py-3 text-right text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                        <div className="font-mono text-sm font-semibold">
+                                            {formatCurrencyExacto(Number(compra.total), compra.moneda?.codigo)}
+                                        </div>
+                                        {Number(compra.descuento) > 0 && (
+                                            <div className="font-mono text-xs text-gray-500">
+                                                Desc: {formatCurrencyExacto(Number(compra.descuento), compra.moneda?.codigo)}
                                             </div>
                                         )}
-                                    </div>
-                                    {compra.tipo_pago ? (
-                                        <span
-                                            className={`inline-flex rounded px-2 py-1 text-xs font-medium ${
-                                                compra.tipo_pago.codigo === 'CONTADO'
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                                            }`}
-                                        >
-                                            {compra.tipo_pago.nombre}
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-gray-400">Sin tipo</span>
-                                    )}
-                                </td>
-                                <td className="px-2 py-4 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
-                                    <div className="font-medium">
-                                        {new Date(compra.created_at).toLocaleString('es-ES', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                            second: '2-digit',
-                                        })}
-                                    </div>
-                                </td>
+                                    </td>
 
-                                <td className="px-2 py-4 text-right text-sm font-medium whitespace-nowrap">
-                                    <div className="flex justify-end gap-2">
-                                        {can('compras.show') && (
-                                            <Link
-                                                href={`/compras/${compra.id}`}
-                                                className="inline-flex items-center rounded p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                                                title="Ver detalle"
+                                    {/* Pago */}
+                                    <td className="px-2 py-3 text-center text-xs whitespace-nowrap">
+                                        {compra.tipo_pago ? (
+                                            <span
+                                                className={`inline-flex rounded px-2 py-1 text-xs font-medium ${
+                                                    compra.tipo_pago.codigo === 'CONTADO'
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                                                }`}
                                             >
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
+                                                {compra.tipo_pago.nombre}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">Sin tipo</span>
                                         )}
+                                    </td>
 
-                                        {/* Botón Imprimir/Exportar - Disponible para todas las compras */}
-                                        {can('compras.show') && (
-                                            <button
-                                                onClick={() => setOutputModal({ isOpen: true, compra })}
-                                                className="inline-flex items-center rounded p-2 text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                                                title="Imprimir documento"
-                                            >
-                                                <Printer className="h-4 w-4" />
-                                            </button>
-                                        )}
+                                    {/* Fecha corta + hora */}
+                                    <td className="px-2 py-3 text-center text-xs whitespace-nowrap text-gray-900 dark:text-white">
+                                        <div className="font-medium">{fecha.dia}</div>
+                                        <div className="text-gray-500 dark:text-gray-400">{fecha.hora}</div>
+                                    </td>
 
-                                        {/* Botón Editar - disponible si el usuario puede actualizar compras */}
-                                        {can('compras.update') && (
-                                            <Link
-                                                href={`/compras/${compra.id}/edit`}
-                                                className="inline-flex items-center rounded p-2 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/20 dark:hover:text-amber-300"
-                                                title="Editar"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Link>
-                                        )}
+                                    {/* Acciones: ver y eliminar a la vista; el resto en el menú */}
+                                    <td className="px-2 py-3 text-right text-sm whitespace-nowrap">
+                                        <div className="flex items-center justify-end gap-1">
+                                            {can('compras.show') && (
+                                                <Link
+                                                    href={`/compras/${compra.id}`}
+                                                    className="inline-flex items-center rounded p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                                                    title="Ver detalle"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Link>
+                                            )}
 
-                                        {/* Botón Anular - Solo si está APROBADO */}
-                                        {can('compras.update') && compra.estado_documento?.codigo === 'APROBADO' && (
-                                            <button
-                                                onClick={() => openAnularModal(compra)}
-                                                disabled={isAnulando}
-                                                className="inline-flex items-center rounded p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                                                title="Anular compra"
-                                            >
-                                                <AlertCircle className="h-4 w-4" />
-                                            </button>
-                                        )}
+                                            {can('compras.delete') && <EliminarCompraDialog compra={compra} onSuccess={() => window.location.reload()} />}
 
-                                        {can('compras.delete') && <EliminarCompraDialog compra={compra} onSuccess={() => window.location.reload()} />}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        className="inline-flex items-center rounded p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                        title="Más acciones"
+                                                        aria-label={`Más acciones de la compra ${compra.numero}`}
+                                                    >
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-56">
+                                                    {can('compras.show') && (
+                                                        <DropdownMenuItem onClick={() => setOutputModal({ isOpen: true, compra })}>
+                                                            <Printer className="mr-2 h-4 w-4" />
+                                                            Imprimir
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {puedeEditar && (
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/compras/${compra.id}/edit`}>
+                                                                <Edit className="mr-2 h-4 w-4" />
+                                                                Editar
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {can('compras.create') && (
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/compras/${compra.id}/duplicar`}>
+                                                                <Copy className="mr-2 h-4 w-4" />
+                                                                Duplicar
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {/* Asignar lotes y vencimientos: solo para compras aprobadas */}
+                                                    {can('compras.update') && estaAprobada(compra) && (
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/compras/${compra.id}/editar-lotes`}>
+                                                                <Package className="mr-2 h-4 w-4" />
+                                                                Asignar lotes
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {(puedeAnular || puedeAnularYDuplicar) && <DropdownMenuSeparator />}
+
+                                                    {puedeAnular && (
+                                                        <DropdownMenuItem onClick={() => openAnularModal(compra)} disabled={isAnulando} className="text-red-600 focus:text-red-700 dark:text-red-400">
+                                                            <AlertCircle className="mr-2 h-4 w-4" />
+                                                            Anular
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {puedeAnularYDuplicar && (
+                                                        <DropdownMenuItem onClick={() => openAnularModal(compra, true)} disabled={isAnulando} className="text-amber-600 focus:text-amber-700 dark:text-amber-400">
+                                                            <RotateCcw className="mr-2 h-4 w-4" />
+                                                            Anular y duplicar
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -353,6 +421,7 @@ export default function TablaCompras({ compras, sortBy = 'created_at', sortDir =
                 onConfirm={handleAnularCompra}
                 isLoading={isAnulando}
                 error={errorAnulacion}
+                duplicarDespues={anularModal.duplicarDespues}
             />
 
             {/* Modal de exportación/impresión */}

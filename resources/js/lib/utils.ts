@@ -5,6 +5,17 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+// Muestra TODOS los decimales registrados (sin redondear), sin ceros de relleno.
+// Las columnas de dinero en BD son decimal(18,10), así que 10 decimales es el máximo posible.
+export function formatCurrencyExacto(amount: number, currency = 'BOB'): string {
+    return new Intl.NumberFormat('es-BO', {
+        style: 'currency',
+        currency: currency === 'USD' ? 'USD' : 'BOB',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 10,
+    }).format(amount);
+}
+
 export function formatCurrency(amount: number, currency = 'BOB'): string {
     return new Intl.NumberFormat('es-BO', {
         style: 'currency',

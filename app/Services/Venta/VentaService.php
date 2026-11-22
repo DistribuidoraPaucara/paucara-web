@@ -361,9 +361,9 @@ class VentaService
             // Si el DTO no vino con peso o vino con 0, calcular desde detalles
             if (($dto->peso_total_estimado ?? 0) <= 0) {
                 $pesoTotalCalculado = 0;
-                $detallesCreados = $venta->detalles()->get();
+                $detallesVenta = $venta->detalles()->get();
 
-                foreach ($detallesCreados as $detalle) {
+                foreach ($detallesVenta as $detalle) {
                     // Si el detalle tiene combo_items_seleccionados, calcular peso desde los items del combo
                     if (!empty($detalle->combo_items_seleccionados) && is_array($detalle->combo_items_seleccionados)) {
                         $pesoCombo = 0;
@@ -387,7 +387,7 @@ class VentaService
                     'venta_id' => $venta->id,
                     'peso_anterior' => $dto->peso_total_estimado ?? 0,
                     'peso_calculado' => $pesoTotalCalculado,
-                    'tiene_combos' => count(array_filter($detallesCreados->all(), fn($d) => !empty($d->combo_items_seleccionados))) > 0,
+                    'tiene_combos' => count(array_filter($detallesVenta->all(), fn($d) => !empty($d->combo_items_seleccionados))) > 0,
                 ]);
 
                 // Actualizar peso en la venta

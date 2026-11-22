@@ -6,7 +6,6 @@ import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog';
 import { Input } from '@/presentation/components/ui/input';
-import SearchSelect from '@/presentation/components/ui/search-select'; // ✅ NUEVO
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Head, router } from '@inertiajs/react';
@@ -21,7 +20,11 @@ import {
     Clock,
     CreditCard,
     Eye,
+    FileSpreadsheet,
+    FileText,
+    MessageCircle,
     MoreVertical,
+    Phone,
     Plus,
     Printer,
     Trash2,
@@ -47,6 +50,7 @@ interface Cliente {
     id: number;
     nombre: string;
     codigo_cliente: string;
+    telefono?: string | null;
 }
 
 interface Venta {
@@ -113,6 +117,20 @@ interface CuentasPorCobrarIndexResponse {
         monto_total_vencido: number;
         total_mes: number;
         promedio_dias_pago: number;
+    };
+    resumen_filtrado?: {
+        cuentas: number;
+        monto_original: number;
+        saldo_pendiente: number;
+        vencido: number;
+        cuentas_vencidas: number;
+        antiguedad?: {
+            vigente: number;
+            d1_30: number;
+            d31_60: number;
+            d61_90: number;
+            d90_mas: number;
+        };
     };
     datosParaFiltros: {
         clientes: Cliente[];
@@ -202,16 +220,6 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         { valor: 'ANULADO', etiqueta: 'Anulado' },
     ];
 
-    // ✅ NUEVO: Columnas por las que se puede ordenar (mismas que acepta el backend)
-    const camposOrdenables = [
-        { valor: 'id', etiqueta: 'ID' },
-        { valor: 'fecha_vencimiento', etiqueta: 'Fecha de vencimiento' },
-        { valor: 'created_at', etiqueta: 'Fecha de creación' },
-        { valor: 'monto_original', etiqueta: 'Monto original' },
-        { valor: 'saldo_pendiente', etiqueta: 'Saldo pendiente' },
-        { valor: 'estado', etiqueta: 'Estado' },
-    ];
-
     // Validación defensiva para evitar errores si cuentasPorCobrar es undefined
     if (!cuentasPorCobrar || !cuentasPorCobrar.filtros) {
         return (
@@ -253,6 +261,108 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         router.get('/ventas/cuentas-por-cobrar');
     };
 
+    // Filtros rápidos: fusionan cambios en los filtros actuales y vuelven a consultar
+    const aplicarFiltrosRapidos = (cambios: Partial<FiltrosCuentasPorCobrar>, quitar: (keyof FiltrosCuentasPorCobrar)[] = []) => {
+        const nuevosFiltros: FiltrosCuentasPorCobrar = { ...filtros, ...cambios };
+        quitar.forEach((clave) => delete nuevosFiltros[clave]);
+        setFiltros(nuevosFiltros);
+        router.get('/ventas/cuentas-por-cobrar', nuevosFiltros as Record<string, string | boolean | undefined>, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const fechaISO = (fecha: Date) => {
+        const y = fecha.getFullYear();
+        const m = String(fecha.getMonth() + 1).padStart(2, '0');
+        const d = String(fecha.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    const hoyISO = fechaISO(new Date());
+    const en7DiasISO = fechaISO(new Date(Date.now() + 7 * 86400000));
+    const chipsRapidos = [
+        {
+            id: 'todas',
+            etiqueta: 'Todas',
+            activo: !filtros.solo_vencidas && !filtros.estado && !filtros.fecha_vencimiento_desde && !filtros.fecha_vencimiento_hasta,
+            accion: () => aplicarFiltrosRapidos({}, ['solo_vencidas', 'estado', 'fecha_vencimiento_desde', 'fecha_vencimiento_hasta']),
+        },
+        {
+            id: 'vencidas',
+            etiqueta: 'Vencidas',
+            activo: Boolean(filtros.solo_vencidas),
+            accion: () => aplicarFiltrosRapidos({ solo_vencidas: !filtros.solo_vencidas }, filtros.solo_vencidas ? ['solo_vencidas'] : []),
+        },
+        {
+            id: 'semana',
+            etiqueta: 'Vencen en 7 días',
+            activo: filtros.fecha_vencimiento_desde === hoyISO && filtros.fecha_vencimiento_hasta === en7DiasISO,
+            accion: () =>
+                filtros.fecha_vencimiento_desde === hoyISO && filtros.fecha_vencimiento_hasta === en7DiasISO
+                    ? aplicarFiltrosRapidos({}, ['fecha_vencimiento_desde', 'fecha_vencimiento_hasta'])
+                    : aplicarFiltrosRapidos({ fecha_vencimiento_desde: hoyISO, fecha_vencimiento_hasta: en7DiasISO }),
+        },
+        {
+            id: 'pendientes',
+            etiqueta: 'Pendientes',
+            activo: String(filtros.estado || '').toUpperCase() === 'PENDIENTE',
+            accion: () =>
+                String(filtros.estado || '').toUpperCase() === 'PENDIENTE'
+                    ? aplicarFiltrosRapidos({}, ['estado'])
+                    : aplicarFiltrosRapidos({ estado: 'PENDIENTE' }),
+        },
+        {
+            id: 'parciales',
+            etiqueta: 'Parciales',
+            activo: String(filtros.estado || '').toUpperCase() === 'PARCIAL',
+            accion: () =>
+                String(filtros.estado || '').toUpperCase() === 'PARCIAL'
+                    ? aplicarFiltrosRapidos({}, ['estado'])
+                    : aplicarFiltrosRapidos({ estado: 'PARCIAL' }),
+        },
+    ];
+
+    // Teléfono de contacto de la cuenta (cliente directo o cliente de la venta)
+    const telefonoDeCuenta = (cuenta: CuentaPorCobrar) => (cuenta.cliente?.telefono || cuenta.venta?.cliente?.telefono || '').trim();
+
+    // Número para WhatsApp: solo dígitos, con código de Bolivia (591) si son 8 dígitos locales
+    const numeroWhatsApp = (telefono: string) => {
+        const digitos = telefono.replace(/\D/g, '');
+        return digitos.length === 8 ? `591${digitos}` : digitos;
+    };
+
+    // Ordenar desde el encabezado: primer clic descendente, segundo clic ascendente
+    const ordenarPor = (campo: string) => {
+        const esActual = (filtros.sort || 'id') === campo;
+        const order: 'asc' | 'desc' = esActual && (filtros.order || 'desc') === 'desc' ? 'asc' : 'desc';
+        const nuevosFiltros = { ...filtros, sort: campo, order };
+        setFiltros(nuevosFiltros);
+        router.get('/ventas/cuentas-por-cobrar', nuevosFiltros as Record<string, string | boolean | undefined>, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    // Encabezado ordenable: muestra la flecha solo en la columna activa
+    const thOrdenable = (campo: string, etiqueta: string, alineacion: 'left' | 'center' = 'left') => {
+        const activo = (filtros.sort || 'id') === campo;
+        const Icono = activo && filtros.order === 'asc' ? ChevronUp : ChevronDown;
+        return (
+            <th className={`px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400 text-${alineacion}`}>
+                <button
+                    type="button"
+                    onClick={() => ordenarPor(campo)}
+                    className={`inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white ${activo ? 'text-gray-900 dark:text-white' : ''}`}
+                    title={`Ordenar por ${etiqueta}`}
+                >
+                    {etiqueta}
+                    <Icono className={`h-3 w-3 ${activo ? 'opacity-100' : 'opacity-30'}`} />
+                </button>
+            </th>
+        );
+    };
+
     // ✅ NUEVO: Abre el reporte PDF con los filtros ya aplicados en la lista
     const generarReporte = () => {
         // Incluye el texto de búsqueda escrito aunque todavía no se haya pulsado "Buscar"
@@ -264,6 +374,18 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
             }
         });
         window.open(`/ventas/cuentas-por-cobrar/reporte?${params.toString()}`, '_blank');
+    };
+
+    // Descarga Excel (.xlsx) con los mismos filtros y orden de la tabla
+    const exportarExcel = () => {
+        const filtrosActivos = { ...filtros, q: searchInput.trim() };
+        const params = new URLSearchParams();
+        Object.entries(filtrosActivos).forEach(([clave, valor]) => {
+            if (valor !== undefined && valor !== null && valor !== '' && valor !== false) {
+                params.append(clave, String(valor));
+            }
+        });
+        window.location.href = `/ventas/cuentas-por-cobrar/exportar-excel?${params.toString()}`;
     };
 
     const handleAbrirModalPago = (cuenta: CuentaPorCobrar) => {
@@ -477,6 +599,8 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
     };
 
     // ✅ MEJORADO: Función para obtener color y icono de urgencia según días vencido
+    const textoVencida = (dias: number) => `Vencida hace ${dias} ${dias === 1 ? 'día' : 'días'}`;
+
     const getUrgenciaInfo = (diasVencido: number) => {
         if (diasVencido > 30) {
             return {
@@ -485,7 +609,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 textColor: 'text-red-800 dark:text-red-200',
                 borderColor: 'border-red-300 dark:border-red-700',
                 icon: AlertTriangle,
-                label: `${diasVencido} días vencido`,
+                label: textoVencida(diasVencido),
             };
         }
         if (diasVencido > 15) {
@@ -495,7 +619,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 textColor: 'text-amber-800 dark:text-amber-200',
                 borderColor: 'border-amber-300 dark:border-amber-700',
                 icon: AlertCircle,
-                label: `${diasVencido} días`,
+                label: textoVencida(diasVencido),
             };
         }
         if (diasVencido > 0) {
@@ -505,7 +629,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                 textColor: 'text-yellow-800 dark:text-yellow-200',
                 borderColor: 'border-yellow-300 dark:border-yellow-700',
                 icon: Clock,
-                label: `${diasVencido} días`,
+                label: textoVencida(diasVencido),
             };
         }
         return {
@@ -634,7 +758,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
         >
             <Head title="Cuentas por Cobrar" />
 
-            <div className="space-y-6 p-4">
+            <div className="space-y-2 p-2">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -694,48 +818,42 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
 
                 {/* Filtros */}
                 <div className="border-t border-gray-200 p-2 dark:border-gray-700">
-                    <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
+                    <div className="flex flex-wrap gap-2">
+                        {chipsRapidos.map((chip) => (
+                            <button
+                                key={chip.id}
+                                type="button"
+                                onClick={chip.accion}
+                                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                                    chip.activo
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                                }`}
+                            >
+                                {chip.etiqueta}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="mb-2 grid grid-cols-2 items-end gap-2 md:grid-cols-5">
+                        {/* Un solo buscador: cliente (nombre o código), número de cuenta o venta, referencia, usuario */}
+                        <div className="col-span-2 space-y-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Buscar</label>
                             <Input
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 onKeyPress={handleBusquedaEnter}
-                                placeholder="ID cuenta, ID venta, referencia, número, cliente, usuario..."
-                                className="dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            />
-                            {/* <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Presiona <kbd className="rounded bg-gray-200 px-1.5 py-0.5 text-xs dark:bg-gray-700">Enter</kbd> para buscar
-                                rápidamente
-                            </p> */}
-                        </div>
-                        {/* ✅ ACTUALIZADO: SearchSelect para cliente */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
-                            <SearchSelect
-                                id="cliente"
-                                label="Cliente"
-                                placeholder="Seleccione un cliente"
-                                value={filtros.cliente_id || ''}
-                                options={cuentasPorCobrar.datosParaFiltros.clientes.map((cliente) => ({
-                                    value: cliente.id,
-                                    label: cliente.nombre,
-                                    description: cliente.codigo_cliente,
-                                }))}
-                                onChange={(value) => handleFiltroChange('cliente_id', value)}
-                                allowClear={true}
-                                emptyText="No se encontraron clientes"
-                                searchPlaceholder="Buscar clientes..."
+                                placeholder="Cliente, ID cuenta, ID venta, referencia, usuario..."
+                                className="h-9 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Estado</label>
                             <Select
                                 value={filtros.estado || 'all'}
                                 onValueChange={(value) => handleFiltroChange('estado', value === 'all' ? '' : value)}
                             >
-                                <SelectTrigger className="dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                <SelectTrigger className="h-9 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                                     <SelectValue placeholder="Seleccionar estado..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -748,130 +866,44 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                 </SelectContent>
                             </Select>
                         </div>
-                    </div>
 
-                    {/* Rango de Fechas de Vencimiento */}
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">Rango de Fecha de Vencimiento</label>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-200 bg-blue-50 p-4 md:grid-cols-3 dark:border-blue-900/30 dark:bg-blue-950/20">
-                            {/* Fecha Desde */}
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-                                    Desde
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={filtros.fecha_vencimiento_desde || ''}
-                                    onChange={(e) => handleFiltroChange('fecha_vencimiento_desde', e.target.value)}
-                                    placeholder="Selecciona fecha inicial"
-                                    className="border-blue-300 bg-white focus:ring-blue-500 dark:border-blue-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                />
-                                {filtros.fecha_vencimiento_desde && (
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                                        A partir de {new Date(filtros.fecha_vencimiento_desde).toLocaleDateString('es-BO')}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Fecha Hasta */}
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
-                                    Hasta
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={filtros.fecha_vencimiento_hasta || ''}
-                                    onChange={(e) => handleFiltroChange('fecha_vencimiento_hasta', e.target.value)}
-                                    placeholder="Selecciona fecha final"
-                                    className="border-green-300 bg-white focus:ring-green-500 dark:border-gray-600 dark:border-green-900 dark:bg-gray-800 dark:text-white"
-                                />
-                                {filtros.fecha_vencimiento_hasta && (
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                                        Hasta {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Filtro: Solo Vencidas - Card Interactivo */}
-                            <div
-                                onClick={() => handleFiltroChange('solo_vencidas', !filtros.solo_vencidas)}
-                                className={`cursor-pointer rounded-lg border-2 p-2 transition-all ${
-                                    filtros.solo_vencidas
-                                        ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
-                                        : 'border-gray-200 bg-gray-50 hover:border-red-300 dark:border-gray-700 dark:bg-gray-800/50'
-                                }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
-                                            filtros.solo_vencidas ? 'border-red-500 bg-red-500' : 'border-gray-300 dark:border-gray-600'
-                                        }`}
-                                    >
-                                        {filtros.solo_vencidas && <CheckCircle2 className="h-4 w-4 text-white" />}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">🚨 Mostrar solo vencidas</p>
-                                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                                            Filtra cuentas con fecha vencimiento anterior a hoy
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Rango de vencimiento: en la misma fila */}
+                        <div className="space-y-1">
+                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                                <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                                Vence desde
+                            </label>
+                            <Input
+                                type="date"
+                                value={filtros.fecha_vencimiento_desde || ''}
+                                onChange={(e) => handleFiltroChange('fecha_vencimiento_desde', e.target.value)}
+                                className="h-9 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            />
                         </div>
 
-                        {/* Indicador de rango activo */}
-                        {/* {filtros.fecha_vencimiento_desde && filtros.fecha_vencimiento_hasta && (
-                            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900/30 dark:bg-green-950/20">
-                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                <span className="text-sm text-green-700 dark:text-green-300">
-                                    Filtrando: {new Date(filtros.fecha_vencimiento_desde).toLocaleDateString('es-BO')} →{' '}
-                                    {new Date(filtros.fecha_vencimiento_hasta).toLocaleDateString('es-BO')}
-                                </span>
-                            </div>
-                        )} */}
-                    </div>
-
-                    {/* ✅ NUEVO: Ordenamiento de la tabla (también se aplica al reporte) */}
-                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por</label>
-                            <Select value={filtros.sort || 'id'} onValueChange={(value) => handleFiltroChange('sort', value)}>
-                                <SelectTrigger className="dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {camposOrdenables.map((campo) => (
-                                        <SelectItem key={campo.valor} value={campo.valor}>
-                                            {campo.etiqueta}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</label>
-                            <Select value={filtros.order || 'desc'} onValueChange={(value) => handleFiltroChange('order', value)}>
-                                <SelectTrigger className="dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="asc">Ascendente (A → Z, menor → mayor)</SelectItem>
-                                    <SelectItem value="desc">Descendente (Z → A, mayor → menor)</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="space-y-1">
+                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                                <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
+                                Vence hasta
+                            </label>
+                            <Input
+                                type="date"
+                                value={filtros.fecha_vencimiento_hasta || ''}
+                                onChange={(e) => handleFiltroChange('fecha_vencimiento_hasta', e.target.value)}
+                                className="h-9 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            />
                         </div>
                     </div>
 
-                    <div className="mt-2 flex justify-between gap-3">
+                    <div className="mt-1 flex justify-between gap-3">
                         <Button onClick={limpiarFiltros} variant="outline">
                             🔄 Limpiar Filtros
                         </Button>
                         <div className="flex gap-3">
+                            <Button onClick={exportarExcel} variant="outline" className="flex items-center gap-2">
+                                <FileSpreadsheet className="h-4 w-4" />
+                                Exportar Excel
+                            </Button>
                             <Button onClick={generarReporte} variant="outline" className="flex items-center gap-2">
                                 <Printer className="h-4 w-4" />
                                 📄 Generar Reporte
@@ -883,37 +915,90 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                     </div>
                 </div>
 
+                {/* Resumen de lo que muestra la tabla (responde a los filtros) */}
+                {cuentasPorCobrar.resumen_filtrado && (
+                    <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm dark:border-gray-700 dark:bg-gray-800/60">
+                        <span className="text-gray-600 dark:text-gray-400">
+                            Resultado: <strong className="text-gray-900 dark:text-white">{cuentasPorCobrar.resumen_filtrado.cuentas}</strong> cuentas
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400">
+                            Monto original: <strong className="text-gray-900 dark:text-white">{formatCurrency(cuentasPorCobrar.resumen_filtrado.monto_original)}</strong>
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400">
+                            Saldo pendiente: <strong className="text-gray-900 dark:text-white">{formatCurrency(cuentasPorCobrar.resumen_filtrado.saldo_pendiente)}</strong>
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400">
+                            Vencido:{' '}
+                            <strong className="text-red-600 dark:text-red-400">
+                                {formatCurrency(cuentasPorCobrar.resumen_filtrado.vencido)} ({cuentasPorCobrar.resumen_filtrado.cuentas_vencidas})
+                            </strong>
+                        </span>
+                    </div>
+                )}
+
+                {/* Antigüedad del saldo pendiente de lo filtrado */}
+                {cuentasPorCobrar.resumen_filtrado?.antiguedad && (
+                    <div className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
+                        {(() => {
+                            const tramos = [
+                                { clave: 'vigente', etiqueta: 'Por vencer', color: 'bg-green-500' },
+                                { clave: 'd1_30', etiqueta: '1–30 días', color: 'bg-yellow-400' },
+                                { clave: 'd31_60', etiqueta: '31–60 días', color: 'bg-orange-500' },
+                                { clave: 'd61_90', etiqueta: '61–90 días', color: 'bg-red-500' },
+                                { clave: 'd90_mas', etiqueta: 'Más de 90 días', color: 'bg-red-800' },
+                            ] as const;
+                            const antig = cuentasPorCobrar.resumen_filtrado!.antiguedad;
+                            const total = tramos.reduce((acc, t) => acc + Number(antig[t.clave] || 0), 0);
+                            return (
+                                <>
+                                    <p className="mb-2 text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">Antigüedad del saldo</p>
+                                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                                        {tramos.map((t) => {
+                                            const monto = Number(antig[t.clave] || 0);
+                                            return monto > 0 ? (
+                                                <div
+                                                    key={t.clave}
+                                                    className={t.color}
+                                                    style={{ width: `${total > 0 ? (monto / total) * 100 : 0}%` }}
+                                                    title={`${t.etiqueta}: ${formatCurrency(monto)}`}
+                                                />
+                                            ) : null;
+                                        })}
+                                    </div>
+                                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
+                                        {tramos.map((t) => (
+                                            <div key={t.clave} className="flex items-center gap-2">
+                                                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${t.color}`} />
+                                                <span className="text-gray-600 dark:text-gray-400">{t.etiqueta}</span>
+                                                <span className="ml-auto font-semibold text-gray-900 dark:text-white">{formatCurrency(Number(antig[t.clave] || 0))}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+                )}
+
                 {/* Tabla de Cuentas por Cobrar */}
                 <div>
                     <div className="overflow-y-auto rounded-lg border border-gray-200 shadow dark:border-gray-700">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Folio
-                                    </th>
+                                    {thOrdenable('id', 'Folio')}
                                     <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Venta
                                     </th>
                                     <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Cliente
                                     </th>
-                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Monto O.
-                                    </th>
-                                    <th className=" py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Saldo
-                                    </th>
-                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Creación
-                                    </th>
+                                    {thOrdenable('monto_original', 'Monto O.')}
+                                    {thOrdenable('saldo_pendiente', 'Saldo')}
+                                    {thOrdenable('created_at', 'Creación')}
                                     
-                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Estado
-                                    </th>
-                                    <th className="px-2 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                        Vencimiento
-                                    </th>
+                                    {thOrdenable('estado', 'Estado')}
+                                    {thOrdenable('fecha_vencimiento', 'Vencimiento')}
                                     {/* dias de retraso */}
                                     <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Días Vencido
@@ -1002,7 +1087,7 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                             <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
                                                                 <div className="py-1">
                                                                     {/* Opción: Ver Detalles */}
-                                                                    <button
+                                                                    {/* <button
                                                                         onClick={() => {
                                                                             setModalDetalle({ isOpen: true, cuenta });
                                                                             setMenuAbiertoId(null);
@@ -1011,7 +1096,43 @@ const CuentasPorCobrarIndex: React.FC<Props> = ({ cuentasPorCobrar }) => {
                                                                     >
                                                                         <Eye className="h-4 w-4" />
                                                                         Ver Detalles
+                                                                    </button> */}
+
+                                                                    {/* Opción: Pantalla completa de la cuenta */}
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setMenuAbiertoId(null);
+                                                                            router.visit(`/ventas/cuentas-por-cobrar/${cuenta.id}/show`);
+                                                                        }}
+                                                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                                    >
+                                                                        <FileText className="h-4 w-4" />
+                                                                        Abrir detalle completo
                                                                     </button>
+
+                                                                    {/* Opciones de contacto con el cliente (si tiene teléfono) */}
+                                                                    {telefonoDeCuenta(cuenta) && (
+                                                                        <>
+                                                                            <a
+                                                                                href={`tel:${telefonoDeCuenta(cuenta)}`}
+                                                                                onClick={() => setMenuAbiertoId(null)}
+                                                                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                                            >
+                                                                                <Phone className="h-4 w-4" />
+                                                                                Llamar ({telefonoDeCuenta(cuenta)})
+                                                                            </a>
+                                                                            <a
+                                                                                href={`https://wa.me/${numeroWhatsApp(telefonoDeCuenta(cuenta))}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                onClick={() => setMenuAbiertoId(null)}
+                                                                                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                                                            >
+                                                                                <MessageCircle className="h-4 w-4" />
+                                                                                WhatsApp
+                                                                            </a>
+                                                                        </>
+                                                                    )}
 
                                                                     {/* Opción: Cambiar Fecha */}
                                                                     <button

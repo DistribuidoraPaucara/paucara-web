@@ -534,6 +534,14 @@ class VentaController extends Controller
      */
     public function create(): InertiaResponse
     {
+        return Inertia::render('ventas/create', $this->propsFormularioVenta());
+    }
+
+    /**
+     * Props del formulario de nueva venta (compartidos por create() y duplicar())
+     */
+    private function propsFormularioVenta(): array
+    {
         // Obtener tipos de pago con sus iconos
         $tiposPago = TipoPago::activos()->select('id', 'nombre', 'codigo')->get()->map(fn($tipo) => [
             'id'     => $tipo->id,
@@ -581,7 +589,7 @@ class VentaController extends Controller
             ->select('id', 'nombre', 'nit', 'codigo_cliente', 'email', 'telefono')
             ->first();
 
-        return Inertia::render('ventas/create', [
+        return [
             'clientes'             => collect($clienteGeneral ? [$clienteGeneral] : []), // ✅ OPTIMIZADO: Solo cliente GENERAL para auto-seleccionar
             'cliente_general'      => $clienteGeneral, // ✅ NUEVO: Para referencia explícita en frontend
             'productos'            => $productos,                                                                                      // ✅ MODIFICADO: Solo productos con stock en almacén
@@ -595,7 +603,140 @@ class VentaController extends Controller
             'es_farmacia'          => (bool) $empresaPrincipal?->es_farmacia,                                          // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos
             'logistica_envios'     => (bool) $empresaPrincipal?->logistica_envios,                                     // ✅ NUEVO: Indicador para mostrar/ocultar logística de envíos
             // ✅ REMOVIDO (2026-08-26): direcciones_clientes innecesarias - Se cargan bajo demanda desde /api/clientes/buscar
+        ];
+    }
+
+    /**
+     * Datos del producto para una copia: el DTO de la venta no trae stock ni precios,
+     * así que se completan con el stock del almacén y la lista de precios actuales.
+     */
+    private function productoParaCopia(array $producto, int $productoId, int $almacenId): array
+    {
+        $stock = \App\Services\ProductoStockService::obtenerStockProducto($productoId, $almacenId);
+
+        $productoModelo = \App\Models\Producto::with('precios.tipoPrecio')->find($productoId);
+
+        // Rangos de precio por cantidad (activos, vigentes y de la empresa), con el precio de cada uno
+        $rangos = \App\Models\PrecioRangoCantidadProducto::query()
+            ->where('producto_id', $productoId)
+            ->activos()
+            ->vigentes()
+            ->when(auth()->user()?->empresa_id, fn ($q, $empresaId) => $q->where('empresa_id', $empresaId))
+            ->with('tipoPrecio:id,nombre,codigo')
+            ->orderBy('cantidad_minima')
+            ->orderBy('orden')
+            ->get()
+            ->map(function ($rango) use ($productoModelo) {
+                $precio = $productoModelo?->precios?->firstWhere('tipo_precio_id', $rango->tipo_precio_id);
+
+                return [
+                    'cantidad_minima'    => (int) $rango->cantidad_minima,
+                    'cantidad_maxima'    => $rango->cantidad_maxima !== null ? (int) $rango->cantidad_maxima : null,
+                    'tipo_precio_id'     => $rango->tipo_precio_id,
+                    'tipo_precio_nombre' => $rango->tipoPrecio?->nombre,
+                    'precio'             => $precio ? (float) $precio->precio : null,
+                ];
+            })
+            ->values()
+            ->all();
+
+        // Peso unitario: el formulario lo usa para calcular el peso total de la venta
+        $peso = (float) ($productoModelo?->peso ?? 0);
+
+        $precios = $productoModelo?->precios
+            ?->map(fn ($p) => [
+                'id'             => $p->id,
+                'tipo_precio_id' => $p->tipo_precio_id,
+                'nombre'         => $p->tipoPrecio?->nombre ?? 'Precio',
+                'precio'         => (float) $p->precio,
+            ])->values()->all() ?? [];
+
+        return array_merge($producto, [
+            'stock'                 => (float) ($stock['stock_disponible'] ?? 0),
+            'stock_disponible'      => (float) ($stock['stock_disponible'] ?? 0),
+            'stock_disponible_calc' => (float) ($stock['stock_disponible'] ?? 0),
+            'stock_total'           => (float) ($stock['stock_total'] ?? 0),
+            'stock_total_calc'      => (float) ($stock['stock_total'] ?? 0),
+            'stock_reservado'       => (float) ($stock['stock_reservado'] ?? 0),
+            'peso'                  => $peso,
+            'precios'               => $precios,
+            'rangos'                => $rangos,
         ]);
+    }
+
+    /**
+     * Duplicar una venta: abre el formulario de nueva venta prellenado con los datos
+     * de la venta origen (cliente, productos, cantidades, precios, etc.).
+     *
+     * NO crea nada en BD: la venta nueva (con id nuevo) se crea al confirmar el
+     * formulario, igual que una venta normal. Así no se descuenta stock ni se
+     * registra caja hasta que el usuario confirme.
+     *
+     * GET /ventas/{venta}/duplicar
+     */
+    public function duplicar(int $id): InertiaResponse | RedirectResponse
+    {
+        try {
+            $origen = Venta::findOrFail($id);
+            $dto = $this->ventaService->obtener($id)->toArray();
+
+            $copia = [
+                'id'                   => null,  // Venta nueva: sin id
+                'numero'               => '',    // Se genera al guardar
+                'fecha'                => now()->toDateString(),
+                'estado_documento_id'  => null,  // Usa APROBADO por defecto en el formulario
+                'estado_logistico'     => null,
+                'entrega_id'           => null,
+                'proforma_id'          => null,
+                'cliente_id'           => $origen->cliente_id,
+                'cliente'              => $dto['cliente'] ?? null,
+                'direccion_cliente_id' => $origen->direccion_cliente_id,
+                'tipo_pago_id'         => $origen->tipo_pago_id,
+                'moneda_id'            => $origen->moneda_id,
+                'tipo_documento_id'    => $origen->tipo_documento_id,
+                'almacen_id'           => $origen->almacen_id,
+                'requiere_envio'       => (bool) $origen->requiere_envio,
+                'politica_pago'        => $origen->politica_pago,
+                'canal_origen'         => $origen->canal_origen,
+                'preventista_id'       => $origen->preventista_id,
+                'observaciones'        => \App\Support\ObservacionesAnulacion::limpiar($origen->observaciones),
+                'origen_numero'        => $origen->numero,
+                'descuento'            => $origen->descuento,
+                'detalles'             => array_map(function ($d) use ($origen) {
+                    // El tipo de precio se toma del modelo: el DTO no lo expone
+                    $detalleOrigen = $origen->detalles->firstWhere('id', $d['id']);
+
+                    return [
+                        'id'                        => null,  // Detalle nuevo
+                        'producto_id'               => $d['producto_id'],
+                        // Stock y precios actuales del producto (la búsqueda por ID puede no devolverlo)
+                        'producto'                  => $this->productoParaCopia($d['producto'] ?? [], (int) $d['producto_id'], (int) ($origen->almacen_id ?? 1)),
+                        'cantidad'                  => $d['cantidad'],
+                        'precio_unitario'           => $d['precio_unitario'],  // Se conserva el precio de la venta original; editable
+                        'descuento'                 => $d['descuento'] ?? 0,
+                        'subtotal'                  => $d['subtotal'],
+                        'tipo_precio_id'            => $detalleOrigen?->tipo_precio_id,
+                        'tipo_precio_nombre'        => $detalleOrigen?->tipo_precio_nombre,
+                        'combo_items_seleccionados' => $d['combo_items_seleccionados'] ?? [],
+                    ];
+                }, $dto['detalles'] ?? []),
+            ];
+
+            Log::info('📋 VentaController::duplicar', [
+                'venta_origen_id' => $origen->id,
+                'venta_origen_numero' => $origen->numero,
+                'detalles' => count($copia['detalles']),
+            ]);
+
+            return Inertia::render('ventas/create', array_merge(
+                $this->propsFormularioVenta(),
+                ['venta_duplicar' => $copia],
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error al duplicar venta', ['venta_id' => $id, 'error' => $e->getMessage()]);
+
+            return redirect()->route('ventas.index')->with('error', 'No se pudo duplicar la venta');
+        }
     }
 
     /**
@@ -976,6 +1117,7 @@ class VentaController extends Controller
                                 'id'         => $d->producto->id,
                                 'nombre'     => $d->producto->nombre,
                                 'sku'        => $d->producto->sku,
+                                'peso'       => (float) ($d->producto->peso ?? 0),
                                 'es_combo'   => (bool) $d->producto->es_combo,
                                 'prestables' => $d->producto->prestables ?? [],
                                 // ✅ NUEVO: Marca del producto
@@ -1171,6 +1313,7 @@ class VentaController extends Controller
                         'id'         => $d->producto->id,
                         'nombre'     => $d->producto->nombre,
                         'sku'        => $d->producto->sku,
+                        'peso'       => (float) ($d->producto->peso ?? 0),
                         'es_combo'   => (bool) $d->producto->es_combo,
                         'prestables' => $d->producto->prestables ?? [],
                         'marca'      => $d->producto->marca ? [

@@ -438,7 +438,7 @@ export function ApprovalPaymentForm({
 
             <div>
                 {/* ✅ NUEVO: Fechas y Horas de Entrega (Solicitada vs Comprometida) */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 space-y-2">
+                <div className="grid grid-cols-1 gap-3 space-y-2">
                     <div className="flex flex-col gap-2">
                         {/* Método de Pago */}
                         <div className="space-y-2">

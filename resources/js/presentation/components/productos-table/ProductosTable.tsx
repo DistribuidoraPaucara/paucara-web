@@ -58,6 +58,11 @@ export default function ProductosTable({
     readOnly = false,
     tipo = 'compra',
     onUpdateDetailUnidadConPrecio,
+    mostrarPesoEnvio = false,
+    resumirDatosProducto = false,
+    enlaceEditarProducto = false,
+    ocultarRangos = false,
+    enlaceReservas = false,
     onManualTipoPrecioChange,
     onComboItemsChange,
     default_tipo_precio_id,
@@ -472,7 +477,7 @@ export default function ProductosTable({
     };
 
     return (
-        <div>
+        <div className="mt-4">
             {/* Buscador de productos */}
             <ProductSearchBar
                 tipo={tipo}
@@ -498,7 +503,7 @@ export default function ProductosTable({
                     )}
 
                     {/* Tabla de productos */}
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg overflow-hidden">
                         <thead className="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-zinc-700 dark:to-zinc-800 border-b-2 border-gray-300 dark:border-zinc-600">
                             <tr>
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
@@ -529,14 +534,24 @@ export default function ProductosTable({
                                     </>
                                 )}
                                 {tipo === 'venta' && (
-                                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
+                                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                         Precio Unitario
                                     </th>
                                 )}
                                 <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Subtotal
                                 </th>
-                                {tipo !== 'compra' && (
+                                {tipo === 'venta' && mostrarPesoEnvio && (
+                                    <>
+                                        <th className="px-2 py-2 text-center text-xs font-bold uppercase text-teal-700 dark:text-teal-300">
+                                            Peso Unit.
+                                        </th>
+                                        <th className="px-2 py-2 text-center text-xs font-bold uppercase text-teal-700 dark:text-teal-300">
+                                            Peso Total
+                                        </th>
+                                    </>
+                                )}
+                                {tipo !== 'compra' && !resumirDatosProducto && (
                                     <>
                                  <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase">
                                     Categoría
@@ -608,11 +623,31 @@ export default function ProductosTable({
                                         formatearPrecioVenta={formatearPrecioVenta}
                                         normalizeDateForInput={normalizeDateForInput}
                                         onUpdateDetailUnidadConPrecio={onUpdateDetailUnidadConPrecio}
+                                        mostrarPesoEnvio={mostrarPesoEnvio}
+                                        ocultarRangos={ocultarRangos || isClienteGeneral}
+                                        enlaceEditarProducto={enlaceEditarProducto}
+                                        enlaceReservas={enlaceReservas}
+                                        resumirDatosProducto={resumirDatosProducto}
                                         proformaConvertida={proformaConvertida}
                                     />
                                 );
                             })}
                         </tbody>
+                        {tipo === 'venta' && mostrarPesoEnvio && (() => {
+                            const pesoTotal = detalles.reduce(
+                                (suma, d) => suma + Number(d.cantidad || 0) * Number((d.producto as any)?.peso || 0),
+                                0,
+                            );
+                            return (
+                                <tfoot className="border-t-2 border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-200">
+                                    <tr>
+                                        <td colSpan={7} className="px-2 py-2 text-right">Peso total de la venta</td>
+                                        <td className="px-2 py-2 text-center whitespace-nowrap font-bold text-teal-800 dark:text-teal-200">{pesoTotal.toLocaleString('es-BO', { maximumFractionDigits: 3 })} kg</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            );
+                        })()}
                         {tipo === 'compra' && (() => {
                             const unidades = detalles.reduce((suma, d) => suma + Number(d.cantidad || 0), 0);
                             const subtotal = detalles.reduce((suma, d) => suma + Number(d.subtotal || 0), 0);

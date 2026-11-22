@@ -29,9 +29,11 @@ interface UbicacionesMultiplesModalProps {
     onClose: () => void;
     ubicaciones: Ubicacion[];
     titulo?: string;
+    // Muestra el título solo como tooltip (queda accesible para lectores de pantalla)
+    tituloComoTooltip?: boolean;
 }
 
-export function UbicacionesMultiplesModal({ isOpen, onClose, ubicaciones, titulo = 'Ubicaciones de Entrega' }: UbicacionesMultiplesModalProps) {
+export function UbicacionesMultiplesModal({ isOpen, onClose, ubicaciones, titulo = 'Ubicaciones de Entrega', tituloComoTooltip = false }: UbicacionesMultiplesModalProps) {
     // ✅ DEBUG: Console log de datos
     console.log('🗺️ [UbicacionesMultiplesModal] Props recibidas:', {
         isOpen,
@@ -174,9 +176,9 @@ export function UbicacionesMultiplesModal({ isOpen, onClose, ubicaciones, titulo
             <DialogContent className="flex h-screen w-screen flex-col overflow-hidden p-0" style={{ maxWidth: '95vw', maxHeight: '95vh' }}>
                 <DialogHeader className="flex-shrink-0 space-y-4 border-b bg-white px-6 pt-6 pb-4 dark:bg-gray-900">
                     <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <DialogTitle className="flex items-center gap-2">
-                                <MapPin className="h-5 w-5 text-blue-600" />
+                        <div title={tituloComoTooltip ? titulo : undefined}>
+                            <DialogTitle className={tituloComoTooltip ? 'sr-only' : 'flex items-center gap-2'}>
+                                {!tituloComoTooltip && <MapPin className="h-5 w-5 text-blue-600" />}
                                 {titulo}
                             </DialogTitle>
                             <DialogDescription>

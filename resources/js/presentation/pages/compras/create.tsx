@@ -143,6 +143,7 @@ const extractErrorMessages = (
 
 interface PageProps extends InertiaPageProps {
   compra?: Compra;
+  compra_duplicar?: Compra & { origen_numero?: string }; // ✅ Copia prellenada de una compra existente (duplicar). Se guarda como compra NUEVA al confirmar
   proveedores: Proveedor[];
   monedas: Moneda[];
   estados: EstadoDocumento[];
@@ -186,7 +187,10 @@ export default function CompraForm() {
   });
 
   const isEditing = Boolean(props.compra);
-  const title = isEditing ? `Editar Compra: ${props.compra?.numero}` : 'Nueva Compra';
+  const isDuplicando = !props.compra && Boolean(props.compra_duplicar);
+  // Fuente de datos iniciales: compra existente (edición) o copia (duplicar)
+  const compraBase = props.compra ?? props.compra_duplicar;
+  const title = isEditing ? `Editar Compra: ${props.compra?.numero}` : isDuplicando ? 'Nueva Compra (duplicada)' : 'Nueva Compra';
 
   // Hooks para búsqueda con autocompletado
   const proveedorSearch = useProveedorSearch();
@@ -205,29 +209,29 @@ export default function CompraForm() {
   const soloLectura = ['FACTURADO', 'CANCELADO', 'ANULADO'].includes(estadoActual || '');
 
   const { data, setData, post, put, processing, errors } = useForm<CompraFormData>({
-    numero: props.compra?.numero || undefined, // Solo para edición
+    numero: compraBase?.numero || undefined, // Solo para edición
     // ✅ FIX 2026-04-16: Usar zona horaria local en lugar de UTC para obtener fecha actual
-    fecha: props.compra?.fecha ? normalizeDateForInput(props.compra.fecha) : getTodayDateString(),
-    numero_factura: props.compra?.numero_factura ?? '',
-    subtotal: props.compra?.subtotal ?? 0,
-    descuento: props.compra?.descuento ?? 0,
-    impuesto: props.compra?.impuesto ?? 0,
-    total: props.compra?.total ?? 0,
-    observaciones: props.compra?.observaciones ?? '',
-    proveedor_id: props.compra?.proveedor_id ?? '',
-    usuario_id: props.compra?.usuario_id ?? user?.id ?? '',
-    estado_documento_id: props.compra?.estado_documento_id ??
+    fecha: compraBase?.fecha ? normalizeDateForInput(compraBase.fecha) : getTodayDateString(),
+    numero_factura: compraBase?.numero_factura ?? '',
+    subtotal: compraBase?.subtotal ?? 0,
+    descuento: compraBase?.descuento ?? 0,
+    impuesto: compraBase?.impuesto ?? 0,
+    total: compraBase?.total ?? 0,
+    observaciones: compraBase?.observaciones ?? '',
+    proveedor_id: compraBase?.proveedor_id ?? '',
+    usuario_id: compraBase?.usuario_id ?? user?.id ?? '',
+    estado_documento_id: compraBase?.estado_documento_id ??
       props.estados?.find(e => e.nombre === 'Borrador')?.id ??
       props.estados?.[0]?.id ?? '',
-    moneda_id: props.compra?.moneda_id ?? 1, // Por defecto moneda ID=1
-    tipo_pago_id: props.compra?.tipo_pago_id ??
+    moneda_id: compraBase?.moneda_id ?? 1, // Por defecto moneda ID=1
+    tipo_pago_id: compraBase?.tipo_pago_id ??
       props.tipos_pago?.find(t => t.codigo === 'EFECTIVO')?.id ??
       props.tipos_pago?.[0]?.id ?? '',
-    almacen_id: props.compra?.almacen_id ??
+    almacen_id: compraBase?.almacen_id ??
       props.almacenes?.find(a => a.nombre === 'Almacen Principal')?.id ??  // ✅ NUEVO 2026-03-24: Buscar Almacen Principal por defecto
       props.almacenes?.find(a => a.activo)?.id ??
       props.almacenes?.[0]?.id ?? '',
-    detalles: props.compra?.detalles?.map(d => ({
+    detalles: compraBase?.detalles?.map(d => ({
       id: d.id,
       producto_id: d.producto?.id ?? '',
       cantidad: d.cantidad,
@@ -291,16 +295,16 @@ export default function CompraForm() {
     }
   }, [data.proveedor_id]); // ✅ Solo depende de data.proveedor_id, no de proveedorValue
 
-  // Cargar el nombre del proveedor cuando se edita una compra
+  // Cargar el nombre del proveedor cuando se edita o duplica una compra
   useEffect(() => {
-    if (isEditing && data.proveedor_id) {
+    if ((isEditing || isDuplicando) && data.proveedor_id) {
       const proveedor = props.proveedores?.find(p => p.id === Number(data.proveedor_id));
       if (proveedor) {
         setProveedorDisplay(proveedor.nombre);
         console.log('✅ Proveedor cargado:', proveedor.nombre);
       }
     }
-  }, [isEditing, data.proveedor_id, props.proveedores]);
+  }, [isEditing, isDuplicando, data.proveedor_id, props.proveedores]);
 
   // Función para manejar la creación de proveedor
   const handleCreateProveedor = (searchQuery: string) => {
@@ -486,7 +490,8 @@ export default function CompraForm() {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (isEditing) return; // No guardar si estamos editando una compra existente
+    // No guardar si estamos editando o duplicando (no pisar el borrador normal de "Nueva compra")
+    if (isEditing || isDuplicando) return;
 
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -515,7 +520,8 @@ export default function CompraForm() {
 
   // ✅ NUEVO: Restaurar datos del localStorage al cargar
   useEffect(() => {
-    if (isEditing) return; // No restaurar si estamos editando una compra existente
+    // No restaurar si estamos editando o duplicando (la copia tiene prioridad sobre el borrador local)
+    if (isEditing || isDuplicando) return;
 
     const datosGuardados = localStorage.getItem('compra-create-draft');
     if (datosGuardados) {
@@ -634,6 +640,19 @@ export default function CompraForm() {
   const updateDetalle = (idx: number, field: keyof DetalleForm, value: string | number) => {
     const newDetalles = [...data.detalles];
     newDetalles[idx] = { ...newDetalles[idx], [field]: value };
+
+    // Subtotal editado: se despeja el precio (precio = (subtotal + descuento) / cantidad)
+    if (field === 'subtotal') {
+      const cantidad = Number(newDetalles[idx].cantidad);
+      if (!(cantidad > 0)) return; // Sin cantidad no hay cómo despejar el precio
+      const descuento = Number(newDetalles[idx].descuento) || 0;
+      const subtotal = Number(value);
+      // Máximo 10 decimales (la BD guarda decimal(18,10))
+      newDetalles[idx].precio_unitario = Number(((subtotal + descuento) / cantidad).toFixed(10));
+      newDetalles[idx].subtotal = subtotal;
+      setData('detalles', newDetalles);
+      return;
+    }
 
     // Recalcular subtotal para este detalle
     if (field === 'cantidad' || field === 'precio_unitario' || field === 'descuento') {
@@ -755,9 +774,26 @@ export default function CompraForm() {
     }
   };
 
+  // Validación visible: se activa al intentar guardar; los campos vacíos se marcan en rojo
+  const [intentoGuardar, setIntentoGuardar] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Atajo: Ctrl+Enter (o Cmd+Enter) guarda la compra
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        formRef.current?.requestSubmit();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const submit = (e: React.FormEvent) => {
     console.log('🔵 CompraForm::submit() - INICIADO');
     e.preventDefault();
+    setIntentoGuardar(true);
 
     if (!canCreate && !isEditing) {
       console.warn('❌ CompraForm::submit() - Permisos insuficientes para crear');
@@ -1109,6 +1145,7 @@ export default function CompraForm() {
       <Head title={title} />
 
       <form
+        ref={formRef}
         onSubmit={submit}
         onKeyDown={(e) => {
           // ✅ Prevenir envío del formulario con Enter en inputs
@@ -1128,9 +1165,10 @@ export default function CompraForm() {
               <button
                 type="button"
                 onClick={clearDraft}
-                className="px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
+                title="Descarta el borrador guardado en este navegador"
+                className="px-3 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/20 transition ease-in-out duration-150"
               >
-                Limpiar Borrador
+                Limpiar borrador
               </button>
             )}
             {/* ✅ NUEVO 2026-05-18: Botón para asignar lotes cuando compra está APROBADA */}
@@ -1150,6 +1188,7 @@ export default function CompraForm() {
             </Link>
             <button
               type="submit"
+              title="Guardar (Ctrl+Enter)"
               disabled={(!canCreate && !isEditing) || (!canUpdate && isEditing) || processing}
               className="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1157,6 +1196,12 @@ export default function CompraForm() {
             </button>
           </div>
         </div>
+
+        {isDuplicando && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-100">
+            Copia de la compra <strong className="font-mono">{props.compra_duplicar?.origen_numero}</strong>. Revisa proveedor, productos, precios, lotes y fechas antes de guardar. Se guardará como compra nueva con su propio número.
+          </div>
+        )}
 
         {((!canCreate && !isEditing) || (!canUpdate && isEditing)) && (
           <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-100">
@@ -1235,6 +1280,7 @@ export default function CompraForm() {
                 />
               </div>
               {errors.fecha && <p className="text-red-600 text-xs mt-1">{errors.fecha}</p>}
+              {!errors.fecha && intentoGuardar && !data.fecha && <p className="text-red-600 text-xs mt-1">Ingresa la fecha</p>}
             </div>
 
             <div>
@@ -1255,7 +1301,7 @@ export default function CompraForm() {
                 }}
                 placeholder="Escribir nombre del proveedor..."
                 emptyText="No se encontraron proveedores"
-                error={errors.proveedor_id}
+                error={errors.proveedor_id || (intentoGuardar && !data.proveedor_id ? 'Selecciona un proveedor' : undefined)}
                 disabled={soloLectura}
                 isSelected={!!proveedorValue}
                 required={true}
@@ -1289,7 +1335,7 @@ export default function CompraForm() {
                 placeholder="Seleccionar tipo de pago"
                 emptyText="No se encontraron tipos de pago"
                 searchPlaceholder="Buscar tipo de pago..."
-                error={errors.tipo_pago_id}
+                error={errors.tipo_pago_id || (intentoGuardar && !data.tipo_pago_id ? 'Selecciona el tipo de pago' : undefined)}
               />
             </div>
 
@@ -1321,7 +1367,7 @@ export default function CompraForm() {
                 placeholder="Seleccionar almacén"
                 emptyText="No se encontraron almacenes"
                 searchPlaceholder="Buscar almacén..."
-                error={errors.almacen_id}
+                error={errors.almacen_id || (intentoGuardar && !data.almacen_id ? 'Selecciona un almacén' : undefined)}
               />
             </div>
 
@@ -1432,12 +1478,15 @@ export default function CompraForm() {
             errors={errors}
             showLoteFields={true}
           />
+          {intentoGuardar && data.detalles.filter((d) => d.producto_id !== '').length === 0 && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">Agrega al menos un producto para guardar la compra.</p>
+          )}
         </div>
 
         {/* Resumen financiero */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-2">
+        <div className="sticky bottom-0 z-20 rounded-lg border-t border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
           {/* <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Resumen</h3> */}
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-6">
             <div className="w-64 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
@@ -1486,6 +1535,14 @@ export default function CompraForm() {
                 </div>
               </div>
             </div>
+            <button
+              type="submit"
+              title="Guardar (Ctrl+Enter)"
+              disabled={(!canCreate && !isEditing) || (!canUpdate && isEditing) || processing}
+              className="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processing ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
+            </button>
           </div>
         </div>
       </form>

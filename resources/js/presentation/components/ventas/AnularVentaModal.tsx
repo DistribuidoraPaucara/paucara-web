@@ -17,6 +17,8 @@ interface AnularVentaModalProps {
     ventaNumero: string;
     onConfirm: (motivo?: string) => void;
     isLoading?: boolean;
+    /** Si es true, al anular se abre la copia de la venta para rehacerla (Anular y duplicar) */
+    duplicarDespues?: boolean;
 }
 
 export default function AnularVentaModal({
@@ -24,7 +26,8 @@ export default function AnularVentaModal({
     onClose,
     ventaNumero,
     onConfirm,
-    isLoading = false
+    isLoading = false,
+    duplicarDespues = false,
 }: AnularVentaModalProps) {
     const [motivo, setMotivo] = useState('');
 
@@ -44,10 +47,15 @@ export default function AnularVentaModal({
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-red-500" />
-                        Anular Venta
+                        {duplicarDespues ? 'Anular y duplicar venta' : 'Anular Venta'}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                         ¿Estás seguro de que deseas anular la venta <strong>{ventaNumero}</strong>?
+                        {duplicarDespues && (
+                            <span className="block mt-2">
+                                Se abrirá una copia en "Nueva venta" para que la rehagas con los cambios que necesites.
+                            </span>
+                        )}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -86,7 +94,7 @@ export default function AnularVentaModal({
                         disabled={isLoading}
                         className="bg-red-600 hover:bg-red-700 text-white"
                     >
-                        {isLoading ? 'Anulando...' : 'Anular Venta'}
+                        {isLoading ? 'Anulando...' : duplicarDespues ? 'Anular y duplicar' : 'Anular Venta'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

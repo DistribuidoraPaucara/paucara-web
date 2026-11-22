@@ -1,4 +1,5 @@
 import { useAuth } from '@/application/hooks/use-auth';
+import { useCajaWarning } from '@/application/hooks/use-caja-warning';
 import type { VentaShow } from '@/domain/entities/ventas';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrencyWith2Decimals } from '@/lib/utils';
@@ -18,10 +19,13 @@ import { ConfirmacionesModal } from '@/presentation/components/ventas/Confirmaci
 import RegistrarConfirmacionModal from '@/presentation/components/ventas/RegistrarConfirmacionModal';
 import { UbicacionesMultiplesModal } from '@/presentation/pages/logistica/entregas/components/UbicacionesMultiplesModal';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { AlertCircle, Edit, MapPin, Package, Printer, User } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { AlertCircle, Edit, MapPin, Package, Printer, RotateCcw, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+
+// Peso en kilogramos con hasta 3 decimales
+const formatearPesoKg = (kg: number) => `${kg.toLocaleString('es-BO', { maximumFractionDigits: 3 })} kg`;
 
 interface PageProps extends InertiaPageProps {
     venta: VentaShow;
@@ -31,7 +35,8 @@ export default function VentaShow() {
     const { venta } = usePage<PageProps>().props;
     const { can } = useAuth();
     const [imagenCargada, setImagenCargada] = useState(true);
-    const [anularModal, setAnularModal] = useState<{ isOpen: boolean }>({ isOpen: false });
+    const [anularModal, setAnularModal] = useState<{ isOpen: boolean; duplicarDespues?: boolean }>({ isOpen: false });
+    const { shouldShowBanner: sinCajaAbierta } = useCajaWarning();
     const [isAnulando, setIsAnulando] = useState(false);
     const [outputModal, setOutputModal] = useState(false);
     // ✅ NUEVO: Estado para modal de confirmación de entrega
@@ -73,6 +78,14 @@ export default function VentaShow() {
                 return;
             }
 
+            // Anular y duplicar: abrir la copia para rehacer la venta (la original ya quedó ANULADA)
+            if (anularModal.duplicarDespues) {
+                toast.success('Venta anulada. Abriendo copia para rehacerla...');
+                setAnularModal({ isOpen: false });
+                router.visit(`/ventas/${venta.id}/duplicar`);
+                return;
+            }
+
             toast.success('Venta anulada exitosamente');
             setAnularModal({ isOpen: false });
 
@@ -95,12 +108,12 @@ export default function VentaShow() {
         <AppLayout
             breadcrumbs={[
                 { title: 'Ventas', href: '/ventas' },
-                { title: `Venta ${venta.id}`, href: '#' },
+                { title: `Venta #${venta.id}`, href: '#' },
             ]}
         >
-            <Head title={`Venta ${venta.id}`} />
+            <Head title={`Venta #${venta.id}`} />
 
-            <div className="flex items-center justify-between px-3 py-3">
+            <div className="flex items-center justify-between px-2 py-2">
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
                     <p>{venta.numero}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Folio: #{venta.id}</p>
@@ -187,6 +200,18 @@ export default function VentaShow() {
                                 {isAnulando ? 'Anulando...' : 'Anular'}
                             </DropdownMenuItem>
                         )}
+
+                        {/* Anular y duplicar - Anula y abre la copia para rehacer la venta (requiere caja abierta) */}
+                        {can('ventas.anular') && can('ventas.create') && esAprobada && (
+                            <DropdownMenuItem
+                                onClick={() => setAnularModal({ isOpen: true, duplicarDespues: true })}
+                                disabled={isAnulando || sinCajaAbierta}
+                                title={sinCajaAbierta ? 'Abre la caja para anular y duplicar' : undefined}
+                            >
+                                <RotateCcw className="mr-2 h-4 w-4" />
+                                Anular y duplicar
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -215,7 +240,7 @@ export default function VentaShow() {
                                     />
                                 </div>
                                 <div className="col-span-4 lg:col-span-5">
-                                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-5 items-start">
+                                    <div className="grid grid-cols-3 items-start gap-3 sm:grid-cols-5 lg:grid-cols-5">
                                         {/* Vendedor */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
@@ -229,19 +254,21 @@ export default function VentaShow() {
                                             </div>
                                         </div>
                                         {/* Preventista */}
-                                        {venta.preventista && ( <div className="flex items-center space-x-3">
-                                            <div className="flex-shrink-0">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                                                    <span className="text-lg">🧑‍💼</span>
+                                        {venta.preventista && (
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                                                        <span className="text-lg">🧑‍💼</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Preventista</p>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {venta.preventista?.name || 'No asignado'}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Preventista</p>
-                                                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                    {venta.preventista?.name || 'No asignado'}
-                                                </p>
-                                            </div>
-                                        </div> )}
+                                        )}
                                         {/* Creada */}
                                         <div className="flex items-center space-x-3">
                                             <div className="flex-shrink-0">
@@ -448,6 +475,12 @@ export default function VentaShow() {
                                         <th className="px-2 py-2 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Subtotal
                                         </th>
+                                        <th className="px-2 py-2 text-center text-xs font-bold tracking-wider text-teal-700 uppercase dark:text-teal-300">
+                                            Peso unit.
+                                        </th>
+                                        <th className="px-2 py-2 text-center text-xs font-bold tracking-wider text-teal-700 uppercase dark:text-teal-300">
+                                            Peso total
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900">
@@ -489,7 +522,10 @@ export default function VentaShow() {
                                                         #{detalle.producto.id}
                                                     </td>
                                                     <td className="px-2 py-2">
-                                                        <Link href={`/productos/${detalle.producto.id}/edit`} className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300">
+                                                        <Link
+                                                            href={`/productos/${detalle.producto.id}/edit`}
+                                                            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                                                        >
                                                             {esCombo && <span className="mr-2">📦</span>}
                                                             {detalle.producto.nombre}
                                                         </Link>
@@ -500,17 +536,33 @@ export default function VentaShow() {
                                                     <td className="px-2 py-2 text-sm text-gray-900 dark:text-white">
                                                         {(detalle.producto as any).marca?.nombre || '-'}
                                                     </td>
-                                                    <td className="px-2 py-2 text-sm text-gray-900 dark:text-white uppercase">
+                                                    <td className="px-2 py-2 text-sm text-gray-900 uppercase dark:text-white">
                                                         {(detalle.producto as any).unidad ? `${(detalle.producto as any).unidad.nombre}` : '-'}
                                                     </td>
-                                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap text-gray-900 dark:text-white">
-                                                        {typeof detalle.cantidad === 'number' ? (detalle.cantidad % 1 === 0 ? detalle.cantidad : detalle.cantidad.toFixed(2)) : detalle.cantidad}
+                                                    <td className="px-2 py-2 text-center text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                                        {typeof detalle.cantidad === 'number'
+                                                            ? detalle.cantidad % 1 === 0
+                                                                ? detalle.cantidad
+                                                                : detalle.cantidad.toFixed(2)
+                                                            : detalle.cantidad}
                                                     </td>
-                                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-center text-sm whitespace-nowrap text-gray-900 dark:text-white">
                                                         {formatCurrencyWith2Decimals(detalle.precio_unitario, venta.moneda.codigo)}
                                                     </td>
-                                                    <td className="px-2 py-2 text-sm text-center font-medium whitespace-nowrap text-gray-900 dark:text-white">
+                                                    <td className="px-2 py-2 text-center text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
                                                         {formatCurrencyWith2Decimals(detalle.subtotal, venta.moneda.codigo)}
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center whitespace-nowrap">
+                                                        <span className="rounded-md bg-teal-50 px-2 py-0.5 font-mono font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                                                            {formatearPesoKg(Number((detalle.producto as any)?.peso || 0))}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-2 py-2 text-center whitespace-nowrap">
+                                                        <span className="rounded-md bg-teal-100 px-2 py-0.5 font-mono font-bold text-teal-800 dark:bg-teal-800/40 dark:text-teal-200">
+                                                            {formatearPesoKg(
+                                                                Number(detalle.cantidad || 0) * Number((detalle.producto as any)?.peso || 0),
+                                                            )}
+                                                        </span>
                                                     </td>
                                                 </tr>
 
@@ -558,7 +610,10 @@ export default function VentaShow() {
                                                                     </td>
                                                                     <td className="px-6 py-3 pl-12 text-sm text-gray-700 dark:text-gray-300">
                                                                         {item.producto ? (
-                                                                            <Link href={`/productos/${item.producto.id}/edit`} className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300">
+                                                                            <Link
+                                                                                href={`/productos/${item.producto.id}/edit`}
+                                                                                className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                                                                            >
                                                                                 <span className="mr-2">└─</span>
                                                                                 {item.producto.nombre}
                                                                             </Link>
@@ -571,7 +626,11 @@ export default function VentaShow() {
                                                                     </td>
                                                                     <td colSpan={2}></td>
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                                                        {typeof cantidadTotal === 'number' ? (cantidadTotal % 1 === 0 ? cantidadTotal : cantidadTotal.toFixed(2)) : cantidadTotal}
+                                                                        {typeof cantidadTotal === 'number'
+                                                                            ? cantidadTotal % 1 === 0
+                                                                                ? cantidadTotal
+                                                                                : cantidadTotal.toFixed(2)
+                                                                            : cantidadTotal}
                                                                     </td>
                                                                     <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                                         {formatCurrencyWith2Decimals(precioUnitario, venta.moneda.codigo)}
@@ -588,6 +647,21 @@ export default function VentaShow() {
                                         );
                                     })}
                                 </tbody>
+                                <tfoot className="bg-gray-50 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-gray-200">
+                                    <tr>
+                                        <td colSpan={10} className="px-2 py-2 text-right">
+                                            Peso total de la venta
+                                        </td>
+                                        <td className="px-2 py-2 text-center font-bold whitespace-nowrap text-teal-800 dark:text-teal-200">
+                                            {formatearPesoKg(
+                                                venta.detalles.reduce(
+                                                    (acc, d) => acc + Number(d.cantidad || 0) * Number((d.producto as any)?.peso || 0),
+                                                    0,
+                                                ),
+                                            )}
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 
@@ -675,9 +749,9 @@ export default function VentaShow() {
                     {/* Cuenta por cobrar si existe */}
                     {venta.cuenta_por_cobrar && (
                         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">💳 Cuenta por Cobrar</h3>
+                            <h3 className="mb-1 text-lg font-medium text-gray-900 dark:text-white">💳 Cuenta por Cobrar</h3>
 
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-500 dark:text-gray-400">Monto Original</span>
                                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -738,16 +812,15 @@ export default function VentaShow() {
                                         {venta.cuenta_por_cobrar.estado.toLocaleUpperCase() === 'ANULADO' && '❌ Anulado'}
                                     </span>
                                 </div>
-
-                                {venta.cuenta_por_cobrar.observaciones && (
-                                    <div className="border-t border-gray-200 pt-1 dark:border-zinc-700">
-                                        <p className="mb-1 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Observaciones</p>
-                                        <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                                            {venta.cuenta_por_cobrar.observaciones}
-                                        </p>
-                                    </div>
-                                )}
                             </div>
+                            {venta.cuenta_por_cobrar.observaciones && (
+                                <div className="pt-1 dark:border-zinc-700">
+                                    <p className="mb-1 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Observaciones</p>
+                                    <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                                        {venta.cuenta_por_cobrar.observaciones}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -768,26 +841,32 @@ export default function VentaShow() {
                                                     href={`/prestamos/clientes/${prestamo.id}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="block rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-25 p-4 transition-all hover:border-blue-400 hover:shadow-md dark:border-blue-900/40 dark:from-blue-950/30 dark:to-blue-900/20 dark:hover:border-blue-800"
+                                                    className="to-blue-25 block rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 p-4 transition-all hover:border-blue-400 hover:shadow-md dark:border-blue-900/40 dark:from-blue-950/30 dark:to-blue-900/20 dark:hover:border-blue-800"
                                                 >
                                                     <div className="mb-2 flex items-start justify-between">
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2">
-                                                                <p className="font-semibold text-blue-900 dark:text-blue-100">PRC #{prestamo.numero}</p>
+                                                                <p className="font-semibold text-blue-900 dark:text-blue-100">
+                                                                    PRC #{prestamo.numero}
+                                                                </p>
                                                                 <span className="text-xs text-blue-600 dark:text-blue-300">(ID: {prestamo.id})</span>
                                                                 <span className="text-xs text-blue-500">↗</span>
                                                             </div>
-                                                            <p className="mt-1 text-sm font-medium text-blue-800 dark:text-blue-200">{prestamo.cliente_nombre}</p>
+                                                            <p className="mt-1 text-sm font-medium text-blue-800 dark:text-blue-200">
+                                                                {prestamo.cliente_nombre}
+                                                            </p>
                                                         </div>
-                                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                                            prestamo.estado === 'ACTIVO'
-                                                                ? 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100'
-                                                                : prestamo.estado === 'DEVUELTO'
-                                                                  ? 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100'
-                                                                  : prestamo.estado === 'VENCIDO'
-                                                                    ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100'
-                                                                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-                                                        }`}>
+                                                        <span
+                                                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                                prestamo.estado === 'ACTIVO'
+                                                                    ? 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100'
+                                                                    : prestamo.estado === 'DEVUELTO'
+                                                                      ? 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100'
+                                                                      : prestamo.estado === 'VENCIDO'
+                                                                        ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100'
+                                                                        : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                                                            }`}
+                                                        >
                                                             {prestamo.estado}
                                                         </span>
                                                     </div>
@@ -828,26 +907,34 @@ export default function VentaShow() {
                                                     href={`/prestamos/eventos/${prestamo.id}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="block rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-25 p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-900/40 dark:from-purple-950/30 dark:to-purple-900/20 dark:hover:border-purple-800"
+                                                    className="to-purple-25 block rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-900/40 dark:from-purple-950/30 dark:to-purple-900/20 dark:hover:border-purple-800"
                                                 >
                                                     <div className="mb-2 flex items-start justify-between">
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2">
-                                                                <p className="font-semibold text-purple-900 dark:text-purple-100">PRE #{prestamo.numero}</p>
-                                                                <span className="text-xs text-purple-600 dark:text-purple-300">(ID: {prestamo.id})</span>
+                                                                <p className="font-semibold text-purple-900 dark:text-purple-100">
+                                                                    PRE #{prestamo.numero}
+                                                                </p>
+                                                                <span className="text-xs text-purple-600 dark:text-purple-300">
+                                                                    (ID: {prestamo.id})
+                                                                </span>
                                                                 <span className="text-xs text-purple-500">↗</span>
                                                             </div>
-                                                            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">Evento ID: {prestamo.evento_id}</p>
+                                                            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">
+                                                                Evento ID: {prestamo.evento_id}
+                                                            </p>
                                                         </div>
-                                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                                            prestamo.estado === 'ACTIVO'
-                                                                ? 'bg-purple-200 text-purple-900 dark:bg-purple-800 dark:text-purple-100'
-                                                                : prestamo.estado === 'DEVUELTO'
-                                                                  ? 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100'
-                                                                  : prestamo.estado === 'VENCIDO'
-                                                                    ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100'
-                                                                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-                                                        }`}>
+                                                        <span
+                                                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                                prestamo.estado === 'ACTIVO'
+                                                                    ? 'bg-purple-200 text-purple-900 dark:bg-purple-800 dark:text-purple-100'
+                                                                    : prestamo.estado === 'DEVUELTO'
+                                                                      ? 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100'
+                                                                      : prestamo.estado === 'VENCIDO'
+                                                                        ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100'
+                                                                        : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                                                            }`}
+                                                        >
                                                             {prestamo.estado}
                                                         </span>
                                                     </div>
@@ -882,7 +969,7 @@ export default function VentaShow() {
 
                     {/* ✅ NUEVO: Sección de Confirmación de Entrega EXPANDIDA */}
                     {confirmacionEntrega && (
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                        <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                             <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">📦 Confirmación de Entrega</h2>
                             <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <div className="flex items-center space-x-3">
@@ -958,7 +1045,7 @@ export default function VentaShow() {
                                 )}
                             </div>
 
-                            <div className="space-y-6">
+                            <div className="space-y-2">
                                 {/* Desglose de Pagos */}
                                 {(() => {
                                     // ✅ Parsear desglose_pagos SOLO si realmente tiene datos
@@ -1154,8 +1241,8 @@ export default function VentaShow() {
 
                                 {/* Observaciones */}
                                 {confirmacionEntrega.observaciones_logistica && (
-                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-800">
-                                        <h3 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">📝 Observaciones</h3>
+                                    <div className="p-2">
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">📝 Observaciones</h3>
                                         <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                                             {confirmacionEntrega.observaciones_logistica}
                                         </p>
@@ -1163,7 +1250,7 @@ export default function VentaShow() {
                                 )}
 
                                 {/* Información de Confirmación */}
-                                <div className="grid grid-cols-2 gap-4 rounded-lg border border-blue-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400">
+                                {/* <div className="grid grid-cols-2 gap-4 rounded-lg border border-blue-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400">
                                     {confirmacionEntrega.confirmado_por && (
                                         <>
                                             <div>
@@ -1186,7 +1273,7 @@ export default function VentaShow() {
                                             </p>
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     )}
@@ -1200,6 +1287,7 @@ export default function VentaShow() {
                 ventaNumero={venta.numero}
                 onConfirm={handleAnularVenta}
                 isLoading={isAnulando}
+                duplicarDespues={anularModal.duplicarDespues}
             />
 
             {/* Modal de exportación/impresión */}
@@ -1367,7 +1455,7 @@ function ClienteInfo({ venta, imagenCargada, setImagenCargada, setShowImagenModa
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title="Abrir en WhatsApp"
-                                className="block text-xs text-center text-green-600 dark:text-green-400"
+                                className="block text-center text-xs text-green-600 dark:text-green-400"
                             >
                                 {/* <MessageCircle className="h-4 w-4" /> */}
                                 {venta.cliente.telefono}

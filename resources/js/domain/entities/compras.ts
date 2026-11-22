@@ -61,6 +61,7 @@ export interface DetalleCompra extends BaseEntity {
     subtotal: number;
     lote?: string | null;
     fecha_vencimiento?: string | null;
+    imagen_url?: string | null; // Imagen principal del producto (solo en la pantalla de detalle)
     // ✅ NUEVO 2026-03-24: Stock movement tracking
     cantidad_anterior?: number | null;
     cantidad_posterior?: number | null;
@@ -149,6 +150,10 @@ export interface FiltrosCompras {
     estado_documento_id?: string;
     moneda_id?: string;
     tipo_pago_id?: string;
+    usuario_id?: string | number;
+    monto_min?: string | number;
+    monto_max?: string | number;
+    con_factura?: 'si' | 'no' | '';
     fecha_desde?: string;
     fecha_hasta?: string;
     sort_by?: string;
@@ -181,6 +186,7 @@ export interface DatosParaFiltrosCompras {
     estados: EstadoDocumento[];
     monedas: Moneda[];
     tipos_pago: TipoPago[];
+    usuarios?: Array<{ id: number; name: string }>;
 }
 
 // =============== ESTADÍSTICAS ===============

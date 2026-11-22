@@ -1,3 +1,4 @@
+import { useAuth } from '@/application/hooks/use-auth';
 import { useCajaWarning } from '@/application/hooks/use-caja-warning';
 import AppLayout from '@/layouts/app-layout';
 import VentaPreviewModal from '@/presentation/components/VentaPreviewModal';
@@ -6,6 +7,7 @@ import { OutputSelectionModal } from '@/presentation/components/impresion/Output
 import { UbicacionesMultiplesModal } from '@/presentation/pages/logistica/entregas/components/UbicacionesMultiplesModal'; // ✅ NUEVO (2026-08-26): Modal de mapa
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { MapPin } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // Importar componentes y hooks adicionales
 import { useClienteSearch } from '@/infrastructure/hooks/use-api-search';
@@ -58,9 +60,11 @@ interface PageProps extends InertiaPageProps {
         };
     };
     venta?: Venta;
+    venta_duplicar?: Venta; // ✅ Copia prellenada de una venta existente (duplicar). Se guarda como venta NUEVA al confirmar
 }
 
 export default function VentaForm() {
+    const { can } = useAuth();
     const {
         clientes,
         cliente_general,
@@ -75,8 +79,12 @@ export default function VentaForm() {
         logistica_envios,
         auth,
         venta,
+        venta_duplicar,
     } = usePage<PageProps>().props;
     const isEditing = Boolean(venta);
+    const isDuplicando = !venta && Boolean(venta_duplicar);
+    // Fuente de datos iniciales: venta existente (edición) o copia (duplicar)
+    const ventaBase = venta ?? venta_duplicar;
     const isFarmacia = Boolean(es_farmacia);
     const { shouldShowBanner } = useCajaWarning();
 
@@ -264,39 +272,39 @@ export default function VentaForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, setData, processing, errors, reset } = useForm({
-        numero: venta?.numero || '', // Solo para edición, se genera automáticamente para nuevas ventas
-        fecha: venta?.fecha || new Date().toISOString().split('T')[0],
-        subtotal: venta?.subtotal || 0,
-        descuento: venta?.descuento || 0,
-        impuesto: venta?.impuesto || 0,
-        total: venta?.total || 0,
-        observaciones: venta?.observaciones || '',
-        cliente_id: venta?.cliente_id || 0,
+        numero: ventaBase?.numero || '', // Solo para edición, se genera automáticamente para nuevas ventas
+        fecha: ventaBase?.fecha || new Date().toISOString().split('T')[0],
+        subtotal: ventaBase?.subtotal || 0,
+        descuento: ventaBase?.descuento || 0,
+        impuesto: ventaBase?.impuesto || 0,
+        total: ventaBase?.total || 0,
+        observaciones: ventaBase?.observaciones || '',
+        cliente_id: ventaBase?.cliente_id || 0,
         usuario_id: auth?.user?.id || 0,
-        estado_documento_id: venta?.estado_documento_id || estadoDocumentoAprobadoId, // ✅ MODIFICADO: Usa APROBADO por defecto
-        moneda_id: venta?.moneda_id || 1, // Solo para edición, se establece automáticamente a BOB para nuevas ventas
-        proforma_id: venta?.proforma_id || undefined,
-        tipo_pago_id: venta?.tipo_pago_id || 1, // EFECTIVO por defecto
-        tipo_documento_id: venta?.tipo_documento_id || tipoDocumentoReciboId, // ✅ MODIFICADO: Usa Recibo (REC) por defecto dinámicamente
-        almacen_id: venta?.almacen_id || almacen_id_empresa, // ✅ MODIFICADO: Usa almacén de la empresa
-        requiere_envio: venta?.requiere_envio || false,
-        canal_origen: venta?.canal_origen || 'PRESENCIAL',
-        estado_logistico: venta?.estado_logistico || undefined,
+        estado_documento_id: ventaBase?.estado_documento_id || estadoDocumentoAprobadoId, // ✅ MODIFICADO: Usa APROBADO por defecto
+        moneda_id: ventaBase?.moneda_id || 1, // Solo para edición, se establece automáticamente a BOB para nuevas ventas
+        proforma_id: ventaBase?.proforma_id || undefined,
+        tipo_pago_id: ventaBase?.tipo_pago_id || 1, // EFECTIVO por defecto
+        tipo_documento_id: ventaBase?.tipo_documento_id || tipoDocumentoReciboId, // ✅ MODIFICADO: Usa Recibo (REC) por defecto dinámicamente
+        almacen_id: ventaBase?.almacen_id || almacen_id_empresa, // ✅ MODIFICADO: Usa almacén de la empresa
+        requiere_envio: ventaBase?.requiere_envio || false,
+        canal_origen: ventaBase?.canal_origen || 'PRESENCIAL',
+        estado_logistico: ventaBase?.estado_logistico || undefined,
         // ✅ NUEVO: Campo para logística de envíos
-        empresa_logistica_id: (venta?.empresa_logistica_id ? Number(venta.empresa_logistica_id) : null) as number | null,
+        empresa_logistica_id: (ventaBase?.empresa_logistica_id ? Number(ventaBase.empresa_logistica_id) : null) as number | null,
         // ✅ NUEVO: Campos de pago y auditoría
-        monto_pagado_inicial: venta?.monto_pagado_inicial || 0,
-        referencia_pago: venta?.referencia_pago || '',
+        monto_pagado_inicial: ventaBase?.monto_pagado_inicial || 0,
+        referencia_pago: ventaBase?.referencia_pago || '',
         // ✅ NUEVO: Política de pago por defecto ANTICIPADO_100 para ventas directas
-        politica_pago: venta?.politica_pago || 'ANTICIPADO_100',
+        politica_pago: ventaBase?.politica_pago || 'ANTICIPADO_100',
         // ✅ NUEVO: Estado de pago por defecto PAGADO (consistente con proformas)
-        estado_pago: venta?.estado_pago || 'PAGADO',
+        estado_pago: ventaBase?.estado_pago || 'PAGADO',
         // ✅ NUEVO: Dirección del cliente para envío
-        direccion_cliente_id: (venta?.direccion_cliente_id ? Number(venta.direccion_cliente_id) : null) as number | null,
+        direccion_cliente_id: (ventaBase?.direccion_cliente_id ? Number(ventaBase.direccion_cliente_id) : null) as number | null,
         // ✅ NUEVO: Preventista (User con rol de preventista)
-        preventista_id: (venta?.preventista_id ? Number(venta.preventista_id) : null) as number | null,
+        preventista_id: (ventaBase?.preventista_id ? Number(ventaBase.preventista_id) : null) as number | null,
         // ✅ NUEVO: Entrega (para asignar venta a una entrega existente)
-        entrega_id: (venta?.entrega_id ? Number(venta.entrega_id) : null) as number | null,
+        entrega_id: (ventaBase?.entrega_id ? Number(ventaBase.entrega_id) : null) as number | null,
     });
 
     // ✅ NUEVO (2026-04-21): Estado para múltiples pagos por venta
@@ -385,9 +393,10 @@ export default function VentaForm() {
             // Si desactiva requiere_envio, revertir política anterior
             // ✅ FIX (2026-11-06): No restaurar CREDITO si el tipo de pago ya no es crédito
             const tipoActual = (tipos_pago || []).find((t: any) => t.id === data.tipo_pago_id);
-            const anterior = politicaPagoAnteriorRef.current === 'CREDITO' && tipoActual?.codigo !== 'CREDITO'
-                ? 'ANTICIPADO_100'
-                : politicaPagoAnteriorRef.current;
+            const anterior =
+                politicaPagoAnteriorRef.current === 'CREDITO' && tipoActual?.codigo !== 'CREDITO'
+                    ? 'ANTICIPADO_100'
+                    : politicaPagoAnteriorRef.current;
             setData('politica_pago', anterior as any);
             console.log('✅ [requiere_envio=false] Revertiendo politica_pago a:', politicaPagoAnteriorRef.current);
         }
@@ -398,7 +407,8 @@ export default function VentaForm() {
     const clienteBorradoRef = useRef(false);
 
     useEffect(() => {
-        if (isEditing) return; // No guardar si estamos editando una venta existente
+        // No guardar si estamos editando o duplicando (no pisar el borrador normal de "Nueva venta")
+        if (isEditing || isDuplicando) return;
 
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
@@ -430,7 +440,8 @@ export default function VentaForm() {
 
     // ✅ NUEVO: Restaurar datos del localStorage al cargar
     useEffect(() => {
-        if (isEditing) return; // No restaurar si estamos editando una venta existente
+        // No restaurar si estamos editando o duplicando (la copia tiene prioridad sobre el borrador local)
+        if (isEditing || isDuplicando) return;
 
         const datosGuardados = localStorage.getItem('venta-create-draft');
         if (datosGuardados) {
@@ -493,9 +504,9 @@ export default function VentaForm() {
 
     // Inicializar detalles con productos y combo items map
     useEffect(() => {
-        if (venta?.detalles) {
+        if (ventaBase?.detalles) {
             setDetallesWithProducts(
-                venta.detalles.map((d) => ({
+                ventaBase.detalles.map((d) => ({
                     id: d.id,
                     producto_id: d.producto_id,
                     cantidad: d.cantidad,
@@ -508,7 +519,7 @@ export default function VentaForm() {
 
             // ✅ NUEVO: Inicializar comboItemsMap desde combo_items_seleccionados guardados
             const nuevoComboMap: Record<number, any[]> = {};
-            venta.detalles.forEach((d, index) => {
+            ventaBase.detalles.forEach((d, index) => {
                 if ((d.producto as any)?.es_combo && d.combo_items_seleccionados?.length) {
                     // Convertir combo_items_seleccionados de vuelta al formato de combo_items para el mapa
                     const comboItemsDelDB = d.combo_items_seleccionados.map((item: any) => ({
@@ -530,7 +541,83 @@ export default function VentaForm() {
                 setComboItemsMap(nuevoComboMap);
             }
         }
-    }, [venta]);
+    }, [ventaBase]);
+
+    // Duplicar: la copia viene de la venta original, así que sus productos no traen stock, precios por tipo
+    // ni conversiones actuales. Se vuelven a consultar con el mismo endpoint de búsqueda que usa la pantalla.
+    // Se conservan cantidad, precio, descuento y combos de la venta original.
+    const duplicadoRefrescadoRef = useRef(false);
+    useEffect(() => {
+        if (!isDuplicando || duplicadoRefrescadoRef.current || detallesWithProducts.length === 0) return;
+        duplicadoRefrescadoRef.current = true;
+
+        const esClienteGeneral = Boolean(cliente_general?.id) && data.cliente_id === cliente_general?.id;
+        const productoIds = [...new Set(detallesWithProducts.map((d) => d.producto_id))];
+
+        Promise.all(
+            productoIds.map(async (productoId) => {
+                const params = new URLSearchParams({ q: String(productoId), tipo_busqueda: 'exacta', limite: '1', tipo: 'venta' });
+                if (data.cliente_id) params.append('cliente_id', String(data.cliente_id));
+                if (esClienteGeneral) params.append('cliente_general', 'true');
+                try {
+                    const res = await fetch(`/api/productos/buscar?${params.toString()}`);
+                    if (!res.ok) return null;
+                    const json = await res.json();
+                    return (json.data?.[0] ?? null) as any;
+                } catch {
+                    return null;
+                }
+            }),
+        ).then((frescos) => {
+            const porId = new Map<number, any>();
+            frescos.forEach((f) => {
+                if (f) porId.set(f.id, f);
+            });
+
+            setDetallesWithProducts((prev) =>
+                prev.map((d) => {
+                    const f = porId.get(d.producto_id);
+                    if (!f) return d; // Sin stock/no disponible: queda con los datos de la venta original
+
+                    const conversiones = f.conversiones || [];
+                    const esFraccionado = Boolean(f.es_fraccionado) && conversiones.length > 0;
+                    const producto = {
+                        ...d.producto,
+                        stock: f.stock_disponible || 0,
+                        stock_disponible_calc: f.stock_disponible || 0,
+                        stock_total_calc: f.stock_total || 0,
+                        stock_reservado: f.stock_reservado || 0,
+                        precios: (f.precios || []).map((pr: any) => ({
+                            id: pr.id,
+                            tipo_precio_id: pr.tipo_precio_id,
+                            nombre: pr.nombre || pr.tipoPrecio?.nombre,
+                            precio: pr.precio,
+                        })),
+                        conversiones,
+                        es_fraccionado: Boolean(f.es_fraccionado),
+                        unidad_medida_id: f.unidad_medida_id,
+                        unidad_medida_nombre: f.unidad_medida_nombre,
+                        tipo_precio_id_recomendado: f.tipo_precio_id_recomendado,
+                        tipo_precio_nombre_recomendado: f.tipo_precio_nombre_recomendado,
+                        es_combo: Boolean(f.es_combo),
+                        combo_items: f.combo_items || [],
+                    };
+
+                    return {
+                        ...d,
+                        producto,
+                        es_fraccionado: esFraccionado,
+                        conversiones,
+                        unidad_medida_id: f.unidad_medida_id,
+                        unidad_medida_nombre: f.unidad_medida_nombre,
+                        unidad_venta_id: esFraccionado ? conversiones[0].unidad_destino_id : f.unidad_medida_id,
+                        tipo_precio_id_recomendado: f.tipo_precio_id_recomendado,
+                        tipo_precio_nombre_recomendado: f.tipo_precio_nombre_recomendado,
+                    };
+                }),
+            );
+        });
+    }, [isDuplicando, detallesWithProducts, data.cliente_id, cliente_general]);
 
     // Sincronizar el estado del InputSearch con los datos del formulario
     useEffect(() => {
@@ -541,12 +628,12 @@ export default function VentaForm() {
 
     // Inicializar el display del cliente cuando se carga la venta existente
     useEffect(() => {
-        if (venta?.cliente && !clienteDisplay) {
-            setClienteDisplay(venta.cliente.nombre + (venta.cliente.nit ? ` (${venta.cliente.nit})` : ''));
-            setClienteValue(venta.cliente.id);
-            setClienteSeleccionado(venta.cliente);
+        if (ventaBase?.cliente && !clienteDisplay) {
+            setClienteDisplay(ventaBase.cliente.nombre + (ventaBase.cliente.nit ? ` (${ventaBase.cliente.nit})` : ''));
+            setClienteValue(ventaBase.cliente.id);
+            setClienteSeleccionado(ventaBase.cliente);
         }
-    }, [venta?.cliente, clienteDisplay]);
+    }, [ventaBase?.cliente, clienteDisplay]);
 
     // ✅ OPTIMIZADO (2026-08-26): Usar direcciones de búsqueda si están disponibles, sino fetch separado
     // Antes: Siempre hacía fetch a /api/clientes/{id}
@@ -747,12 +834,8 @@ export default function VentaForm() {
         // Si cliente.codigo = GENERAL → usar LICORERIA
         // Si otro cliente → usar VENTA o lo recomendado por backend
         const isClienteGeneral = clienteSeleccionado?.codigo_cliente === 'GENERAL';
-        const tipoPrecioIdRecomendado = isClienteGeneral
-            ? tipoPrecioLicoreriId
-            : (producto as any).tipo_precio_id_recomendado || tipoPrecioVentaId;
-        const tipoPrecioNombreRecomendado = isClienteGeneral
-            ? 'LICORERIA'
-            : (producto as any).tipo_precio_nombre_recomendado || 'VENTA';
+        const tipoPrecioIdRecomendado = isClienteGeneral ? tipoPrecioLicoreriId : (producto as any).tipo_precio_id_recomendado || tipoPrecioVentaId;
+        const tipoPrecioNombreRecomendado = isClienteGeneral ? 'LICORERIA' : (producto as any).tipo_precio_nombre_recomendado || 'VENTA';
 
         // ✅ NUEVO (2026-02-17): Obtener el precio específico del tipo_precio_recomendado ANTES de usarlo
         // En lugar de usar precio_venta genérico, buscar el precio específico del tipo_precio_id
@@ -1085,20 +1168,19 @@ export default function VentaForm() {
     };
 
     // ✅ NUEVO: Función para limpiar manualmente el borrador de localStorage
-    const limpiarBorrador = () => {
-        const confirmar = window.confirm('¿Deseas limpiar el borrador? Esta acción no se puede deshacer.');
-        if (!confirmar) return;
+    // Limpiar borrador: pide confirmación con el diálogo de la app (sin alert) y recarga el formulario desde cero
+    const limpiarBorrador = async () => {
+        const confirmado = await NotificationService.confirm('¿Deseas limpiar el borrador? Esta acción no se puede deshacer.', {
+            confirmText: 'Limpiar',
+            cancelText: 'Cancelar',
+        });
+        if (!confirmado) return;
 
         try {
             localStorage.removeItem('venta-create-draft');
-            // Resetear estados
-            reset();
-            setDetallesWithProducts([]);
-            setClienteSeleccionado(null);
-            setClienteValue(null);
-            setClienteDisplay('');
-            setManuallySelectedTipoPrecio({});
             NotificationService.success('Borrador de venta eliminado');
+            // Recargar la pantalla en limpio: detalles, cliente general y precios se inicializan como al abrirla
+            router.visit('/ventas/create', { replace: true });
         } catch (error) {
             console.error('Error limpiando borrador:', error);
             NotificationService.error('Error al limpiar el borrador');
@@ -1157,11 +1239,14 @@ export default function VentaForm() {
         // ✅ NUEVO: Verificar si el tipo de pago seleccionado es CREDITO y ajustar política de pago
         const tipoPagoSeleccionado = tipos_pago?.find((t: any) => t.id === data.tipo_pago_id);
         // ✅ FIX (2026-11-06): Nunca enviar CREDITO si el tipo de pago no es crédito
-        const politicaPagoFinal = tipoPagoSeleccionado?.codigo === 'CREDITO'
-            ? 'CREDITO'
-            : (data.politica_pago && data.politica_pago !== 'CREDITO'
-                ? data.politica_pago
-                : (data.requiere_envio ? 'CONTRA_ENTREGA' : 'ANTICIPADO_100'));
+        const politicaPagoFinal =
+            tipoPagoSeleccionado?.codigo === 'CREDITO'
+                ? 'CREDITO'
+                : data.politica_pago && data.politica_pago !== 'CREDITO'
+                  ? data.politica_pago
+                  : data.requiere_envio
+                    ? 'CONTRA_ENTREGA'
+                    : 'ANTICIPADO_100';
 
         console.log(`🔍 handleConfirmSubmit - Verificación de tipo de pago:`, {
             tipo_pago_id: data.tipo_pago_id,
@@ -1504,13 +1589,20 @@ export default function VentaForm() {
     const selectedClienteForModal = selectedCliente
         ? {
               id: selectedCliente.id,
-              nombre: selectedCliente.nombre,
+              // Las opciones de búsqueda traen `label` (no `nombre`)
+              nombre: selectedCliente.nombre || (selectedCliente as any).label || clienteRaw?.label || clienteDisplay || '-',
               nit: selectedCliente.nit || undefined,
               telefono: selectedCliente.telefono || undefined,
               email: selectedCliente.email || undefined,
               direccion: selectedCliente.direccion || undefined,
           }
-        : undefined;
+        : data.cliente_id
+          ? {
+                // Respaldo: si el cliente no está cargado completo, usar el nombre mostrado en la búsqueda
+                id: data.cliente_id,
+                nombre: clienteRaw?.label || clienteDisplay || '-',
+            }
+          : undefined;
     const selectedMoneda = monedasSeguro.find((m) => m.id === data.moneda_id);
     const selectedEstado = estadosSeguro.find((e) => e.id === data.estado_documento_id);
 
@@ -1551,7 +1643,7 @@ export default function VentaForm() {
         >
             <Head title={isEditing ? 'Editar venta' : 'Nueva venta'} />
 
-            <form onSubmit={handleSubmit} className="space-y-6 px-4 py-2">
+            <form onSubmit={handleSubmit} className="space-y-2 px-2 py-2">
                 {/* Indicador de verificación de caja */}
                 {cargandoCaja && (
                     <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 dark:bg-blue-900/20">
@@ -1570,11 +1662,23 @@ export default function VentaForm() {
                 )}
 
                 {/* Información básica */}
-                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                    <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                    <div className="grid grid-cols-1 items-center justify-between gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {/* Campo número oculto - se genera automáticamente */}
                         <input type="hidden" value={data.numero} onChange={(e) => setData('numero', e.target.value)} />
-                        <div>
+                        <div
+                            title={
+                                selectedCliente
+                                    ? [
+                                          selectedCliente.telefono ? `Tel: ${selectedCliente.telefono}` : '',
+                                          selectedCliente.nit ? `NIT: ${selectedCliente.nit}` : '',
+                                          selectedCliente.email ? `Email: ${selectedCliente.email}` : '',
+                                      ]
+                                          .filter(Boolean)
+                                          .join(' • ') || undefined
+                                    : undefined
+                            }
+                        >
                             <InputSearch
                                 id="cliente_search"
                                 label="Cliente"
@@ -1611,21 +1715,6 @@ export default function VentaForm() {
                                 className="w-full"
                             />
                             {errors.cliente_id && <p className="mt-1 text-sm text-red-600">{errors.cliente_id}</p>}
-                            {selectedCliente && (
-                                <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                                    {selectedCliente.telefono && <span>📱 {selectedCliente.telefono}</span>}
-                                    {selectedCliente.nit && (
-                                        <span>
-                                            {selectedCliente.telefono ? ' • ' : ''}NIT: {selectedCliente.nit}
-                                        </span>
-                                    )}
-                                    {selectedCliente.email && (
-                                        <span>
-                                            {selectedCliente.telefono || selectedCliente.nit ? ' • ' : ''}Email: {selectedCliente.email}
-                                        </span>
-                                    )}
-                                </p>
-                            )}
                         </div>
                         {/* Campo moneda oculto - se establece automáticamente a BOB */}
                         <input type="hidden" value={data.moneda_id} onChange={(e) => setData('moneda_id', Number(e.target.value))} />
@@ -1646,37 +1735,32 @@ export default function VentaForm() {
 
                         {/* ✅ REFACTORIZADO (2026-07-03): Toggle Switch elegante en lugar de dos botones */}
                         {logistica_envios && (
-                            <div className="flex flex-col justify-end gap-2">
-                                {/* <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    🚚 Requiere Envío
-                                </label> */}
-                                <div className="flex items-center gap-3">
-                                    {/* Toggle Switch */}
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const nuevoValor = !data.requiere_envio;
-                                            console.log('🚚 [VentaForm] Requiere envío:', nuevoValor);
-                                            setData('requiere_envio', nuevoValor);
-                                            if (!nuevoValor) {
-                                                setData('direccion_cliente_id', null);
-                                            }
-                                        }}
-                                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${
-                                            data.requiere_envio ? 'bg-green-500 dark:bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                            <div className="flex items-center gap-3">
+                                {/* Toggle Switch */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const nuevoValor = !data.requiere_envio;
+                                        console.log('🚚 [VentaForm] Requiere envío:', nuevoValor);
+                                        setData('requiere_envio', nuevoValor);
+                                        if (!nuevoValor) {
+                                            setData('direccion_cliente_id', null);
+                                        }
+                                    }}
+                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${
+                                        data.requiere_envio ? 'bg-green-500 dark:bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                                            data.requiere_envio ? 'translate-x-6' : 'translate-x-1'
                                         }`}
-                                    >
-                                        <span
-                                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                                                data.requiere_envio ? 'translate-x-6' : 'translate-x-1'
-                                            }`}
-                                        />
-                                    </button>
-                                    {/* Etiqueta descriptiva */}
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {data.requiere_envio ? '✅ Sí, requiere envío' : '❌ No requiere envío'}
-                                    </span>
-                                </div>
+                                    />
+                                </button>
+                                {/* Etiqueta descriptiva */}
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {data.requiere_envio ? '✅ Sí, requiere envío' : '❌ No requiere envío'}
+                                </span>
                             </div>
                         )}
                     </div>
@@ -1684,71 +1768,20 @@ export default function VentaForm() {
                     {/* Sección de Envío - Solo visible si logistica_envios = true Y requiere_envio = true */}
                     {logistica_envios && data.requiere_envio && (
                         <div className="mt-2 border-t border-gray-200 pt-2 dark:border-zinc-700">
-                            <h3 className="text-md mb-2 font-medium text-gray-900 dark:text-white">🚚 Detalles de Envío</h3>
+                            <h3 className="text-md font-medium text-gray-900 dark:text-white">🚚 Detalles de Envío</h3>
 
                             {/* Campos de envío */}
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    {/* ✅ NUEVO: Selector de política de pago para envíos - Moderno */}
-                                    {/* <div> */}
-                                    {/* <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">💳 Política de Pago</label> */}
-                                    {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-1">
-                                            <button
-                                                type="button"
-                                                onClick={() => setData('politica_pago', 'CONTRA_ENTREGA')}
-                                                className={`rounded-lg border-2 p-2 text-left transition-all duration-200 ${
-                                                    data.politica_pago === 'CONTRA_ENTREGA'
-                                                        ? 'border-blue-500 bg-blue-50 shadow-md dark:border-blue-500 dark:bg-blue-900/40'
-                                                        : 'border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-gray-500'
-                                                }`}
-                                            >
-                                                <div
-                                                    className={`text-2xl ${data.politica_pago === 'CONTRA_ENTREGA' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
-                                                >
-                                                    <p
-                                                        className={`text-sm font-semibold ${data.politica_pago === 'CONTRA_ENTREGA' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-gray-100'}`}
-                                                    >
-                                                        🚚 Contra Entrega
-                                                    </p>
-                                                    <p
-                                                        className={`text-xs ${data.politica_pago === 'CONTRA_ENTREGA' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
-                                                    >
-                                                        Pago al recibir
-                                                    </p>
-                                                </div>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setData('politica_pago', 'ANTICIPADO_100')}
-                                                className={`rounded-lg border-2 p-2 text-left transition-all duration-200 ${
-                                                    data.politica_pago === 'ANTICIPADO_100'
-                                                        ? 'border-green-500 bg-green-50 shadow-md dark:border-green-500 dark:bg-green-900/40'
-                                                        : 'border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-gray-500'
-                                                }`}
-                                            >
-                                                <p
-                                                    className={`text-sm font-semibold ${data.politica_pago === 'ANTICIPADO_100' ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-gray-100'}`}
-                                                >
-                                                    ⚡Anticipado 100%
-                                                </p>
-                                                <p
-                                                    className={`text-xs ${data.politica_pago === 'ANTICIPADO_100' ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
-                                                >
-                                                    Antes de enviar
-                                                </p>
-                                            </button>
-                                        </div> */}
-                                    {/* </div> */}
-
+                            <div className="items-start">
+                                <div className="items-start">
                                     {/* ✅ NUEVO: Campo de Logística de Envíos - mostrar solo si logistica_envios (prop global) = true */}
                                     {(() => {
                                         const mostrar = logistica_envios;
                                         return (
                                             mostrar && (
                                                 <div>
-                                                    <div className="grid grid-cols-1 gap-3 p-2 sm:grid-cols-5">
+                                                    <div className="grid grid-cols-3 items-start gap-3 space-y-2 p-2">
                                                         {/* ✅ NUEVO: Selector de Preventista */}
-                                                        <div className="sm:col-span-2 dark:border-green-800">
+                                                        <div className="dark:border-green-800">
                                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                                 👤 Preventista (Opcional)
                                                             </label>
@@ -1780,7 +1813,7 @@ export default function VentaForm() {
                                                         </div>
 
                                                         {/* ✅ NUEVO: Selector de Entrega con Búsqueda */}
-                                                        <div className="sm:col-span-3 dark:border-green-800">
+                                                        <div className="dark:border-green-800">
                                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                                 🚚 Asignar a Entrega (Opcional)
                                                             </label>
@@ -1789,120 +1822,116 @@ export default function VentaForm() {
                                                                 onValueChange={(value) => setData('entrega_id', value ? Number(value) : null)}
                                                             />
                                                         </div>
+
+                                                        {/* ✅ NUEVO: Card de información del cliente */}
+                                                        {clienteSeleccionado && (
+                                                            <div>
+                                                                {/* Selector de direcciones */}
+                                                                <div className="dark:border-amber-800">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                                                                            📍 Direcciones Disponibles
+                                                                        </label>
+                                                                    </div>
+                                                                    {cargandoDirecciones ? (
+                                                                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent"></div>
+                                                                            <span className="text-sm">Cargando direcciones...</span>
+                                                                        </div>
+                                                                    ) : direccionesDisponibles.length > 0 ? (
+                                                                        <div className="space-y-2">
+                                                                            {direccionesDisponibles.map((dir) => (
+                                                                                <div key={dir.id} className="flex items-stretch gap-2">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setData('direccion_cliente_id', dir.id)}
+                                                                                        className={`min-w-0 flex-1 rounded-lg border-2 p-1 text-left transition-all ${
+                                                                                            data.direccion_cliente_id === dir.id
+                                                                                                ? 'border-blue-500 bg-blue-50 shadow-md dark:border-blue-500 dark:bg-blue-900/30'
+                                                                                                : 'border-gray-300 bg-white hover:border-blue-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-blue-500'
+                                                                                        }`}
+                                                                                    >
+                                                                                        {/* Observaciones como dato principal */}
+                                                                                        {dir.observaciones ? (
+                                                                                            <>
+                                                                                                <div className="flex items-center justify-between">
+                                                                                                    <p className="text-sm font-semibold text-gray-900 uppercase dark:text-white">
+                                                                                                        🏷️ {dir.observaciones}
+                                                                                                    </p>
+                                                                                                    {dir.es_principal && (
+                                                                                                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                                                                            Principal
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                                {dir.localidad && (
+                                                                                                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
+                                                                                                        🏘️{' '}
+                                                                                                        {typeof dir.localidad === 'string'
+                                                                                                            ? dir.localidad
+                                                                                                            : dir.localidad?.nombre}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                            </>
+                                                                                        ) : (
+                                                                                            <>
+                                                                                                <div className="flex items-center justify-between">
+                                                                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                                                        📮 {dir.direccion}
+                                                                                                    </p>
+                                                                                                    {dir.es_principal && (
+                                                                                                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                                                                            Principal
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                    {data.direccion_cliente_id === dir.id && (
+                                                                                                        <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                                                                                            ✅ Seleccionada
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                                {dir.localidad && (
+                                                                                                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                                                                        🏘️{' '}
+                                                                                                        {typeof dir.localidad === 'string'
+                                                                                                            ? dir.localidad
+                                                                                                            : dir.localidad?.nombre}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                            </>
+                                                                                        )}
+                                                                                    </button>
+                                                                                    {data.direccion_cliente_id === dir.id && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => setShowMapaUbicacion(true)}
+                                                                                            title="Ver ubicación del cliente en el mapa"
+                                                                                            className="inline-flex shrink-0 items-center gap-1.5 self-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium whitespace-nowrap text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200"
+                                                                                        >
+                                                                                            <MapPin className="h-3.5 w-3.5" />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <p className="rounded bg-amber-100 p-2 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                                                                            ⚠️ El cliente no tiene direcciones registradas. Completa la dirección
+                                                                            manualmente a continuación.
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )
                                         );
                                     })()}
-
-                                    {/* ✅ NUEVO: Card de información del cliente */}
-                                    {clienteSeleccionado && (
-                                        <div className="space-y-4 p-2 border-l border-gray-200 dark:border-zinc-700">
-                                            {/* Selector de direcciones */}
-                                            <div className="dark:border-amber-800">
-                                                <div className="mb-2 flex items-center justify-between">
-                                                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
-                                                        📍 Direcciones Disponibles
-                                                    </label>
-                                                    {/* ✅ NUEVO (2026-08-26): Botón para ver ubicación en mapa */}
-                                                    {data.direccion_cliente_id && direccionesDisponibles.length > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowMapaUbicacion(true)}
-                                                            className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
-                                                            title="Ver ubicación del cliente en el mapa"
-                                                        >
-                                                            🗺️ Ver en Mapa
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {cargandoDirecciones ? (
-                                                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent"></div>
-                                                        <span className="text-sm">Cargando direcciones...</span>
-                                                    </div>
-                                                ) : direccionesDisponibles.length > 0 ? (
-                                                    <div className="space-y-2">
-                                                        {direccionesDisponibles.map((dir) => (
-                                                            <button
-                                                                key={dir.id}
-                                                                type="button"
-                                                                onClick={() => setData('direccion_cliente_id', dir.id)}
-                                                                className={`w-full rounded-lg border-2 px-3 py-3 text-left transition-all ${
-                                                                    data.direccion_cliente_id === dir.id
-                                                                        ? 'border-blue-500 bg-blue-50 shadow-md dark:border-blue-500 dark:bg-blue-900/30'
-                                                                        : 'border-gray-300 bg-white hover:border-blue-400 dark:border-gray-600 dark:bg-zinc-800 dark:hover:border-blue-500'
-                                                                }`}
-                                                            >
-                                                                {/* Observaciones como dato principal */}
-                                                                {dir.observaciones ? (
-                                                                    <>
-                                                                        <div className="flex items-center justify-between">
-                                                                            <p className="text-sm font-semibold text-gray-900 uppercase dark:text-white">
-                                                                                🏷️ {dir.observaciones}
-                                                                            </p>
-                                                                            {dir.es_principal && (
-                                                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
-                                                                                    Principal
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        {/* <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                                                                            📮 {dir.direccion}
-                                                                        </p> */}
-                                                                        {dir.localidad && (
-                                                                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
-                                                                                🏘️{' '}
-                                                                                {typeof dir.localidad === 'string'
-                                                                                    ? dir.localidad
-                                                                                    : dir.localidad?.nombre}
-                                                                            </p>
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <div className="flex items-center justify-between">
-                                                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                                                📮 {dir.direccion}
-                                                                            </p>
-                                                                            {dir.es_principal && (
-                                                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-800 dark:text-green-100">
-                                                                                    Principal
-                                                                                </span>
-                                                                            )}
-                                                                            {data.direccion_cliente_id === dir.id && (
-                                                                                <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                                                                                    ✅ Seleccionada
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                        {dir.localidad && (
-                                                                            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                                                                                🏘️{' '}
-                                                                                {typeof dir.localidad === 'string'
-                                                                                    ? dir.localidad
-                                                                                    : dir.localidad?.nombre}
-                                                                            </p>
-                                                                        )}
-                                                                    </>
-                                                                )}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="rounded bg-amber-100 p-2 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-                                                        ⚠️ El cliente no tiene direcciones registradas. Completa la dirección manualmente a
-                                                        continuación.
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
                     )}
-                    <br />
                     <ProductosTable
                         productos={productosSeguro}
                         detalles={detallesWithProducts}
@@ -1925,15 +1954,18 @@ export default function VentaForm() {
                         carritoCalculado={precioRango.carritoCalculado} // ✅ NUEVO (2026-02-17): Pasar datos de rangos al componente
                         onDetallesActualizados={handleDetallesActualizados} // ✅ MEMOIZADO
                         es_farmacia={es_farmacia} // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos
+                        resumirDatosProducto // Marca, categoría y unidad en tooltip del nombre
+                        enlaceEditarProducto={can('productos.manage')} // Nombre y SKU abren el producto en otra pestaña
+                        mostrarPesoEnvio={Boolean(data.requiere_envio)} // Peso unitario y total cuando requiere envío
                     />
                 </div>
                 {/* Totales */}
                 {detallesWithProducts.length > 0 && (
-                    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                        <div className={`grid grid-cols-1 gap-4 ${es_farmacia ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                        <div className={`grid grid-cols-1 items-end gap-4 ${es_farmacia ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                             {/* Descuento general */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descuento general</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Descuento general</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -1957,8 +1989,8 @@ export default function VentaForm() {
                                 <>
                                     {/* Desglose de Pagos: Efectivo */}
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Efectivo</label>
-                                        <div className="flex items-center gap-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Efectivo</label>
+                                        <div className="flex items-center gap-1">
                                             <span className="text-sm text-gray-600 dark:text-gray-400">Bs.</span>
                                             <input
                                                 type="number"

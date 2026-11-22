@@ -1,25 +1,65 @@
-import React, { useRef, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import AppLayout from '@/layouts/app-layout';
-import { formatCurrency } from '@/lib/utils';
 import { useAuth } from '@/application/hooks/use-auth';
 import { useExport } from '@/infrastructure/hooks/use-export';
+import AppLayout from '@/layouts/app-layout';
 import { compraToExportData, getDefaultCompraExportOptions } from '@/lib/export-helpers';
-import { ExportButtons } from '@/presentation/components/Export/ExportButtons';
-import { PrintableContent } from '@/presentation/components/Export/PrintableContent';
-import { ArrowLeft, Edit, Printer, Package, User, Calendar, FileText, Hash, CreditCard, Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'react-toastify';
 import AnularCompraModal, { type ErrorAnulacion } from '@/presentation/components/compras/AnularCompraModal';
+import { PrintableContent } from '@/presentation/components/Export/PrintableContent';
 import { OutputSelectionModal } from '@/presentation/components/impresion/OutputSelectionModal';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { AlertCircle, Calendar, ChevronDown, Copy, CreditCard, Edit, FileText, Hash, Package, Printer, RotateCcw, User } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 // Importar tipos del domain
 import type { Compra } from '@/domain/entities/compras';
 import type { EstadoDocumento } from '@/domain/entities/estados-documento';
 
+interface PagoResumen {
+    id: number;
+    numero_pago?: string | null;
+    monto: string | number;
+    fecha?: string | null;
+    estado?: string | null;
+    anulado: boolean;
+}
+
+interface CuentaPorPagarResumen {
+    id: number;
+    estado?: string | null;
+    monto_total: string | number;
+    monto_pagado: string | number;
+    saldo_pendiente: string | number;
+    fecha_vencimiento?: string | null;
+    pagos: PagoResumen[];
+}
+
+interface AnulacionResumen {
+    aprobada: boolean;
+    motivos: string[];
+}
+
 interface PageProps extends InertiaPageProps {
     compra: Compra;
+    cuenta_por_pagar?: CuentaPorPagarResumen | null;
+    anulacion?: AnulacionResumen;
 }
+
+// Color del vencimiento: vencido (rojo), vence en 30 días o menos (ámbar), normal (gris)
+const claseVencimiento = (fecha?: string | null): string => {
+    if (!fecha) return 'text-gray-500 dark:text-gray-400';
+    const dias = Math.ceil((new Date(fecha).getTime() - Date.now()) / 86400000);
+    if (dias < 0) return 'font-semibold text-red-600 dark:text-red-400';
+    if (dias <= 30) return 'font-semibold text-amber-600 dark:text-amber-400';
+    return 'text-gray-500 dark:text-gray-400';
+};
 
 // ✅ NUEVO 2026-03-24: Formateador de números que muestra decimales solo cuando existen
 const formatDecimal = (value: number | string | null | undefined): string => {
@@ -85,8 +125,15 @@ export default function CompraShow() {
     const { can } = useAuth();
     const { isExporting, exportToPDF, exportToExcel, exportToCSV, print, error } = useExport();
     const compra = props.compra;
+    const cuenta = props.cuenta_por_pagar ?? null;
+    const anulacion = props.anulacion;
+    const simbolo = compra.moneda?.simbolo || '$';
+    const totalUnidades = (compra.detalles || []).reduce((acc, d) => acc + Number(d.cantidad || 0), 0);
+    const subtotalLineas = (compra.detalles || []).reduce((acc, d) => acc + Number(d.subtotal || 0), 0);
     const printableRef = useRef<HTMLDivElement>(null);
     const [mostrarModalAnular, setMostrarModalAnular] = useState(false);
+    // Anular y duplicar: al anular con éxito se abre la copia para rehacer la compra
+    const [duplicarDespuesAnular, setDuplicarDespuesAnular] = useState(false);
     const [errorAnulacion, setErrorAnulacion] = useState<ErrorAnulacion | null>(null);
     const [isAnulando, setIsAnulando] = useState(false);
     const [outputModal, setOutputModal] = useState(false);
@@ -112,6 +159,14 @@ export default function CompraShow() {
             if (!response.ok) {
                 // Mostrar el motivo dentro del modal (sigue abierto)
                 setErrorAnulacion({ message: data.message || 'Error al anular la compra', motivos: data.motivos });
+                return;
+            }
+
+            // Anular y duplicar: abrir la copia para rehacer la compra (la original ya quedó ANULADA)
+            if (duplicarDespuesAnular) {
+                toast.success('Compra anulada. Abriendo copia para rehacerla...');
+                setMostrarModalAnular(false);
+                router.visit(`/compras/${compra.id}/duplicar`);
                 return;
             }
 
@@ -159,136 +214,171 @@ export default function CompraShow() {
     };
 
     return (
-        <AppLayout breadcrumbs={[
-            { title: 'Compras', href: '/compras' },
-            { title: `Compra ${compra.numero}`, href: '#' }
-        ]}>
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Compras', href: '/compras' },
+                { title: `Compra ${compra.numero}`, href: '#' },
+            ]}
+        >
             <Head title={`Compra ${compra.numero}`} />
 
             {/* Header mejorado */}
-            <div className="flex items-center justify-between mb-6 p-4">
+            <div className="mb-2 flex items-center justify-between p-2">
                 <div className="flex items-center space-x-4">
-                    <Link
+                    {/* <Link
                         href="/compras"
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                     >
                         <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                    </Link>
+                    </Link> */}
                     <div>
                         <div className="flex items-center space-x-3">
                             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
                                 Folio #{compra.id} | {compra.numero}
                             </h1>
-                            <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getEstadoColor(compra.estado_documento)}`}>
+                            <span className={`inline-flex rounded-full px-2 py-1 text-sm font-medium ${getEstadoColor(compra.estado_documento)}`}>
                                 {compra.estado_documento?.nombre || 'Sin estado'}
                             </span>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Creada el {compra.created_at ? new Date(compra.created_at).toLocaleDateString('es-ES', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }) : 'Fecha no disponible'}
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Creada el{' '}
+                            {compra.created_at
+                                ? new Date(compra.created_at).toLocaleDateString('es-ES', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                  })
+                                : 'Fecha no disponible'}
                         </p>
+
+                        {anulacion?.aprobada && anulacion.motivos.length === 0 && (
+                            <p className="text-xs text-green-700 dark:text-green-400">Esta compra se puede anular.</p>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex gap-3">
-                    {/* Botón Exportar/Imprimir */}
-                    <button
-                        onClick={() => setOutputModal(true)}
-                        className="px-4 py-2 text-sm font-medium text-white bg-gray-600 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors"
-                        title="Exportar/Imprimir documento"
-                    >
-                        <Printer className="h-4 w-4" />
-                        Exportar
-                    </button>
-
-                    {/* Botón Editar - Solo si NO está aprobada */}
+                    {/* Editar: acción principal, solo si la compra no está aprobada */}
                     {can('compras.update') && !esAprobada && (
                         <Link
                             href={`/compras/${compra.id}/edit`}
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
+                            className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-2 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none active:bg-blue-900 dark:focus:ring-offset-gray-800"
                         >
-                            <Edit className="h-4 w-4 mr-2" />
+                            <Edit className="mr-2 h-4 w-4" />
                             Editar
                         </Link>
                     )}
 
-                    {/* Botón Anular - Solo si está aprobada */}
-                    {can('compras.update') && esAprobada && (
-                        <button
-                            onClick={() => {
-                                setErrorAnulacion(null);
-                                setMostrarModalAnular(true);
-                            }}
-                            disabled={isAnulando}
-                            className="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 disabled:opacity-50"
-                        >
-                            <AlertCircle className="h-4 w-4 mr-2" />
-                            {isAnulando ? 'Anulando...' : 'Anular'}
-                        </button>
-                    )}
+                    {/* Acciones secundarias agrupadas */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                            >
+                                Acciones
+                                <ChevronDown className="h-4 w-4" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-60">
+                            <DropdownMenuItem onClick={() => setOutputModal(true)}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Exportar / Imprimir
+                            </DropdownMenuItem>
+
+                            {can('compras.create') && (
+                                <DropdownMenuItem asChild>
+                                    <Link href={`/compras/${compra.id}/duplicar`}>
+                                        <Copy className="mr-2 h-4 w-4" />
+                                        Duplicar
+                                    </Link>
+                                </DropdownMenuItem>
+                            )}
+
+                            {can('compras.update') && esAprobada && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setErrorAnulacion(null);
+                                            setDuplicarDespuesAnular(false);
+                                            setMostrarModalAnular(true);
+                                        }}
+                                        disabled={isAnulando}
+                                        className="text-red-600 focus:text-red-700 dark:text-red-400"
+                                    >
+                                        <AlertCircle className="mr-2 h-4 w-4" />
+                                        {isAnulando ? 'Anulando...' : 'Anular'}
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+
+                            {can('compras.anular') && can('compras.create') && esAprobada && (
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setErrorAnulacion(null);
+                                        setDuplicarDespuesAnular(true);
+                                        setMostrarModalAnular(true);
+                                    }}
+                                    disabled={isAnulando}
+                                    className="text-amber-600 focus:text-amber-700 dark:text-amber-400"
+                                >
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Anular y duplicar
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
-            <div className="space-y-6 px-6">
+            <div className="space-y-2 px-2">
+                {/* Aviso: por qué la compra no se puede anular (o confirmación de que sí se puede) */}
+                {anulacion?.aprobada && anulacion.motivos.length > 0 && (
+                    <div className="rounded-lg border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-100">
+                        <p className="font-semibold">Esta compra no se puede anular por ahora:</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5">
+                            {anulacion.motivos.map((motivo, i) => (
+                                <li key={i}>{motivo}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
                 {/* Información General - Card Principal Consolidado */}
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                     {/* SECCIÓN 1: Información General de la Compra */}
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                            <FileText className="h-5 w-5 mr-2" />
+                    <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                        <h3 className="flex items-center text-lg font-medium text-gray-900 dark:text-white">
+                            <FileText className="mr-2 h-5 w-5" />
                             Información General
                         </h3>
                     </div>
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <dl className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="border-b border-gray-200 p-2 dark:border-gray-700">
+                        <dl className="grid grid-cols-1 gap-6 md:grid-cols-4">
                             <div className="flex items-start space-x-3">
-                                <Hash className="h-5 w-5 text-gray-400 mt-0.5" />
+                                <Hash className="mt-0.5 h-5 w-5 text-gray-400" />
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                        Número de Compra
-                                    </dt>
-                                    <dd className="mt-1 text-sm text-gray-900 dark:text-white font-mono">
-                                        {compra.numero}
-                                    </dd>
+                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Número de Compra</dt>
+                                    <dd className="mt-1 font-mono text-sm text-gray-900 dark:text-white">{compra.numero}</dd>
                                 </div>
                             </div>
 
                             <div className="flex items-start space-x-3">
-                                <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                                <Calendar className="mt-0.5 h-5 w-5 text-gray-400" />
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                        Fecha de Compra
-                                    </dt>
+                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Compra</dt>
                                     <dd className="mt-1 text-sm text-gray-900 dark:text-white">
                                         {new Date(compra.fecha).toLocaleDateString('es-ES', {
                                             year: 'numeric',
                                             month: 'long',
-                                            day: 'numeric'
+                                            day: 'numeric',
                                         })}
                                     </dd>
                                 </div>
                             </div>
-
-                            {compra.numero_factura && (
-                                <div className="flex items-start space-x-3">
-                                    <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
-                                    <div>
-                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            Número de Factura
-                                        </dt>
-                                        <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-mono text-xs">
-                                                {compra.numero_factura}
-                                            </span>
-                                        </dd>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* <div className="flex items-start space-x-3">
                                 <CreditCard className="h-5 w-5 text-gray-400 mt-0.5" />
@@ -305,104 +395,50 @@ export default function CompraShow() {
                             </div> */}
 
                             <div className="flex items-start space-x-3">
-                                <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                                <User className="mt-0.5 h-5 w-5 text-gray-400" />
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                        Registrado por
-                                    </dt>
+                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Registrado por</dt>
                                     <dd className="mt-1 text-sm text-gray-900 dark:text-white">
                                         {compra.usuario?.name || 'Usuario no especificado'}
                                     </dd>
                                 </div>
                             </div>
-
-                            {compra.observaciones && (
-                                <div className="md:col-span-2 flex items-start space-x-3">
-                                    <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
-                                    <div className="flex-1">
-                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            Observaciones
-                                        </dt>
+                            {compra.proveedor?.nombre && (
+                                <div className="flex items-start space-x-3">
+                                    <User className="mt-0.5 h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Proveedor</dt>
+                                        <dd className="mt-1 text-sm text-gray-900 dark:text-white">{compra.proveedor.nombre}</dd>
+                                    </div>
+                                </div>
+                            )}
+                            {compra.numero_factura && (
+                                <div className="flex items-start space-x-3">
+                                    <FileText className="mt-0.5 h-5 w-5 text-gray-400" />
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Número de Factura</dt>
                                         <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                                                {compra.observaciones}
-                                            </div>
+                                            <span className="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+                                                {compra.numero_factura}
+                                            </span>
                                         </dd>
                                     </div>
                                 </div>
                             )}
-                            {compra.proveedor?.nombre && (
-                                <div className="flex items-start space-x-3">
-                                <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                        Proveedor
-                                    </dt>
-                                    <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                                        {compra.proveedor.nombre}
-                                    </dd>
+                            {compra.observaciones && (
+                                <div className="flex items-start space-x-3 md:col-span-2">
+                                    <FileText className="mt-0.5 h-5 w-5 text-gray-400" />
+                                    <div className="flex-1">
+                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Observaciones</dt>
+                                        <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                                            <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-700">{compra.observaciones}</div>
+                                        </dd>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
                         </dl>
                     </div>
-
-                    {/* SECCIÓN 2: Proveedor */}
-                    {/* <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-md font-medium text-gray-900 dark:text-white flex items-center">
-                            <User className="h-5 w-5 mr-2" />
-                            Proveedor: 
-                        </h3>
-                        
-                    </div> */}
-                    {/* <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <div className="space-y-2">
-                            {compra.proveedor?.razon_social && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Razón Social:</span>
-                                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs">
-                                        {compra.proveedor.razon_social}
-                                    </span>
-                                </div>
-                            )}
-
-                            {compra.proveedor?.nit && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">NIT:</span>
-                                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs font-mono">
-                                        {compra.proveedor.nit}
-                                    </span>
-                                </div>
-                            )}
-
-                            {compra.proveedor?.telefono && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tel:</span>
-                                    <a href={`tel:${compra.proveedor.telefono}`} className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs hover:underline">
-                                        {compra.proveedor.telefono}
-                                    </a>
-                                </div>
-                            )}
-
-                            {compra.proveedor?.email && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Email:</span>
-                                    <a href={`mailto:${compra.proveedor.email}`} className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded text-xs hover:underline truncate">
-                                        {compra.proveedor.email}
-                                    </a>
-                                </div>
-                            )}
-                        </div>
-                    </div> */}
-
-                    {/* SECCIÓN 3: Resumen Financiero */}
-                    {/* <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-xs font-medium text-gray-900 dark:text-white flex items-center">
-                            <CreditCard className="h-5 w-5 mr-2" />
-                            Resumen Financiero
-                        </h3>
-                    </div> */}
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className="border-b border-gray-200 p-2 dark:border-gray-700">
                         <dl className="space-y-4">
                             {compra.descuento > 0 && (
                                 <div className="flex justify-between text-sm">
@@ -416,7 +452,7 @@ export default function CompraShow() {
                             <div className="border-t pt-4">
                                 <div className="flex justify-between">
                                     <dt className="text-base font-semibold text-gray-900 dark:text-white">Total:</dt>
-                                    <dd className="text-base font-bold font-mono text-gray-900 dark:text-white">
+                                    <dd className="font-mono text-base font-bold text-gray-900 dark:text-white">
                                         {formatCurrencySmartDecimal(compra.total, compra.moneda?.simbolo || '$')}
                                     </dd>
                                 </div>
@@ -424,110 +460,210 @@ export default function CompraShow() {
                         </dl>
                     </div>
 
-                    {/* SECCIÓN 4: Información de Auditoría */}
-                    {/* <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                            <Calendar className="h-5 w-5 mr-2" />
-                            Información de Auditoría
+                    {/* Pagos y cuenta por pagar */}
+                    <div className="border-b border-gray-200 p-2 dark:border-gray-700">
+                        <h3 className="mb-2 flex items-center text-lg font-medium text-gray-900 dark:text-white">
+                            <CreditCard className="mr-2 h-5 w-5" />
+                            Pagos y cuenta por pagar
                         </h3>
-                    </div>
-                    <div className="p-6">
-                        <dl className="space-y-4">
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    Creada
-                                </dt>
-                                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                                    {compra.created_at ? new Date(compra.created_at).toLocaleString('es-ES', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }) : 'Fecha no disponible'}
-                                </dd>
-                            </div>
 
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    Última modificación
-                                </dt>
-                                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                                    {compra.updated_at ? new Date(compra.updated_at).toLocaleString('es-ES', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }) : 'Fecha no disponible'}
-                                </dd>
+                        {cuenta ? (
+                            <div className="space-y-4">
+                                <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+                                    <div>
+                                        <dt className="text-gray-500 dark:text-gray-400">Monto total</dt>
+                                        <dd className="font-mono font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrencySmartDecimal(cuenta.monto_total, simbolo)}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500 dark:text-gray-400">Pagado</dt>
+                                        <dd className="font-mono font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrencySmartDecimal(cuenta.monto_pagado, simbolo)}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500 dark:text-gray-400">Saldo pendiente</dt>
+                                        <dd
+                                            className={`font-mono font-semibold ${Number(cuenta.saldo_pendiente) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}
+                                        >
+                                            {formatCurrencySmartDecimal(cuenta.saldo_pendiente, simbolo)}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500 dark:text-gray-400">Estado</dt>
+                                        <dd className="font-medium text-gray-900 dark:text-white">{cuenta.estado ?? 'Sin estado'}</dd>
+                                    </div>
+                                </dl>
+
+                                {cuenta.fecha_vencimiento && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Vence el {new Date(cuenta.fecha_vencimiento).toLocaleDateString('es-ES')}
+                                    </p>
+                                )}
+
+                                {cuenta.pagos.length === 0 ? (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Sin pagos registrados.</p>
+                                ) : (
+                                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                                        {cuenta.pagos.map((pago) => (
+                                            <li
+                                                key={pago.id}
+                                                className={`flex items-center justify-between py-2 text-sm ${pago.anulado ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}
+                                            >
+                                                <span>
+                                                    {pago.numero_pago ?? `Pago #${pago.id}`}
+                                                    {pago.fecha && (
+                                                        <span className="ml-2 text-gray-500 dark:text-gray-400">
+                                                            {new Date(pago.fecha).toLocaleDateString('es-ES')}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="font-mono">
+                                                    {formatCurrencySmartDecimal(pago.monto, simbolo)}
+                                                    {pago.anulado && <span className="ml-2 text-xs no-underline">(anulado)</span>}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
-                        </dl>
-                    </div> */}
+                        ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Esta compra no tiene cuenta por pagar.</p>
+                        )}
+                    </div>
                 </div>
 
-                    {/* Detalles de productos mejorados */}
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-gray-900 dark:text-white flex items-center">
-                                <Package className="h-5 w-5 mr-2" />
-                                Productos ({compra.detalles?.length || 0})
-                            </h3>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
-                                <thead className="bg-gray-50 dark:bg-gray-700">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            ID
-                                        </th>
-                                        <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Nombre
-                                        </th>
-                                        <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            SKU
-                                        </th>
-                                        {/* <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {/* Detalles de productos mejorados */}
+                <div className="rounded-lg bg-white shadow dark:bg-gray-800">
+                    <div className="border-b border-gray-200 px-2 py-2 dark:border-gray-700">
+                        <h3 className="flex items-center text-lg font-medium text-gray-900 dark:text-white">
+                            <Package className="mr-2 h-5 w-5" />
+                            Productos ({compra.detalles?.length || 0})
+                        </h3>
+                    </div>
+                    {/* Vista móvil: una tarjeta por producto */}
+                    <ul className="divide-y divide-gray-200 md:hidden dark:divide-gray-700">
+                        {(compra.detalles || []).map((detalle) => (
+                            <li key={`m-${detalle.id}`} className="space-y-2 px-4 py-3 text-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        {detalle.imagen_url && (
+                                            <img
+                                                src={detalle.imagen_url}
+                                                alt={detalle.producto?.nombre}
+                                                loading="lazy"
+                                                className="mb-1 h-14 w-14 rounded border border-gray-200 object-cover dark:border-gray-600"
+                                            />
+                                        )}
+                                        {can('productos.manage') && detalle.producto ? (
+                                            <a
+                                                href={`/productos/${detalle.producto.id}/edit`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="block truncate font-medium text-blue-600 hover:underline dark:text-blue-400"
+                                            >
+                                                {detalle.producto.nombre}
+                                            </a>
+                                        ) : (
+                                            <p className="truncate font-medium text-gray-900 dark:text-white">{detalle.producto?.nombre}</p>
+                                        )}
+                                        <p className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                                            {detalle.producto?.sku ? `SKU ${detalle.producto.sku}` : `ID ${detalle.producto?.id}`}
+                                        </p>
+                                    </div>
+                                    <span className="shrink-0 font-mono font-semibold text-gray-900 dark:text-white">
+                                        {formatCurrencySmartDecimal(detalle.subtotal, simbolo)}
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-300">
+                                    <span>
+                                        {Number(detalle.cantidad).toLocaleString()} × {formatCurrencySmartDecimal(detalle.precio_unitario, simbolo)}
+                                    </span>
+                                    <span>Lote: {detalle.lote || '-'}</span>
+                                    <span className={claseVencimiento(detalle.fecha_vencimiento)}>
+                                        Vence: {detalle.fecha_vencimiento ? new Date(detalle.fecha_vencimiento).toLocaleDateString('es-ES') : '-'}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className="hidden overflow-x-auto md:block">
+                        <table className="min-w-full divide-y divide-gray-200 text-xs dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th className="px-3 py-2 text-left font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">ID</th>
+                                    <th className="px-3 py-2 text-center font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Imagen
+                                    </th>
+                                    <th className="px-3 py-2 text-left font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Nombre
+                                    </th>
+                                    <th className="px-3 py-2 text-left font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">SKU</th>
+                                    {/* <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Códigos de Barra
                                         </th> */}
-                                        <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Cantidad
-                                        </th>
-                                        <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Precio Unit.
-                                        </th>
-                                        <th className="px-3 py-2 text-right font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Subtotal
-                                        </th>
-                                        {/* <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-3 py-2 text-center font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Cantidad
+                                    </th>
+                                    <th className="px-3 py-2 text-right font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Precio Unit.
+                                    </th>
+                                    <th className="px-3 py-2 text-right font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Subtotal
+                                    </th>
+                                    {/* <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Stock Ant.
                                         </th>
                                         <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Stock Post.
                                         </th> */}
-                                        <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Lote
-                                        </th>
-                                        <th className="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Vencimiento
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {(compra.detalles || []).map((detalle) => (
-                                        <tr key={detalle.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <td className="px-3 py-2 text-gray-900 dark:text-white">
-                                                <div className="font-medium">#{detalle.producto.id}</div>
-                                            </td>
-                                            <td >
-                                                <div className="text-gray-500 dark:text-gray-400 text-xs">
-                                                    {detalle.producto.nombre}
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-900 dark:text-white font-mono text-xs">
-                                                {detalle.producto.sku || '-'}
-                                            </td>
-                                            {/* <td className="px-3 py-2 text-gray-900 dark:text-white text-xs">
+                                    <th className="px-3 py-2 text-center font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Lote
+                                    </th>
+                                    <th className="px-3 py-2 text-center font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Vencimiento
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                                {(compra.detalles || []).map((detalle) => (
+                                    <tr key={detalle.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td className="px-3 py-2 text-gray-900 dark:text-white">
+                                            <div className="font-medium">#{detalle.producto.id}</div>
+                                        </td>
+                                        <td className="px-3 py-2 text-center">
+                                            {detalle.imagen_url ? (
+                                                <img
+                                                    src={detalle.imagen_url}
+                                                    alt={detalle.producto.nombre}
+                                                    loading="lazy"
+                                                    className="mx-auto h-12 w-12 rounded border border-gray-200 object-cover dark:border-gray-600"
+                                                />
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {can('productos.manage') && detalle.producto ? (
+                                                    <a
+                                                        href={`/productos/${detalle.producto.id}/edit`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline dark:text-blue-400"
+                                                        title="Editar producto (se abre en otra pestaña)"
+                                                    >
+                                                        {detalle.producto.nombre}
+                                                    </a>
+                                                ) : (
+                                                    detalle.producto.nombre
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-2 font-mono text-xs text-gray-900 dark:text-white">{detalle.producto.sku || '-'}</td>
+                                        {/* <td className="px-3 py-2 text-gray-900 dark:text-white text-xs">
                                                 {detalle.producto.codigosBarra && detalle.producto.codigosBarra.length > 0 ? (
                                                     <div className="space-y-1">
                                                         {detalle.producto.codigosBarra.map((codigo) => (
@@ -545,16 +681,16 @@ export default function CompraShow() {
                                                     <span className="text-gray-400">-</span>
                                                 )}
                                             </td> */}
-                                            <td className="px-3 py-2 text-center text-gray-900 dark:text-white font-mono">
-                                                {formatDecimal(detalle.cantidad)}
-                                            </td>
-                                            <td className="px-3 py-2 text-right text-gray-900 dark:text-white font-mono">
-                                                {formatCurrencySmartDecimal(detalle.precio_unitario, compra.moneda?.simbolo || '$')}
-                                            </td>
-                                            <td className="px-3 py-2 text-right text-gray-900 dark:text-white font-mono font-semibold">
-                                                {formatCurrencySmartDecimal(detalle.subtotal, compra.moneda?.simbolo || '$')}
-                                            </td>
-                                            {/* <td className="px-3 py-2 text-center text-gray-900 dark:text-white font-mono">
+                                        <td className="px-3 py-2 text-center font-mono text-gray-900 dark:text-white">
+                                            {formatDecimal(detalle.cantidad)}
+                                        </td>
+                                        <td className="px-3 py-2 text-right font-mono text-gray-900 dark:text-white">
+                                            {formatCurrencySmartDecimal(detalle.precio_unitario, compra.moneda?.simbolo || '$')}
+                                        </td>
+                                        <td className="px-3 py-2 text-right font-mono font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrencySmartDecimal(detalle.subtotal, compra.moneda?.simbolo || '$')}
+                                        </td>
+                                        {/* <td className="px-3 py-2 text-center text-gray-900 dark:text-white font-mono">
                                                 {detalle.cantidad_anterior !== null ? (
                                                     <span>{formatDecimal(detalle.cantidad_anterior)}</span>
                                                 ) : (
@@ -568,39 +704,50 @@ export default function CompraShow() {
                                                     <span className="text-gray-400">-</span>
                                                 )}
                                             </td>*/}
-                                            <td className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
-                                                {detalle.lote ? (
-                                                    <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-mono">
-                                                        {detalle.lote}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
-                                                {detalle.fecha_vencimiento ? (
-                                                    <span className="text-xs">
-                                                        {new Date(detalle.fecha_vencimiento).toLocaleDateString('es-ES')}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                        <td className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
+                                            {detalle.lote ? (
+                                                <span className="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+                                                    {detalle.lote}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
+                                            {detalle.fecha_vencimiento ? (
+                                                <span className={`text-xs ${claseVencimiento(detalle.fecha_vencimiento)}`}>
+                                                    {new Date(detalle.fecha_vencimiento).toLocaleDateString('es-ES')}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot className="bg-gray-50 font-semibold dark:bg-gray-700">
+                                <tr>
+                                    <td colSpan={4} className="px-3 py-2 text-left text-gray-700 dark:text-gray-200">
+                                        Totales ({compra.detalles?.length || 0} productos)
+                                    </td>
+                                    <td className="px-3 py-2 text-center font-mono text-gray-900 dark:text-white">
+                                        {totalUnidades.toLocaleString()}
+                                    </td>
+                                    <td />
+                                    <td className="px-3 py-2 text-right font-mono text-gray-900 dark:text-white">
+                                        {formatCurrencySmartDecimal(subtotalLineas, simbolo)}
+                                    </td>
+                                    <td colSpan={2} />
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
+                </div>
             </div>
 
             {/* Contenido para impresión (oculto visualmente pero disponible en DOM) */}
-            <div className="absolute -left-full -top-full opacity-0 pointer-events-none print:block print:relative print:left-0 print:top-0 print:opacity-100 print:pointer-events-auto">
-                <PrintableContent
-                    ref={printableRef}
-                    compra={compra}
-                    title={`Compra ${compra.numero}`}
-                />
+            <div className="pointer-events-none absolute -top-full -left-full opacity-0 print:pointer-events-auto print:relative print:top-0 print:left-0 print:block print:opacity-100">
+                <PrintableContent ref={printableRef} compra={compra} title={`Compra ${compra.numero}`} />
             </div>
 
             {/* Modal de anulación */}
@@ -614,6 +761,7 @@ export default function CompraShow() {
                 onConfirm={handleAnularCompra}
                 isLoading={isAnulando}
                 error={errorAnulacion}
+                duplicarDespues={duplicarDespuesAnular}
             />
 
             {/* Modal de exportación/impresión */}

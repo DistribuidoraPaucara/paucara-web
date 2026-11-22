@@ -4013,9 +4013,55 @@ class ApiProformaController extends Controller
             'usuarioCreador',
             'detalles.producto.marca',
             'detalles.producto.categoria',
+            'detalles.producto.precios.tipoPrecio',
             'direccionSolicitada',
             'direccionConfirmada',
         ]);
+
+        // Cantidad reservada ACTIVA de esta proforma, por producto
+        $reservadoPorProducto = \App\Models\ReservaProforma::with('stockProducto:id,producto_id')
+            ->where('proforma_id', $proforma->id)
+            ->where('estado', \App\Models\ReservaProforma::ACTIVA)
+            ->get()
+            ->groupBy(fn ($r) => $r->stockProducto?->producto_id)
+            ->map(fn ($grupo) => (int) $grupo->sum('cantidad_reservada'));
+
+        $empresaId = auth()->user()?->empresa_id;
+
+        foreach ($proforma->detalles as $detalle) {
+            $producto = $detalle->producto;
+            if (! $producto) {
+                continue;
+            }
+
+            $detalle->setAttribute('reservado_proforma', (int) ($reservadoPorProducto[$producto->id] ?? 0));
+
+            // Rangos de precio por cantidad (activos, vigentes y de la empresa) con su precio
+            $rangos = \App\Models\PrecioRangoCantidadProducto::query()
+                ->where('producto_id', $producto->id)
+                ->activos()
+                ->vigentes()
+                ->when($empresaId, fn ($q, $id) => $q->where('empresa_id', $id))
+                ->with('tipoPrecio:id,nombre')
+                ->orderBy('cantidad_minima')
+                ->orderBy('orden')
+                ->get()
+                ->map(function ($rango) use ($producto) {
+                    $precio = $producto->precios?->firstWhere('tipo_precio_id', $rango->tipo_precio_id);
+
+                    return [
+                        'cantidad_minima'    => (int) $rango->cantidad_minima,
+                        'cantidad_maxima'    => $rango->cantidad_maxima !== null ? (int) $rango->cantidad_maxima : null,
+                        'tipo_precio_id'     => $rango->tipo_precio_id,
+                        'tipo_precio_nombre' => $rango->tipoPrecio?->nombre,
+                        'precio'             => $precio ? (float) $precio->precio : null,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $producto->setAttribute('rangos', $rangos);
+        }
 
         return Inertia::render('proformas/Show', [
             'proforma' => $proforma,
@@ -4637,7 +4683,7 @@ class ApiProformaController extends Controller
             'fecha_entrega_solicitada'   => 'nullable|date',
             'tipo_entrega'               => 'nullable|in:DELIVERY,PICKUP',
             'canal'                      => 'nullable|in:PRESENCIAL,ONLINE,TELEFONO',
-            'politica_pago'              => 'nullable|in:CONTRA_ENTREGA,ANTICIPADO_100',
+            'politica_pago'              => 'nullable|in:CONTRA_ENTREGA,ANTICIPADO_100,CREDITO',
             'observaciones'              => 'nullable|string|max:1000',
             // ✅ NUEVO: Estado y preventista para edición completa
             'estado_inicial'             => 'nullable|in:BORRADOR,PENDIENTE',
@@ -4651,6 +4697,25 @@ class ApiProformaController extends Controller
                     'success' => false,
                     'message' => 'Solo se pueden actualizar proformas en estado PENDIENTE o BORRADOR',
                 ], 400);
+            }
+
+            // Política CREDITO: validar que el cliente pueda tener crédito (igual que en crear/actualizar)
+            if ($request->input('politica_pago') === 'CREDITO') {
+                $clienteCredito = Cliente::findOrFail($request->input('cliente_id') ?? $proforma->cliente_id);
+
+                if (! $clienteCredito->puede_tener_credito) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "El cliente '{$clienteCredito->nombre}' no tiene permiso para solicitar crédito",
+                    ], 422);
+                }
+
+                if (! $clienteCredito->limite_credito || $clienteCredito->limite_credito <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "El cliente '{$clienteCredito->nombre}' no tiene límite de crédito configurado",
+                    ], 422);
+                }
             }
 
             // Obtener los detalles enviados

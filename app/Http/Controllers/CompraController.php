@@ -65,8 +65,12 @@ class CompraController extends Controller
             'estado_documento_id' => ['nullable', 'exists:estados_documento,id'],
             'moneda_id'           => ['nullable', 'exists:monedas,id'],
             'tipo_pago_id'        => ['nullable', 'exists:tipos_pago,id'],
+            'usuario_id'          => ['nullable', 'integer', 'exists:users,id'],
+            'monto_min'           => ['nullable', 'numeric', 'min:0'],
+            'monto_max'           => ['nullable', 'numeric', 'min:0', 'gte:monto_min'],
+            'con_factura'         => ['nullable', 'in:si,no'],
             'fecha_desde'         => ['nullable', 'date'],
-            'fecha_hasta'         => ['nullable', 'date'],
+            'fecha_hasta'         => ['nullable', 'date', 'after_or_equal:fecha_desde'],
             'per_page'            => ['nullable', 'integer', 'min:10', 'max:100'],
             'sort_by'             => ['nullable', 'string', 'in:id,numero,fecha,estado,proveedor,total,created_at'],
             'sort_dir'            => ['nullable', 'string', 'in:asc,desc'],
@@ -74,49 +78,8 @@ class CompraController extends Controller
 
         $query = Compra::with(['proveedor', 'usuario', 'estadoDocumento', 'moneda', 'tipoPago']);
 
-        // Filtro por ID de compra
-        if (! empty($filtros['id'])) {
-            $query->where('id', $filtros['id']);
-        }
-
-        // Filtro de búsqueda general
-        if (! empty($filtros['q'])) {
-            $searchTerm = $filtros['q'];
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('numero', 'ilike', "%{$searchTerm}%")
-                    ->orWhere('numero_factura', 'ilike', "%{$searchTerm}%")
-                    ->orWhere('observaciones', 'ilike', "%{$searchTerm}%")
-                    ->orWhereHas('proveedor', function ($qq) use ($searchTerm) {
-                        $qq->where('nombre', 'ilike', "%{$searchTerm}%");
-                    });
-            });
-        }
-
-        // Filtros específicos
-        if (! empty($filtros['proveedor_id'])) {
-            $query->where('proveedor_id', $filtros['proveedor_id']);
-        }
-
-        if (! empty($filtros['estado_documento_id'])) {
-            $query->where('estado_documento_id', $filtros['estado_documento_id']);
-        }
-
-        if (! empty($filtros['moneda_id'])) {
-            $query->where('moneda_id', $filtros['moneda_id']);
-        }
-
-        if (! empty($filtros['tipo_pago_id'])) {
-            $query->where('tipo_pago_id', $filtros['tipo_pago_id']);
-        }
-
-        // Filtros de fecha
-        if (! empty($filtros['fecha_desde'])) {
-            $query->whereDate('fecha', '>=', $filtros['fecha_desde']);
-        }
-
-        if (! empty($filtros['fecha_hasta'])) {
-            $query->whereDate('fecha', '<=', $filtros['fecha_hasta']);
-        }
+        // Filtros (mismos que usan las estadísticas)
+        $this->aplicarFiltrosCompras($query, $filtros);
 
         // Ordenamiento
         $sortBy  = $filtros['sort_by'] ?? 'created_at';
@@ -160,6 +123,10 @@ class CompraController extends Controller
                 ->get(['id', 'codigo', 'simbolo']),
             'tipos_pago'  => TipoPago::orderBy('nombre')
                 ->get(['id', 'codigo', 'nombre']),
+            // Solo usuarios que han registrado compras
+            'usuarios'    => \App\Models\User::whereIn('id', Compra::query()->select('usuario_id'))
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ];
 
         return Inertia::render('compras/index', [
@@ -171,6 +138,14 @@ class CompraController extends Controller
     }
 
     public function create()
+    {
+        return Inertia::render('compras/create', $this->datosFormularioCreateCompra());
+    }
+
+    /**
+     * Datos base del formulario de nueva compra (compartidos por create() y duplicar())
+     */
+    private function datosFormularioCreateCompra(): array
     {
         // Debug inicial
         Log::info('CompraController::create - MÉTODO EJECUTADO');
@@ -260,7 +235,92 @@ class CompraController extends Controller
             'almacenes_count'   => $data['almacenes']->count(),
         ]);
 
-        return Inertia::render('compras/create', $data);
+        return $data;
+    }
+
+    /**
+     * Duplicar una compra: abre el formulario de nueva compra prellenado con los datos de la compra origen.
+     *
+     * NO crea nada en BD: la compra nueva se crea al confirmar el formulario.
+     * Se limpian el número de factura y los lotes (son propios de cada compra); se conservan proveedor,
+     * productos, cantidades, precios, descuentos y fechas de vencimiento.
+     *
+     * GET /compras/{compra}/duplicar
+     */
+    public function duplicar(int $id)
+    {
+        if (! auth()->user()?->can('compras.create')) {
+            abort(403, 'No tienes permiso para crear compras');
+        }
+
+        $origen = Compra::with([
+            'detalles.producto.marca:id,nombre',
+            'detalles.producto.unidad:id,codigo,nombre',
+            'detalles.producto.stock:id,producto_id,almacen_id,cantidad,cantidad_disponible',
+        ])->findOrFail($id);
+
+        $copia = [
+            'id'                  => null,
+            'numero'              => null,  // Se genera al guardar
+            'fecha'               => now()->toDateString(),
+            'numero_factura'      => '',    // La factura es de la compra original; se ingresa la nueva
+            'estado_documento_id' => null,  // Usa el estado por defecto del formulario
+            'proveedor_id'        => $origen->proveedor_id,
+            'moneda_id'           => $origen->moneda_id,
+            'tipo_pago_id'        => $origen->tipo_pago_id,
+            'almacen_id'          => $origen->almacen_id,
+            'observaciones'       => \App\Support\ObservacionesAnulacion::limpiar($origen->observaciones),
+        'origen_numero'       => $origen->numero,
+            'subtotal'            => $origen->subtotal,
+            'descuento'           => $origen->descuento,
+            'impuesto'            => $origen->impuesto,
+            'total'               => $origen->total,
+            'detalles'            => $origen->detalles->map(function ($detalle) {
+                $producto = $detalle->producto;
+
+                return [
+                    'id'                => null,  // Detalle nuevo
+                    'producto_id'       => $detalle->producto_id,
+                    'cantidad'          => $detalle->cantidad,
+                    'precio_unitario'   => $detalle->precio_unitario,
+                    'descuento'         => $detalle->descuento ?? 0,
+                    'subtotal'          => $detalle->subtotal,
+                    'lote'              => '',  // Cada compra tiene sus propios lotes
+                    'fecha_vencimiento' => $detalle->fecha_vencimiento
+                        ? \Carbon\Carbon::parse($detalle->fecha_vencimiento)->format('Y-m-d')
+                        : null,
+                    // Stock actual del producto (se consulta al momento de duplicar)
+                    'producto'          => $producto ? [
+                        'id'               => $producto->id,
+                        'nombre'           => $producto->nombre,
+                        'sku'              => $producto->sku,
+                        'codigo'           => $producto->codigo_barras,
+                        'codigo_barras'    => $producto->codigo_barras,
+                        'precio_venta'     => $producto->precio_venta,
+                        'precio_compra'    => $producto->precio_compra,
+                        'marca'            => $producto->marca ? ['id' => $producto->marca->id, 'nombre' => $producto->marca->nombre] : null,
+                        'unidad'           => $producto->unidad ? [
+                            'id'     => $producto->unidad->id,
+                            'codigo' => $producto->unidad->codigo,
+                            'nombre' => $producto->unidad->nombre,
+                        ] : null,
+                        'stock_total'      => (float) $producto->stock->sum('cantidad'),
+                        'stock_disponible' => (float) $producto->stock->sum('cantidad_disponible'),
+                    ] : null,
+                ];
+            })->values()->toArray(),
+        ];
+
+        Log::info('📋 CompraController::duplicar', [
+            'compra_origen_id' => $origen->id,
+            'compra_origen_numero' => $origen->numero,
+            'detalles' => count($copia['detalles']),
+        ]);
+
+        return Inertia::render('compras/create', array_merge(
+            $this->datosFormularioCreateCompra(),
+            ['compra_duplicar' => $copia],
+        ));
     }
 
     public function show($id)
@@ -273,6 +333,7 @@ class CompraController extends Controller
             'tipoPago',
             'detalles.producto.codigosBarra',
             'detalles.producto.prestables',
+            'detalles.producto.imagenes',
             'almacen'
         ])->findOrFail($id);
 
@@ -314,6 +375,9 @@ class CompraController extends Controller
                 'subtotal' => $detalle->subtotal,
                 'lote' => $detalle->lote,
                 'fecha_vencimiento' => $detalle->fecha_vencimiento,
+                // Imagen principal del producto (o la primera si no hay principal)
+                'imagen_url' => $detalle->producto?->imagenes?->firstWhere('es_principal', true)?->url
+                    ?? $detalle->producto?->imagenes?->first()?->url,
                 'cantidad_anterior' => $movimiento?->cantidad_anterior ?? null,
                 'cantidad_posterior' => $movimiento?->cantidad_posterior ?? null,
             ];
@@ -342,6 +406,8 @@ class CompraController extends Controller
             'compra' => array_merge($compra->toArray(), [
                 'detalles' => $detalles,
             ]),
+            'cuenta_por_pagar' => $this->resumenCuentaPorPagar($compra),
+            'anulacion'        => $this->resumenAnulacion($compra),
         ]);
     }
 
@@ -1400,6 +1466,50 @@ class CompraController extends Controller
      *
      * @return string[]
      */
+    /**
+     * Resumen de la cuenta por pagar de la compra y sus pagos (para la pantalla de detalle).
+     * Los montos se envían tal como están en BD (decimal) para no perder decimales.
+     */
+    private function resumenCuentaPorPagar(Compra $compra): ?array
+    {
+        $cuenta = $compra->cuentaPorPagar;
+        if (! $cuenta) {
+            return null;
+        }
+
+        $cuenta->loadMissing('pagos');
+
+        return [
+            'id'                => $cuenta->id,
+            'estado'            => $cuenta->estado,
+            'monto_total'       => $cuenta->monto_total,
+            'monto_pagado'      => $cuenta->monto_pagado,
+            'saldo_pendiente'   => $cuenta->saldo_pendiente,
+            'fecha_vencimiento' => $cuenta->fecha_vencimiento,
+            'pagos'             => $cuenta->pagos->map(fn ($p) => [
+                'id'          => $p->id,
+                'numero_pago' => $p->numero_pago,
+                'monto'       => $p->monto,
+                'fecha'       => $p->fecha ?? $p->fecha_pago,
+                'estado'      => $p->estado,
+                'anulado'     => $p->estado === 'ANULADO',
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Si la compra está aprobada, los motivos por los que hoy no se puede anular (vacío = se puede).
+     */
+    private function resumenAnulacion(Compra $compra): array
+    {
+        $aprobada = $compra->estadoDocumento?->codigo === 'APROBADO';
+
+        return [
+            'aprobada' => $aprobada,
+            'motivos'  => $aprobada ? $this->motivosNoAnulable($compra) : [],
+        ];
+    }
+
     private function motivosNoAnulable(Compra $compra): array
     {
         $motivos = [];
@@ -1601,32 +1711,86 @@ class CompraController extends Controller
     }
 
     /**
+     * Aplica los filtros del listado de compras a un query (listado y estadísticas).
+     * No aplica orden ni paginación.
+     */
+    private function aplicarFiltrosCompras($query, array $filtros): void
+    {
+        // Filtro por ID de compra
+        if (! empty($filtros['id'])) {
+            $query->where('id', $filtros['id']);
+        }
+
+        // Filtro de búsqueda general
+        if (! empty($filtros['q'])) {
+            $searchTerm = $filtros['q'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('numero', 'ilike', "%{$searchTerm}%")
+                    ->orWhere('numero_factura', 'ilike', "%{$searchTerm}%")
+                    ->orWhere('observaciones', 'ilike', "%{$searchTerm}%")
+                    ->orWhereHas('proveedor', function ($qq) use ($searchTerm) {
+                        $qq->where('nombre', 'ilike', "%{$searchTerm}%");
+                    });
+            });
+        }
+
+        // Filtros específicos
+        if (! empty($filtros['proveedor_id'])) {
+            $query->where('proveedor_id', $filtros['proveedor_id']);
+        }
+
+        if (! empty($filtros['estado_documento_id'])) {
+            $query->where('estado_documento_id', $filtros['estado_documento_id']);
+        }
+
+        if (! empty($filtros['moneda_id'])) {
+            $query->where('moneda_id', $filtros['moneda_id']);
+        }
+
+        if (! empty($filtros['tipo_pago_id'])) {
+            $query->where('tipo_pago_id', $filtros['tipo_pago_id']);
+        }
+
+        // Filtros de fecha
+        if (! empty($filtros['fecha_desde'])) {
+            $query->whereDate('fecha', '>=', $filtros['fecha_desde']);
+        }
+
+        if (! empty($filtros['fecha_hasta'])) {
+            $query->whereDate('fecha', '<=', $filtros['fecha_hasta']);
+        }
+
+        // Creador de la compra
+        if (! empty($filtros['usuario_id'])) {
+            $query->where('usuario_id', $filtros['usuario_id']);
+        }
+
+        // Rango de monto (total)
+        if (isset($filtros['monto_min']) && $filtros['monto_min'] !== '') {
+            $query->where('total', '>=', $filtros['monto_min']);
+        }
+
+        if (isset($filtros['monto_max']) && $filtros['monto_max'] !== '') {
+            $query->where('total', '<=', $filtros['monto_max']);
+        }
+
+        // Con / sin número de factura registrado
+        if (($filtros['con_factura'] ?? '') === 'si') {
+            $query->whereNotNull('numero_factura')->where('numero_factura', '!=', '');
+        } elseif (($filtros['con_factura'] ?? '') === 'no') {
+            $query->where(fn ($q) => $q->whereNull('numero_factura')->orWhere('numero_factura', ''));
+        }
+    }
+
+    /**
      * Calcular estadísticas para el dashboard de compras
      */
     private function calcularEstadisticas(array $filtros): array
     {
         $baseQuery = Compra::query();
 
-        // Aplicar mismos filtros que en el index para estadísticas consistentes
-        if (! empty($filtros['proveedor_id'])) {
-            $baseQuery->where('proveedor_id', $filtros['proveedor_id']);
-        }
-
-        if (! empty($filtros['estado_documento_id'])) {
-            $baseQuery->where('estado_documento_id', $filtros['estado_documento_id']);
-        }
-
-        if (! empty($filtros['moneda_id'])) {
-            $baseQuery->where('moneda_id', $filtros['moneda_id']);
-        }
-
-        if (! empty($filtros['fecha_desde'])) {
-            $baseQuery->whereDate('fecha', '>=', $filtros['fecha_desde']);
-        }
-
-        if (! empty($filtros['fecha_hasta'])) {
-            $baseQuery->whereDate('fecha', '<=', $filtros['fecha_hasta']);
-        }
+        // Mismos filtros que el listado, para que las estadísticas coincidan con lo que se ve
+        $this->aplicarFiltrosCompras($baseQuery, $filtros);
 
         // Estadísticas generales
         $totalCompras   = (clone $baseQuery)->count();
@@ -1640,7 +1804,7 @@ class CompraController extends Controller
             ->groupBy('estado_documento.nombre')
             ->map(function ($compras, $estado) {
                 return [
-                    'nombre'      => $estado ?? 'Sin estado',
+                    'nombre'      => $estado ?: 'Sin estado', // ?: también cubre la clave vacía (compras sin estado)
                     'cantidad'    => $compras->count(),
                     'monto_total' => $compras->sum('total'),
                 ];

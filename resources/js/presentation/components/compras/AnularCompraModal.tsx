@@ -25,6 +25,8 @@ interface AnularCompraModalProps {
     isLoading?: boolean;
     /** Motivos por los que el servidor rechazó la anulación (se muestran dentro del modal) */
     error?: ErrorAnulacion | null;
+    /** Si es true, al anular se abre la copia de la compra para rehacerla (Anular y duplicar) */
+    duplicarDespues?: boolean;
 }
 
 export default function AnularCompraModal({
@@ -34,6 +36,7 @@ export default function AnularCompraModal({
     onConfirm,
     isLoading = false,
     error = null,
+    duplicarDespues = false,
 }: AnularCompraModalProps) {
     const [motivo, setMotivo] = useState('');
 
@@ -54,10 +57,15 @@ export default function AnularCompraModal({
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-red-500" />
-                        Anular Compra
+                        {duplicarDespues ? 'Anular y duplicar compra' : 'Anular Compra'}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                         ¿Estás seguro de que deseas anular la compra <strong>{compraNumero}</strong>?
+                        {duplicarDespues && (
+                            <span className="block mt-2">
+                                Se abrirá una copia en "Nueva compra" para que la rehagas con los cambios que necesites.
+                            </span>
+                        )}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -113,7 +121,7 @@ export default function AnularCompraModal({
                         disabled={isLoading}
                         className="bg-red-600 hover:bg-red-700 text-white"
                     >
-                        {isLoading ? 'Anulando...' : bloqueada ? 'Reintentar' : 'Anular Compra'}
+                        {isLoading ? 'Anulando...' : bloqueada ? 'Reintentar' : duplicarDespues ? 'Anular y duplicar' : 'Anular Compra'}
                     </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>

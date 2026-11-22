@@ -9,9 +9,20 @@
  */
 
 import { useMemo } from 'react';
+import { AlertTriangle, CheckCircle, Clock, Pencil, ShoppingCart, XCircle, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/presentation/components/ui/badge';
 import { useProformaEstadoBadge } from '@/application/hooks';
 import { getEstadoBadge } from '@/domain/entities/proformas';
+
+// Ícono por código de estado (se muestra antes del texto)
+const ICONOS_ESTADO: Record<string, LucideIcon> = {
+    BORRADOR: Pencil,
+    PENDIENTE: Clock,
+    APROBADA: CheckCircle,
+    RECHAZADA: XCircle,
+    CONVERTIDA: ShoppingCart,
+    VENCIDA: AlertTriangle,
+};
 
 interface ProformaEstadoBadgeProps {
     estado: string;
@@ -53,8 +64,11 @@ export function ProformaEstadoBadge({ estado, className }: ProformaEstadoBadgePr
         return getEstadoBadge(estado);
     }, [estado, getEstadoBadgeInfo]);
 
+    const Icono = ICONOS_ESTADO[estado];
+
     return (
-        <Badge variant={badgeInfo.variant} className={className}>
+        <Badge variant={badgeInfo.variant} className={`inline-flex items-center gap-1 ${className ?? ''}`}>
+            {Icono && <Icono className="h-3 w-3 shrink-0" />}
             {badgeInfo.label}
         </Badge>
     );

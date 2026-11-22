@@ -24,7 +24,40 @@ class CuentaPorCobrarController extends Controller
 
     public function index(Request $request)
     {
-        $query = $this->aplicarOrden($this->consultaFiltrada($request), $request);
+        $base  = $this->consultaFiltrada($request);
+        $query = $this->aplicarOrden(clone $base, $request);
+
+        // Resumen de lo filtrado (no global): se muestra arriba de la tabla
+        $pendientesFiltro = fn () => (clone $base)->where('estado', '!=', 'PAGADO')->where('saldo_pendiente', '>', 0);
+        // Antigüedad del saldo pendiente por tramos de días vencido (solo lectura, sobre lo filtrado)
+        // PostgreSQL: la resta de fechas (date - date) devuelve días enteros
+        $tramoSql = "CASE
+            WHEN fecha_vencimiento >= CURRENT_DATE THEN 'vigente'
+            WHEN (CURRENT_DATE - fecha_vencimiento) <= 30 THEN 'd1_30'
+            WHEN (CURRENT_DATE - fecha_vencimiento) <= 60 THEN 'd31_60'
+            WHEN (CURRENT_DATE - fecha_vencimiento) <= 90 THEN 'd61_90'
+            ELSE 'd90_mas' END";
+        $antiguedad = $pendientesFiltro()->toBase()
+            ->selectRaw("{$tramoSql} as tramo, SUM(saldo_pendiente) as monto")
+            ->groupBy('tramo')
+            ->pluck('monto', 'tramo')
+            ->map(fn ($monto) => (float) $monto)
+            ->all();
+
+        $resumenFiltrado  = [
+            'cuentas'          => (clone $base)->count(),
+            'monto_original'   => (float) (clone $base)->sum('monto_original'),
+            'saldo_pendiente'  => (float) $pendientesFiltro()->sum('saldo_pendiente'),
+            'vencido'          => (float) $pendientesFiltro()->whereDate('fecha_vencimiento', '<', today())->sum('saldo_pendiente'),
+            'cuentas_vencidas' => $pendientesFiltro()->whereDate('fecha_vencimiento', '<', today())->count(),
+            'antiguedad'       => [
+                'vigente'  => $antiguedad['vigente'] ?? 0,
+                'd1_30'    => $antiguedad['d1_30'] ?? 0,
+                'd31_60'   => $antiguedad['d31_60'] ?? 0,
+                'd61_90'   => $antiguedad['d61_90'] ?? 0,
+                'd90_mas'  => $antiguedad['d90_mas'] ?? 0,
+            ],
+        ];
 
         // ✅ ACTUALIZADO: Permitir cambiar per_page vía parámetro (50 por defecto)
         $perPage = min((int)$request->get('per_page', 25), 500); // Máximo 500 para evitar sobrecarga
@@ -63,11 +96,56 @@ class CuentaPorCobrarController extends Controller
                 ],
                 'filtros'            => $request->only(['estado', 'cliente_id', 'q', 'fecha_vencimiento_desde', 'fecha_vencimiento_hasta', 'solo_vencidas', 'sort', 'order']),
                 'estadisticas'       => $estadisticas,
+                'resumen_filtrado'   => $resumenFiltrado,
                 'datosParaFiltros'   => [
                     'clientes' => Cliente::select('id', 'nombre', 'codigo_cliente')->get(),
                 ],
                 'tipos_pago'         => TipoPago::select('id', 'nombre', 'codigo')->where('codigo', '!=', 'CREDITO')->get(),
             ],
+        ]);
+    }
+
+    /**
+     * Exporta a Excel (.xlsx) las cuentas con los mismos filtros y orden de la lista
+     */
+    public function exportarExcel(Request $request)
+    {
+        $cuentas = $this->aplicarOrden($this->consultaFiltrada($request), $request)->get();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $hoja        = $spreadsheet->getActiveSheet();
+        $hoja->setTitle('Cuentas por cobrar');
+
+        $encabezados = ['Folio', 'Venta', 'Cliente', 'Monto original', 'Saldo pendiente', 'Estado', 'Creación', 'Vencimiento', 'Días vencido'];
+        $hoja->fromArray($encabezados, null, 'A1');
+        $hoja->getStyle('A1:I1')->getFont()->setBold(true);
+
+        $fila = 2;
+        foreach ($cuentas as $cuenta) {
+            $hoja->setCellValue("A{$fila}", $cuenta->id);
+            $hoja->setCellValue("B{$fila}", $cuenta->venta?->numero ?? '');
+            $hoja->setCellValue("C{$fila}", $cuenta->cliente?->nombre ?? $cuenta->venta?->cliente?->nombre ?? '');
+            $hoja->setCellValue("D{$fila}", (float) $cuenta->monto_original);
+            $hoja->setCellValue("E{$fila}", (float) $cuenta->saldo_pendiente);
+            $hoja->setCellValue("F{$fila}", $cuenta->estado);
+            $hoja->setCellValue("G{$fila}", $cuenta->created_at ? \Carbon\Carbon::parse($cuenta->created_at)->format('d/m/Y') : '');
+            $hoja->setCellValue("H{$fila}", $cuenta->fecha_vencimiento ? \Carbon\Carbon::parse($cuenta->fecha_vencimiento)->format('d/m/Y') : '');
+            $hoja->setCellValue("I{$fila}", $cuenta->calcularDiasVencido());
+            $fila++;
+        }
+
+        $hoja->getStyle("D2:E{$fila}")->getNumberFormat()->setFormatCode('#,##0.00');
+        foreach (range('A', 'I') as $columna) {
+            $hoja->getColumnDimension($columna)->setAutoSize(true);
+        }
+
+        $nombreArchivo = 'cuentas-por-cobrar-' . now()->format('Ymd-His') . '.xlsx';
+        $escritor      = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($escritor) {
+            $escritor->save('php://output');
+        }, $nombreArchivo, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 
@@ -115,16 +193,21 @@ class CuentaPorCobrarController extends Controller
                             $sq->orWhere('venta_id', (int)$request->q);
                         })
                         // 3️⃣ PRIORIDAD 3: Buscar por referencia_documento
-                        ->orWhere('referencia_documento', 'LIKE', $searchTerm)
+                        ->orWhere('referencia_documento', 'ILIKE', $searchTerm)
                         // 4️⃣ PRIORIDAD 4: Buscar por usuario creador
                         ->orWhereHas('usuario', function ($userQ) use ($searchTerm) {
-                            $userQ->where('name', 'LIKE', $searchTerm)
-                                ->orWhere('email', 'LIKE', $searchTerm);
+                            $userQ->where('name', 'ILIKE', $searchTerm)
+                                ->orWhere('email', 'ILIKE', $searchTerm);
                         })
                         // 5️⃣ PRIORIDAD 5: Buscar por datos del cliente (nombre, código)
                         ->orWhereHas('cliente', function ($clienteQ) use ($searchTerm) {
-                            $clienteQ->where('nombre', 'LIKE', $searchTerm)
-                                ->orWhere('codigo_cliente', 'LIKE', $searchTerm);
+                            $clienteQ->where('nombre', 'ILIKE', $searchTerm)
+                                ->orWhere('codigo_cliente', 'ILIKE', $searchTerm);
+                        })
+                        // 6️⃣ Cliente de la venta (cuando la cuenta no tiene cliente directo)
+                        ->orWhereHas('venta.cliente', function ($clienteQ) use ($searchTerm) {
+                            $clienteQ->where('nombre', 'ILIKE', $searchTerm)
+                                ->orWhere('codigo_cliente', 'ILIKE', $searchTerm);
                         });
                 });
             })
@@ -160,11 +243,36 @@ class CuentaPorCobrarController extends Controller
             'Solo vencidas' => $request->boolean('solo_vencidas') ? 'Sí' : 'No',
         ];
 
+        // Antigüedad del saldo pendiente (mismos tramos que la pantalla)
+        $hoy = today();
+        $antiguedad = [
+            'vigente' => 0.0, 'd1_30' => 0.0, 'd31_60' => 0.0, 'd61_90' => 0.0, 'd90_mas' => 0.0,
+        ];
+        foreach ($cuentas as $cuenta) {
+            if (strtoupper((string) $cuenta->estado) === 'PAGADO' || (float) $cuenta->saldo_pendiente <= 0) {
+                continue;
+            }
+            $saldo = (float) $cuenta->saldo_pendiente;
+            $dias  = (int) $cuenta->dias_vencido;
+            if (\Carbon\Carbon::parse($cuenta->fecha_vencimiento)->gte($hoy)) {
+                $antiguedad['vigente'] += $saldo;
+            } elseif ($dias <= 30) {
+                $antiguedad['d1_30'] += $saldo;
+            } elseif ($dias <= 60) {
+                $antiguedad['d31_60'] += $saldo;
+            } elseif ($dias <= 90) {
+                $antiguedad['d61_90'] += $saldo;
+            } else {
+                $antiguedad['d90_mas'] += $saldo;
+            }
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.reporte-cuentas-por-cobrar', [
             'cuentas'           => $cuentas,
             'filtrosAplicados'  => $filtrosAplicados,
             'totalMonto'        => $cuentas->sum('monto_original'),
             'totalSaldo'        => $cuentas->sum('saldo_pendiente'),
+            'antiguedad'        => $antiguedad,
             'fecha_generacion'  => now()->format('d/m/Y H:i'),
         ])->setPaper('a4', 'landscape');
 
@@ -173,13 +281,14 @@ class CuentaPorCobrarController extends Controller
 
     public function show(CuentaPorCobrar $cuentaPorCobrar)
     {
-        $cuentaPorCobrar->load(['venta.cliente', 'venta.detalles.producto', 'pagos.tipoPago', 'pagos.usuario']);
+        $cuentaPorCobrar->load(['cliente', 'venta.cliente', 'venta.detalles.producto', 'pagos.tipoPago', 'pagos.usuario']);
 
         // ✅ NUEVO: Recalcular dias_vencido dinámicamente
         $cuentaPorCobrar->dias_vencido = $cuentaPorCobrar->calcularDiasVencido();
 
         return Inertia::render('ventas/cuentas-por-cobrar/show', [
-            'cuenta' => $cuentaPorCobrar,
+            'cuenta'     => $cuentaPorCobrar,
+            'tipos_pago' => TipoPago::select('id', 'nombre', 'codigo')->where('codigo', '!=', 'CREDITO')->get(),
         ]);
     }
 

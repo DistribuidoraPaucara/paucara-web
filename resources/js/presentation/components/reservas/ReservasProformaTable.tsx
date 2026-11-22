@@ -530,7 +530,7 @@ export default function ReservasProformaTable({ onFiltersChange }: ReservasProfo
                                             <div className="text-xs text-gray-500">{reserva.cliente_nit}</div>
                                         </td>
                                         <td className="px-2 py-2">
-                                            <div className="text-xs text-gray-900 dark:text-white">{reserva.producto_nombre}</div>
+                                            <Link href={`/reservas/producto/${(reserva as any).producto_id}`} className="text-xs text-blue-600 hover:underline dark:text-blue-400" title="Ver reservas de este producto">{reserva.producto_nombre}</Link>
                                             <div className="text-xs text-gray-500">{reserva.producto_sku}</div>
                                             {/* ✅ NUEVO (2026-07-22): Link a editar proforma */}
                                             <Link

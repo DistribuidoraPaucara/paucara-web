@@ -176,6 +176,7 @@ export function useProductSearch({
                 nombre: pr.nombre || pr.tipoPrecio?.nombre,
                 precio: pr.precio
             })) || [],
+            rangos: p.rangos || [], // Rangos de precio por cantidad (ventas)
             tipo_precio_id_recomendado: tipoPrecioSeleccionado || p.tipo_precio_id_recomendado,
             tipo_precio_nombre_recomendado: tipoPrecioUsado || p.tipo_precio_nombre_recomendado,
             es_combo: p.es_combo || false,

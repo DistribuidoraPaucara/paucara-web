@@ -77,5 +77,15 @@ export interface ProductosTableProps {
     carritoCalculado?: any; // ✅ NUEVO (2026-02-17): Datos de rangos aplicados para actualizar precios automáticamente
     onDetallesActualizados?: (detalles: DetalleProducto[]) => void; // ✅ NUEVO (2026-02-17): Callback cuando se actualizan detalles por cambios de rangos
     es_farmacia?: boolean; // ✅ NUEVO: Indicador para mostrar/ocultar campos de medicamentos en sugerencias
+    // Ventas: mostrar columnas de peso (unitario y total) cuando la venta requiere envío
+    mostrarPesoEnvio?: boolean;
+    // Ventas: marca, categoría y unidad van en tooltip del nombre (se quitan sus columnas)
+    resumirDatosProducto?: boolean;
+    // Nombre y SKU abren la edición del producto en otra pestaña (solo si el usuario puede editar productos)
+    enlaceEditarProducto?: boolean;
+    // Ocultar el badge de rangos (p. ej. cliente GENERAL)
+    ocultarRangos?: boolean;
+    // Badge de reservado: enlaza a las reservas del producto (/reservas/producto/{id})
+    enlaceReservas?: boolean;
     permitirProductosSinStock?: boolean; // ✅ NUEVO (2026-05-26): Permitir productos sin stock en proformas
 }

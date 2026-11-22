@@ -81,7 +81,7 @@ export default function PermisosIndexPage({
   return (
     <AppLayout>
       <Head title="Gestión de Permisos" />
-      <div className="space-y-6 p-6">
+      <div className="space-y-2 p-2">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Permisos</h1>
@@ -98,9 +98,9 @@ export default function PermisosIndexPage({
 
         {/* Filtros */}
         <div className="rounded-lg bg-white dark:bg-gray-800 p-4 shadow dark:shadow-lg">
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid items-end gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto_auto]">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Buscar
               </label>
               <div className="relative">
@@ -119,11 +119,10 @@ export default function PermisosIndexPage({
                   disabled={isLoading}
                 />
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Presiona Enter o espera 1.5s</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Módulo
               </label>
               <select
@@ -141,22 +140,19 @@ export default function PermisosIndexPage({
               </select>
             </div>
 
-            <div className="flex items-end">
-              <button
-                onClick={handleSearch}
-                disabled={isLoading}
-                className="w-full rounded-lg bg-indigo-600 dark:bg-indigo-700 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Buscando...' : 'Buscar'}
-              </button>
-            </div>
+            <button
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="h-[38px] rounded-lg bg-indigo-600 dark:bg-indigo-700 px-6 text-sm font-medium text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Buscando...' : 'Buscar'}
+            </button>
 
-            <div className="flex items-end">
-              <div className="w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right">
-                Total: <strong>{permissions?.total || 0}</strong>
-              </div>
+            <div className="flex h-[38px] items-center justify-end whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+              Total: <strong className="ml-1">{permissions?.total || 0}</strong>
             </div>
           </div>
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Presiona Enter o espera 1.5s</p>
         </div>
 
         {/* Tabla */}

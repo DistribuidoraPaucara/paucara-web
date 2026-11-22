@@ -1,3 +1,6 @@
+import { useAuth } from '@/application/hooks/use-auth';
+import ResumenCreditoProforma from '@/presentation/components/proformas/ResumenCreditoProforma';
+import { ProformaEstadoBadge } from '@/presentation/components/proforma/ProformaEstadoBadge';
 import AppLayout from '@/layouts/app-layout';
 import ProductosTable, { DetalleProducto } from '@/presentation/components/ProductosTable'; // ✅ NUEVO: Componente centralizado
 import { Button } from '@/presentation/components/ui/button';
@@ -11,7 +14,14 @@ import MapViewWithFallback from '@/presentation/components/maps/MapViewWithFallb
 import { Input } from '@/presentation/components/ui/input';
 import { Label } from '@/presentation/components/ui/label';
 import { Textarea } from '@/presentation/components/ui/textarea';
-import { AlertCircle, Check, ChevronUp, FileText, MapPin, Package, Pencil, RefreshCw, Search, ShoppingCart, User, X } from 'lucide-react';
+import { AlertCircle, Check, ChevronUp, FileText, MapPin, MoreHorizontal, Package, Pencil, RefreshCw, Search, ShoppingCart, User, X } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/presentation/components/ui/dropdown-menu';
 
 // DOMAIN LAYER: Importar tipos desde domain
 import type { Producto } from '@/domain/entities/productos';
@@ -318,6 +328,7 @@ function ProductSelectionDialog({
 const puedeSerEditada = (estado: string) => ['PENDIENTE', 'BORRADOR'].includes(estado);
 
 export default function ProformasShow({ item: proforma, tiposPrecio = [], almacen_id_empresa = 1 }: Props) {
+    const { can } = useAuth();
     // APPLICATION LAYER: Lógica de negocio desde hook
     // ✅ LOGS COMPLETOS - Ver qué datos llegan al componente
     useEffect(() => {
@@ -1725,24 +1736,26 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Folio</p>
                                         <p className="truncate text-xs font-bold text-slate-900 dark:text-white">#{proforma.id}</p>
-                                        <div className="min-w-0 flex-1">
-                                            <p
-                                                className={`truncate text-xs font-bold ${
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                                            <span
+                                                className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                                                     proforma.politica_pago === 'CREDITO'
-                                                        ? 'text-purple-800 dark:text-purple-200'
-                                                        : 'text-slate-900 dark:text-white'
+                                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'
+                                                        : proforma.politica_pago === 'ANTICIPADO_100'
+                                                          ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                                                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
                                                 }`}
                                             >
                                                 {proforma.politica_pago === 'CREDITO'
-                                                    ? '🔴 CRÉDITO'
+                                                    ? 'Crédito'
                                                     : proforma.politica_pago === 'ANTICIPADO_100'
-                                                      ? 'ANTICIPADO 100%'
+                                                      ? 'Anticipado 100%'
                                                       : proforma.politica_pago === 'CONTRA_ENTREGA'
-                                                        ? 'CONTRA ENTREGA'
+                                                        ? 'Contra entrega'
                                                         : proforma.politica_pago}
-                                            </p>
+                                            </span>
+                                            <ProformaEstadoBadge estado={proforma.estado} className="text-[11px]" />
                                         </div>
-                                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{proforma.estado}</p>
                                     </div>
                                 </div>
 
@@ -1837,9 +1850,32 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">Vencimiento</p>
-                                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                                {proforma.fecha_vencimiento.split('T')[0].split('-').reverse().join('-')}
-                                            </p>
+                                            {(() => {
+                                                const [anio, mes, dia] = proforma.fecha_vencimiento.split('T')[0].split('-').map(Number);
+                                                const hoy = new Date();
+                                                const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                                                const dias = Math.round((new Date(anio, mes - 1, dia).getTime() - inicioHoy.getTime()) / 86400000);
+                                                const texto =
+                                                    dias < 0
+                                                        ? `Vencida hace ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'día' : 'días'}`
+                                                        : dias === 0
+                                                          ? 'Vence hoy'
+                                                          : `Vence en ${dias} ${dias === 1 ? 'día' : 'días'}`;
+                                                const clase =
+                                                    dias < 0
+                                                        ? 'text-red-700 dark:text-red-300'
+                                                        : dias <= 3
+                                                          ? 'text-amber-700 dark:text-amber-300'
+                                                          : 'text-slate-900 dark:text-white';
+                                                return (
+                                                    <>
+                                                        <p className={`truncate text-xs font-bold ${clase}`}>{texto}</p>
+                                                        <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {`${String(dia).padStart(2, '0')}-${String(mes).padStart(2, '0')}-${anio}`}
+                                                        </p>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 )}
@@ -1876,7 +1912,7 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                         </div>
                     </div>
 
-                    {/* Botones de acción */}
+                    {/* Botones de acción: la principal visible; el resto en "Más acciones" */}
                     <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                         {puedeAprobar && (
                             <Button
@@ -1891,67 +1927,62 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                             </Button>
                         )}
 
-                        {puedeRechazar && (
-                            <Button variant="destructive" onClick={() => setShowRechazarDialog(true)}>
-                                <X className="mr-2 h-4 w-4" />
-                                Rechazar
-                            </Button>
-                        )}
-
-                        {/* ✅ NUEVO: Botón para editar la proforma (solo disponible en estado PENDIENTE) */}
-                        {proforma.estado === 'PENDIENTE' && (
-                            <Button onClick={() => (window.location.href = `/proformas/${proforma.id}/edit`)} variant="outline" className="border-green-300 text-green-600 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20">
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar
-                            </Button>
-                        )}
-
-                        {puedeConvertir && (
+                        {!puedeAprobar && puedeConvertir && (
                             <Button onClick={() => setShowAprobarDialog(true)} className="bg-purple-600 text-white hover:bg-purple-700">
                                 <ShoppingCart className="mr-2 h-4 w-4" />
                                 Convertir a Venta
                             </Button>
                         )}
 
-                        {/* ✅ NUEVO: Botón para abrir modal de selección de salida (impresión/descarga) */}
-                        <Button onClick={() => setShowProformaOutputSelection(true)} variant="outline" className="border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20">
-                            <FileText className="mr-2 h-4 w-4" />
-                            Imprimir
-                        </Button>
-                        {/* Dirección Solicitada */}
-                        {proforma.direccion_solicitada && (
-                            <button
-                                onClick={() => {
-                                    if (proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud) {
-                                        setDireccionMapaResumen('solicitada');
-                                        setShowMapaResumen(true);
-                                    }
-                                }}
-                                className={`cursor-pointer rounded-lg border p-2.5 text-center text-xs transition-all ${
-                                    proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                        ? 'border-amber-200 bg-amber-50 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/20 dark:hover:bg-amber-900/30'
-                                        : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-950/40 dark:hover:bg-slate-900/50'
-                                }`}
-                                disabled={!proforma.direccion_solicitada?.latitud || !proforma.direccion_solicitada?.longitud}
-                            >
-                                {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
-                                    <span
-                                        className={`inline-block text-xs text-center font-semibold ${
-                                            proforma.direccion_confirmada?.direccion === proforma.direccion_solicitada?.direccion
-                                                ? 'text-amber-700 dark:text-amber-400'
-                                                : 'text-blue-600 dark:text-blue-400'
-                                        }`}
-                                    >
-                                        📍 Ver en mapa
-                                    </span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <MoreHorizontal className="mr-2 h-4 w-4" />
+                                    Más acciones
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => setShowProformaOutputSelection(true)}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Imprimir
+                                </DropdownMenuItem>
+
+                                {proforma.estado === 'PENDIENTE' && (
+                                    <DropdownMenuItem onClick={() => (window.location.href = `/proformas/${proforma.id}/edit`)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </DropdownMenuItem>
                                 )}
-                            </button>
-                        )}
+
+                                {proforma.direccion_solicitada?.latitud && proforma.direccion_solicitada?.longitud && (
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setDireccionMapaResumen('solicitada');
+                                            setShowMapaResumen(true);
+                                        }}
+                                    >
+                                        <MapPin className="mr-2 h-4 w-4" />
+                                        Ver en mapa
+                                    </DropdownMenuItem>
+                                )}
+
+                                {puedeRechazar && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => setShowRechazarDialog(true)} className="text-red-600 focus:text-red-700">
+                                            <X className="mr-2 h-4 w-4" />
+                                            Rechazar
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
                 {/* Información principal */}
                 <div className="space-y-[var(--space-lg)] lg:col-span-2">
+                    {(proforma as any).politica_pago === 'CREDITO' && <ResumenCreditoProforma proformaId={proforma.id} />}
                     {/* Detalles de la proforma */}
                     <div className="space-y-4 p-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2005,6 +2036,11 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                 carritoCalculado={carritoCalculado}
                                 onDetallesActualizados={handleDetallesActualizadosPorRangos}
                                 proformaConvertida={proforma.estado === 'CONVERTIDA'}
+                                resumirDatosProducto
+                                enlaceEditarProducto={can('productos.manage')}
+                                mostrarPesoEnvio={(proforma as any).tipo_entrega === 'DELIVERY'}
+                                ocultarRangos={(proforma.cliente as any)?.codigo_cliente === 'GENERAL'}
+                                enlaceReservas={can('inventario.reservas.index')}
                             />
                         </div>
 
@@ -2132,16 +2168,8 @@ export default function ProformasShow({ item: proforma, tiposPrecio = [], almace
                                 )}
                                 {proforma.hora_entrega_solicitada && (
                                     <div>
-                                        <div className="mb-1 font-medium text-[var(--text-xs)] text-muted-foreground uppercase">Hora Solicitada</div>
-                                        <div className="font-medium text-[var(--text-sm)]">
-                                            {proforma.hora_entrega_solicitada}
-                                            {proforma.hora_entrega_solicitada_fin && (
-                                                <span>
-                                                    {' - '}
-                                                    {proforma.hora_entrega_solicitada_fin}
-                                                </span>
-                                            )}
-                                        </div>
+                                        <div className="mb-1 font-medium text-[var(--text-xs)] text-muted-foreground uppercase">Hora de referencia</div>
+                                        <div className="font-medium text-[var(--text-sm)]">{proforma.hora_entrega_solicitada.substring(0, 5)}</div>
                                     </div>
                                 )}
                             </div>

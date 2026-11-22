@@ -38,6 +38,26 @@
         @endforeach
     </table>
 
+    <table class="antiguedad" style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+        <tr>
+            <th colspan="5" style="text-align: left; background: #f3f4f6; border: 1px solid #d1d5db; padding: 4px; font-size: 9px; text-transform: uppercase;">Antigüedad del saldo pendiente</th>
+        </tr>
+        <tr>
+            @foreach ([
+                'vigente' => 'Por vencer',
+                'd1_30' => '1–30 días',
+                'd31_60' => '31–60 días',
+                'd61_90' => '61–90 días',
+                'd90_mas' => 'Más de 90 días',
+            ] as $clave => $etiqueta)
+                <td style="border: 1px solid #e5e7eb; padding: 4px; text-align: center; width: 20%;">
+                    <div style="font-size: 9px; color: #6b7280;">{{ $etiqueta }}</div>
+                    <div style="font-weight: bold;">{{ number_format($antiguedad[$clave] ?? 0, 2, '.', ',') }}</div>
+                </td>
+            @endforeach
+        </tr>
+    </table>
+
     <table class="listado">
         <thead>
             <tr>

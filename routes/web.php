@@ -390,6 +390,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ NUEVO: Ruta para anular compras
     Route::post('compras/{compra}/anular', [\App\Http\Controllers\CompraController::class, 'anular'])->name('compras.anular');
 
+    // ✅ Duplicar compra: abre el formulario de nueva compra prellenado (no crea nada hasta confirmar)
+    Route::get('compras/{compra}/duplicar', [\App\Http\Controllers\CompraController::class, 'duplicar'])->name('compras.duplicar');
+
     // ✅ NUEVO 2026-05-18: Rutas para asignación de lotes y fechas de vencimiento
     Route::get('compras/{compra}/editar-lotes', [\App\Http\Controllers\CompraController::class, 'editarAsignarLotes'])->name('compras.editar-lotes');
     Route::post('compras/{compra}/guardar-lotes', [\App\Http\Controllers\CompraController::class, 'asignarLotes'])->name('compras.guardar-lotes');
@@ -427,6 +430,11 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ✅ NUEVO: Aplicar middleware CheckCajaAbierta para validar que hay caja abierta
     // Excluir 'show' porque lo definiremos después de las rutas específicas
     Route::resource('ventas', \App\Http\Controllers\VentaController::class)->except(['show'])->middleware('caja.abierta');
+
+    // ✅ Duplicar venta: abre el formulario de nueva venta prellenado (no crea nada hasta confirmar)
+    Route::get('ventas/{venta}/duplicar', [\App\Http\Controllers\VentaController::class, 'duplicar'])
+        ->name('ventas.duplicar')
+        ->middleware('caja.abierta');
 
     // ✨ NUEVO: Ruta para interfaz de venta de comidas/helados
     Route::get('ventas-resort', function () {
@@ -490,6 +498,8 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         Route::get('cuentas-por-cobrar', [\App\Http\Controllers\CuentaPorCobrarController::class, 'index'])->name('cuentas-por-cobrar.index');
         // ✅ NUEVO: Reporte PDF de cuentas por cobrar con los mismos filtros de la lista
         Route::get('cuentas-por-cobrar/reporte', [\App\Http\Controllers\CuentaPorCobrarController::class, 'reporte'])->name('cuentas-por-cobrar.reporte');
+        // Exportación a Excel (.xlsx) de la lista con los mismos filtros y orden de la tabla
+        Route::get('cuentas-por-cobrar/exportar-excel', [\App\Http\Controllers\CuentaPorCobrarController::class, 'exportarExcel'])->name('cuentas-por-cobrar.exportar-excel');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/show', [\App\Http\Controllers\CuentaPorCobrarController::class, 'show'])->name('cuentas-por-cobrar.show');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/imprimir', [\App\Http\Controllers\CuentaPorCobrarController::class, 'imprimir'])->name('cuentas-por-cobrar.imprimir');
         Route::get('cuentas-por-cobrar/{cuentaPorCobrar}/imprimir-ticket-80', [\App\Http\Controllers\CuentaPorCobrarController::class, 'imprimirTicket80'])->name('cuentas-por-cobrar.imprimir-ticket-80');
@@ -580,6 +590,9 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
         // ✅ NUEVO: Editar proforma existente
         Route::get('/{proforma}/edit', [\App\Http\Controllers\ProformaController::class, 'edit'])->name('edit');
 
+        // Duplicar proforma: abre el formulario de nueva proforma prellenado (no crea nada hasta guardar)
+        Route::get('/{proforma}/duplicar', [\App\Http\Controllers\ProformaController::class, 'duplicar'])->name('duplicar');
+
         // ==========================================
         // RUTAS DE IMPRESIÓN (DEBEN ir ANTES de rutas con parámetros dinámicos)
         // ==========================================
@@ -620,6 +633,10 @@ Route::middleware(['auth', 'verified', 'platform'])->group(function () {
     // ==========================================
     Route::prefix('reservas')->name('reservas.')->middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\ReservaController::class, 'index'])->name('index');
+        // Reservas de un producto (stock, activas e historial)
+        Route::get('producto/{producto}', [\App\Http\Controllers\ReservaController::class, 'showPorProducto'])
+            ->middleware('permission:inventario.reservas.index')
+            ->name('producto');
     });
 
     // ✅ RUTAS PARA USUARIO: Gestión de su propia caja
